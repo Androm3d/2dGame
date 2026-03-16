@@ -8,6 +8,8 @@
 #define JUMP_ANGLE_STEP 4
 #define JUMP_HEIGHT 96
 #define FALL_STEP 4
+#define PLAYER_FRAME_SIZE 64
+#define PLAYER_ANIM_FRAMES 8
 
 
 enum PlayerAnims
@@ -31,25 +33,29 @@ Player::~Player()
 void Player::init(const glm::ivec2 &tileMapPos, ShaderProgram &shaderProgram)
 {
 	bJumping = false;
-	spritesheet.loadFromFile("images/bub.png", TEXTURE_PIXEL_FORMAT_RGBA);
-	sprite = Sprite::createSprite(glm::ivec2(32, 32), glm::vec2(0.25, 0.25), &spritesheet, &shaderProgram);
+	spritesheet.loadFromFile("images/RunAnimation.png", TEXTURE_PIXEL_FORMAT_RGBA);
+	glm::vec2 frameSizeInTexture(
+		float(PLAYER_FRAME_SIZE) / float(spritesheet.width()),
+		float(PLAYER_FRAME_SIZE) / float(spritesheet.height())
+	);
+	sprite = Sprite::createSprite(glm::ivec2(32, 32), frameSizeInTexture, &spritesheet, &shaderProgram);
 	sprite->setNumberAnimations(4);
 	
-		sprite->setAnimationSpeed(STAND_LEFT, 8);
-		sprite->addKeyframe(STAND_LEFT, glm::vec2(0.f, 0.f));
-		
-		sprite->setAnimationSpeed(STAND_RIGHT, 8);
-		sprite->addKeyframe(STAND_RIGHT, glm::vec2(0.25f, 0.f));
-		
-		sprite->setAnimationSpeed(MOVE_LEFT, 8);
-		sprite->addKeyframe(MOVE_LEFT, glm::vec2(0.f, 0.f));
-		sprite->addKeyframe(MOVE_LEFT, glm::vec2(0.f, 0.25f));
-		sprite->addKeyframe(MOVE_LEFT, glm::vec2(0.f, 0.5f));
-		
-		sprite->setAnimationSpeed(MOVE_RIGHT, 8);
-		sprite->addKeyframe(MOVE_RIGHT, glm::vec2(0.25, 0.f));
-		sprite->addKeyframe(MOVE_RIGHT, glm::vec2(0.25, 0.25f));
-		sprite->addKeyframe(MOVE_RIGHT, glm::vec2(0.25, 0.5f));
+	sprite->setAnimationSpeed(STAND_LEFT, 8);
+	sprite->addKeyframe(STAND_LEFT, glm::vec2(0.f, 0.f));
+
+	sprite->setAnimationSpeed(STAND_RIGHT, 8);
+	sprite->addKeyframe(STAND_RIGHT, glm::vec2(0.f, 0.f));
+
+	sprite->setAnimationSpeed(MOVE_LEFT, 12);
+	sprite->setAnimationSpeed(MOVE_RIGHT, 12);
+	for(int frame = 0; frame < PLAYER_ANIM_FRAMES; ++frame)
+	{
+		float u = frame * frameSizeInTexture.x;
+		glm::vec2 frameOffset(u, 0.f);
+		sprite->addKeyframe(MOVE_LEFT, frameOffset);
+		sprite->addKeyframe(MOVE_RIGHT, frameOffset);
+	}
 		
 	sprite->changeAnimation(0);
 	tileMapDispl = tileMapPos;
@@ -100,7 +106,7 @@ void Player::update(int deltaTime)
 		}
 		else
 		{
-			posPlayer.y = int(startY - 96 * sin(3.14159f * jumpAngle / 180.f));
+			posPlayer.y = int(startY - JUMP_HEIGHT * sin(3.14159f * jumpAngle / 180.f));
 			if(jumpAngle > 90)
 				bJumping = !map->collisionMoveDown(posPlayer, glm::ivec2(32, 32), &posPlayer.y);
 		}
