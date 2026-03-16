@@ -447,11 +447,15 @@ CMakeFiles/BugsBunnyCrazyCastle.dir/src/Game.cpp.o: /home/pibe/info/VJ/2d/src/Ga
   /usr/include/c++/15.2.1/bits/concept_check.h \
   /usr/include/c++/15.2.1/bits/cpp_type_traits.h \
   /usr/include/c++/15.2.1/bits/cxxabi_forced.h \
+  /usr/include/c++/15.2.1/bits/enable_special_members.h \
+  /usr/include/c++/15.2.1/bits/erase_if.h \
   /usr/include/c++/15.2.1/bits/exception.h \
   /usr/include/c++/15.2.1/bits/exception_defines.h \
   /usr/include/c++/15.2.1/bits/functexcept.h \
   /usr/include/c++/15.2.1/bits/functional_hash.h \
   /usr/include/c++/15.2.1/bits/hash_bytes.h \
+  /usr/include/c++/15.2.1/bits/hashtable.h \
+  /usr/include/c++/15.2.1/bits/hashtable_policy.h \
   /usr/include/c++/15.2.1/bits/invoke.h \
   /usr/include/c++/15.2.1/bits/localefwd.h \
   /usr/include/c++/15.2.1/bits/memoryfwd.h \
@@ -477,6 +481,7 @@ CMakeFiles/BugsBunnyCrazyCastle.dir/src/Game.cpp.o: /home/pibe/info/VJ/2d/src/Ga
   /usr/include/c++/15.2.1/bits/stl_uninitialized.h \
   /usr/include/c++/15.2.1/bits/stl_vector.h \
   /usr/include/c++/15.2.1/bits/stringfwd.h \
+  /usr/include/c++/15.2.1/bits/unordered_map.h \
   /usr/include/c++/15.2.1/bits/uses_allocator.h \
   /usr/include/c++/15.2.1/bits/utility.h \
   /usr/include/c++/15.2.1/bits/vector.tcc \
@@ -495,6 +500,7 @@ CMakeFiles/BugsBunnyCrazyCastle.dir/src/Game.cpp.o: /home/pibe/info/VJ/2d/src/Ga
   /usr/include/c++/15.2.1/cwchar \
   /usr/include/c++/15.2.1/debug/assertions.h \
   /usr/include/c++/15.2.1/debug/debug.h \
+  /usr/include/c++/15.2.1/ext/aligned_buffer.h \
   /usr/include/c++/15.2.1/ext/alloc_traits.h \
   /usr/include/c++/15.2.1/ext/numeric_traits.h \
   /usr/include/c++/15.2.1/ext/string_conversions.h \
@@ -508,6 +514,7 @@ CMakeFiles/BugsBunnyCrazyCastle.dir/src/Game.cpp.o: /home/pibe/info/VJ/2d/src/Ga
   /usr/include/c++/15.2.1/tuple \
   /usr/include/c++/15.2.1/type_traits \
   /usr/include/c++/15.2.1/typeinfo \
+  /usr/include/c++/15.2.1/unordered_map \
   /usr/include/c++/15.2.1/vector \
   /usr/include/c++/15.2.1/x86_64-pc-linux-gnu/bits/c++allocator.h \
   /usr/include/c++/15.2.1/x86_64-pc-linux-gnu/bits/c++config.h \
@@ -791,12 +798,16 @@ CMakeFiles/BugsBunnyCrazyCastle.dir/src/Player.cpp.o: /home/pibe/info/VJ/2d/src/
   /usr/include/c++/15.2.1/bits/cpp_type_traits.h \
   /usr/include/c++/15.2.1/bits/cxxabi_forced.h \
   /usr/include/c++/15.2.1/bits/cxxabi_init_exception.h \
+  /usr/include/c++/15.2.1/bits/enable_special_members.h \
+  /usr/include/c++/15.2.1/bits/erase_if.h \
   /usr/include/c++/15.2.1/bits/exception.h \
   /usr/include/c++/15.2.1/bits/exception_defines.h \
   /usr/include/c++/15.2.1/bits/exception_ptr.h \
   /usr/include/c++/15.2.1/bits/functexcept.h \
   /usr/include/c++/15.2.1/bits/functional_hash.h \
   /usr/include/c++/15.2.1/bits/hash_bytes.h \
+  /usr/include/c++/15.2.1/bits/hashtable.h \
+  /usr/include/c++/15.2.1/bits/hashtable_policy.h \
   /usr/include/c++/15.2.1/bits/invoke.h \
   /usr/include/c++/15.2.1/bits/ios_base.h \
   /usr/include/c++/15.2.1/bits/istream.tcc \
@@ -833,6 +844,7 @@ CMakeFiles/BugsBunnyCrazyCastle.dir/src/Player.cpp.o: /home/pibe/info/VJ/2d/src/
   /usr/include/c++/15.2.1/bits/streambuf.tcc \
   /usr/include/c++/15.2.1/bits/streambuf_iterator.h \
   /usr/include/c++/15.2.1/bits/stringfwd.h \
+  /usr/include/c++/15.2.1/bits/unordered_map.h \
   /usr/include/c++/15.2.1/bits/uses_allocator.h \
   /usr/include/c++/15.2.1/bits/utility.h \
   /usr/include/c++/15.2.1/bits/vector.tcc \
@@ -853,6 +865,7 @@ CMakeFiles/BugsBunnyCrazyCastle.dir/src/Player.cpp.o: /home/pibe/info/VJ/2d/src/
   /usr/include/c++/15.2.1/debug/assertions.h \
   /usr/include/c++/15.2.1/debug/debug.h \
   /usr/include/c++/15.2.1/exception \
+  /usr/include/c++/15.2.1/ext/aligned_buffer.h \
   /usr/include/c++/15.2.1/ext/alloc_traits.h \
   /usr/include/c++/15.2.1/ext/atomicity.h \
   /usr/include/c++/15.2.1/ext/numeric_traits.h \
@@ -874,6 +887,7 @@ CMakeFiles/BugsBunnyCrazyCastle.dir/src/Player.cpp.o: /home/pibe/info/VJ/2d/src/
   /usr/include/c++/15.2.1/tuple \
   /usr/include/c++/15.2.1/type_traits \
   /usr/include/c++/15.2.1/typeinfo \
+  /usr/include/c++/15.2.1/unordered_map \
   /usr/include/c++/15.2.1/vector \
   /usr/include/c++/15.2.1/x86_64-pc-linux-gnu/bits/atomic_word.h \
   /usr/include/c++/15.2.1/x86_64-pc-linux-gnu/bits/c++allocator.h \
@@ -1172,12 +1186,16 @@ CMakeFiles/BugsBunnyCrazyCastle.dir/src/Scene.cpp.o: /home/pibe/info/VJ/2d/src/S
   /usr/include/c++/15.2.1/bits/cpp_type_traits.h \
   /usr/include/c++/15.2.1/bits/cxxabi_forced.h \
   /usr/include/c++/15.2.1/bits/cxxabi_init_exception.h \
+  /usr/include/c++/15.2.1/bits/enable_special_members.h \
+  /usr/include/c++/15.2.1/bits/erase_if.h \
   /usr/include/c++/15.2.1/bits/exception.h \
   /usr/include/c++/15.2.1/bits/exception_defines.h \
   /usr/include/c++/15.2.1/bits/exception_ptr.h \
   /usr/include/c++/15.2.1/bits/functexcept.h \
   /usr/include/c++/15.2.1/bits/functional_hash.h \
   /usr/include/c++/15.2.1/bits/hash_bytes.h \
+  /usr/include/c++/15.2.1/bits/hashtable.h \
+  /usr/include/c++/15.2.1/bits/hashtable_policy.h \
   /usr/include/c++/15.2.1/bits/invoke.h \
   /usr/include/c++/15.2.1/bits/ios_base.h \
   /usr/include/c++/15.2.1/bits/istream.tcc \
@@ -1214,6 +1232,7 @@ CMakeFiles/BugsBunnyCrazyCastle.dir/src/Scene.cpp.o: /home/pibe/info/VJ/2d/src/S
   /usr/include/c++/15.2.1/bits/streambuf.tcc \
   /usr/include/c++/15.2.1/bits/streambuf_iterator.h \
   /usr/include/c++/15.2.1/bits/stringfwd.h \
+  /usr/include/c++/15.2.1/bits/unordered_map.h \
   /usr/include/c++/15.2.1/bits/uses_allocator.h \
   /usr/include/c++/15.2.1/bits/utility.h \
   /usr/include/c++/15.2.1/bits/vector.tcc \
@@ -1234,6 +1253,7 @@ CMakeFiles/BugsBunnyCrazyCastle.dir/src/Scene.cpp.o: /home/pibe/info/VJ/2d/src/S
   /usr/include/c++/15.2.1/debug/assertions.h \
   /usr/include/c++/15.2.1/debug/debug.h \
   /usr/include/c++/15.2.1/exception \
+  /usr/include/c++/15.2.1/ext/aligned_buffer.h \
   /usr/include/c++/15.2.1/ext/alloc_traits.h \
   /usr/include/c++/15.2.1/ext/atomicity.h \
   /usr/include/c++/15.2.1/ext/numeric_traits.h \
@@ -1255,6 +1275,7 @@ CMakeFiles/BugsBunnyCrazyCastle.dir/src/Scene.cpp.o: /home/pibe/info/VJ/2d/src/S
   /usr/include/c++/15.2.1/tuple \
   /usr/include/c++/15.2.1/type_traits \
   /usr/include/c++/15.2.1/typeinfo \
+  /usr/include/c++/15.2.1/unordered_map \
   /usr/include/c++/15.2.1/vector \
   /usr/include/c++/15.2.1/x86_64-pc-linux-gnu/bits/atomic_word.h \
   /usr/include/c++/15.2.1/x86_64-pc-linux-gnu/bits/c++allocator.h \
@@ -3031,11 +3052,15 @@ CMakeFiles/BugsBunnyCrazyCastle.dir/src/main.cpp.o: /home/pibe/info/VJ/2d/src/ma
   /usr/include/c++/15.2.1/bits/concept_check.h \
   /usr/include/c++/15.2.1/bits/cpp_type_traits.h \
   /usr/include/c++/15.2.1/bits/cxxabi_forced.h \
+  /usr/include/c++/15.2.1/bits/enable_special_members.h \
+  /usr/include/c++/15.2.1/bits/erase_if.h \
   /usr/include/c++/15.2.1/bits/exception.h \
   /usr/include/c++/15.2.1/bits/exception_defines.h \
   /usr/include/c++/15.2.1/bits/functexcept.h \
   /usr/include/c++/15.2.1/bits/functional_hash.h \
   /usr/include/c++/15.2.1/bits/hash_bytes.h \
+  /usr/include/c++/15.2.1/bits/hashtable.h \
+  /usr/include/c++/15.2.1/bits/hashtable_policy.h \
   /usr/include/c++/15.2.1/bits/invoke.h \
   /usr/include/c++/15.2.1/bits/localefwd.h \
   /usr/include/c++/15.2.1/bits/memoryfwd.h \
@@ -3061,6 +3086,7 @@ CMakeFiles/BugsBunnyCrazyCastle.dir/src/main.cpp.o: /home/pibe/info/VJ/2d/src/ma
   /usr/include/c++/15.2.1/bits/stl_uninitialized.h \
   /usr/include/c++/15.2.1/bits/stl_vector.h \
   /usr/include/c++/15.2.1/bits/stringfwd.h \
+  /usr/include/c++/15.2.1/bits/unordered_map.h \
   /usr/include/c++/15.2.1/bits/uses_allocator.h \
   /usr/include/c++/15.2.1/bits/utility.h \
   /usr/include/c++/15.2.1/bits/vector.tcc \
@@ -3079,6 +3105,7 @@ CMakeFiles/BugsBunnyCrazyCastle.dir/src/main.cpp.o: /home/pibe/info/VJ/2d/src/ma
   /usr/include/c++/15.2.1/cwchar \
   /usr/include/c++/15.2.1/debug/assertions.h \
   /usr/include/c++/15.2.1/debug/debug.h \
+  /usr/include/c++/15.2.1/ext/aligned_buffer.h \
   /usr/include/c++/15.2.1/ext/alloc_traits.h \
   /usr/include/c++/15.2.1/ext/numeric_traits.h \
   /usr/include/c++/15.2.1/ext/string_conversions.h \
@@ -3092,6 +3119,7 @@ CMakeFiles/BugsBunnyCrazyCastle.dir/src/main.cpp.o: /home/pibe/info/VJ/2d/src/ma
   /usr/include/c++/15.2.1/tuple \
   /usr/include/c++/15.2.1/type_traits \
   /usr/include/c++/15.2.1/typeinfo \
+  /usr/include/c++/15.2.1/unordered_map \
   /usr/include/c++/15.2.1/vector \
   /usr/include/c++/15.2.1/x86_64-pc-linux-gnu/bits/c++allocator.h \
   /usr/include/c++/15.2.1/x86_64-pc-linux-gnu/bits/c++config.h \
@@ -3266,8 +3294,6 @@ CMakeFiles/BugsBunnyCrazyCastle.dir/src/main.cpp.o: /home/pibe/info/VJ/2d/src/ma
 
 /usr/include/c++/15.2.1/utility:
 
-/usr/include/c++/15.2.1/unordered_map:
-
 /usr/include/c++/15.2.1/sstream:
 
 /usr/include/c++/15.2.1/numeric:
@@ -3280,15 +3306,11 @@ CMakeFiles/BugsBunnyCrazyCastle.dir/src/main.cpp.o: /home/pibe/info/VJ/2d/src/ma
 
 /usr/include/c++/15.2.1/forward_list:
 
-/usr/include/c++/15.2.1/ext/aligned_buffer.h:
-
 /usr/include/c++/15.2.1/ctime:
 
 /usr/include/c++/15.2.1/compare:
 
 /usr/include/c++/15.2.1/bits/valarray_array.h:
-
-/usr/include/c++/15.2.1/bits/unordered_map.h:
 
 /usr/include/c++/15.2.1/bits/unique_ptr.h:
 
@@ -3320,21 +3342,21 @@ CMakeFiles/BugsBunnyCrazyCastle.dir/src/main.cpp.o: /home/pibe/info/VJ/2d/src/ma
 
 /usr/include/c++/15.2.1/bits/indirect_array.h:
 
-/usr/include/c++/15.2.1/bits/hashtable_policy.h:
+/usr/include/c++/15.2.1/bits/gslice_array.h:
 
-/usr/include/c++/15.2.1/bits/hashtable.h:
+/usr/include/c++/15.2.1/bits/forward_list.tcc:
 
-/usr/include/c++/15.2.1/vector:
+/usr/include/c++/15.2.1/bits/shared_ptr_atomic.h:
 
-/usr/include/c++/15.2.1/bits/exception_defines.h:
-
-/usr/include/glm/packing.hpp:
+/usr/include/c++/15.2.1/bits/forward_list.h:
 
 /usr/include/c++/15.2.1/functional:
 
 /usr/include/c++/15.2.1/ext/type_traits.h:
 
 /usr/include/c++/15.2.1/ext/alloc_traits.h:
+
+/usr/include/c++/15.2.1/ext/aligned_buffer.h:
 
 /usr/include/c++/15.2.1/cfloat:
 
@@ -3350,11 +3372,15 @@ CMakeFiles/BugsBunnyCrazyCastle.dir/src/main.cpp.o: /home/pibe/info/VJ/2d/src/ma
 
 /usr/include/c++/15.2.1/x86_64-pc-linux-gnu/bits/cpu_defines.h:
 
-/usr/include/glm/ext/quaternion_relational.inl:
+/usr/include/c++/15.2.1/bits/unordered_map.h:
+
+/usr/include/glm/ext/vector_int2_sized.hpp:
 
 /usr/include/bits/atomic_wide_counter.h:
 
 /usr/include/c++/15.2.1/bits/enable_special_members.h:
+
+/usr/include/glm/ext/quaternion_relational.inl:
 
 /usr/include/c++/15.2.1/bits/stl_uninitialized.h:
 
@@ -3380,6 +3406,18 @@ CMakeFiles/BugsBunnyCrazyCastle.dir/src/main.cpp.o: /home/pibe/info/VJ/2d/src/ma
 
 /usr/include/c++/15.2.1/bits/ostream_insert.h:
 
+/usr/include/c++/15.2.1/bits/hashtable_policy.h:
+
+/usr/include/c++/15.2.1/clocale:
+
+/usr/include/GL/glew.h:
+
+/usr/include/c++/15.2.1/bits/hashtable.h:
+
+/home/pibe/info/VJ/2d/external/soil/include/SOIL/stbi_dds_aug_c.h:
+
+/usr/include/glm/ext/matrix_double3x3_precision.hpp:
+
 /usr/include/c++/15.2.1/bits/functional_hash.h:
 
 /home/pibe/info/VJ/2d/src/Scene.h:
@@ -3389,6 +3427,14 @@ CMakeFiles/BugsBunnyCrazyCastle.dir/src/main.cpp.o: /home/pibe/info/VJ/2d/src/ma
 /usr/include/glm/ext/matrix_double4x4_precision.hpp:
 
 /usr/include/glm/ext/quaternion_common.inl:
+
+/usr/include/c++/15.2.1/bits/exception_defines.h:
+
+/usr/include/c++/15.2.1/vector:
+
+/usr/include/glm/packing.hpp:
+
+/usr/lib/libXau.so.6:
 
 /usr/include/c++/15.2.1/bits/cxxabi_forced.h:
 
@@ -3430,10 +3476,6 @@ CMakeFiles/BugsBunnyCrazyCastle.dir/src/main.cpp.o: /home/pibe/info/VJ/2d/src/ma
 
 /usr/include/bits/errno.h:
 
-/usr/include/c++/15.2.1/clocale:
-
-/usr/include/GL/glew.h:
-
 /usr/include/c++/15.2.1/iomanip:
 
 /usr/include/bits/locale.h:
@@ -3445,10 +3487,6 @@ CMakeFiles/BugsBunnyCrazyCastle.dir/src/main.cpp.o: /home/pibe/info/VJ/2d/src/ma
 /home/pibe/info/VJ/2d/src/Game.h:
 
 /home/pibe/info/VJ/2d/src/Game.cpp:
-
-/home/pibe/info/VJ/2d/external/soil/include/SOIL/stbi_dds_aug_c.h:
-
-/usr/include/glm/ext/matrix_double3x3_precision.hpp:
 
 /usr/lib/libX11.so.6:
 
@@ -3626,8 +3664,6 @@ CMakeFiles/BugsBunnyCrazyCastle.dir/src/Game.cpp.o:
 
 /usr/include/locale.h:
 
-/usr/include/c++/15.2.1/bits/gslice_array.h:
-
 /usr/include/bits/mathcalls-macros.h:
 
 /home/pibe/info/VJ/2d/src/Texture.h:
@@ -3674,16 +3710,6 @@ CMakeFiles/BugsBunnyCrazyCastle.dir/external/soil/src/image_helper.c.o:
 
 /usr/include/glm/detail/compute_common.hpp:
 
-/usr/include/c++/15.2.1/map:
-
-/usr/include/c++/15.2.1/new:
-
-/usr/lib/gcc/x86_64-pc-linux-gnu/15.2.1/libgcc.a:
-
-/usr/include/c++/15.2.1/string:
-
-/usr/include/c++/15.2.1/debug/assertions.h:
-
 /usr/include/bits/stdint-least.h:
 
 /usr/lib/libGL.so:
@@ -3701,8 +3727,6 @@ CMakeFiles/BugsBunnyCrazyCastle.dir/external/soil/src/image_helper.c.o:
 /usr/include/bits/endian.h:
 
 /usr/include/glm/ext/scalar_uint_sized.hpp:
-
-/usr/include/c++/15.2.1/type_traits:
 
 /usr/include/glm/ext/vector_bool3_precision.hpp:
 
@@ -3774,10 +3798,6 @@ CMakeFiles/BugsBunnyCrazyCastle.dir/external/soil/src/soil.c.o:
 
 /usr/lib/libGLdispatch.so.0:
 
-/usr/include/c++/15.2.1/tuple:
-
-/usr/include/errno.h:
-
 /usr/include/bits/types/clockid_t.h:
 
 /usr/include/sys/select.h:
@@ -3834,6 +3854,12 @@ CMakeFiles/BugsBunnyCrazyCastle.dir/src/main.cpp.o:
 
 /usr/include/bits/types/time_t.h:
 
+/usr/include/c++/15.2.1/x86_64-pc-linux-gnu/bits/messages_members.h:
+
+/usr/include/c++/15.2.1/bits/erase_if.h:
+
+/usr/include/bits/mathcalls-narrow.h:
+
 /usr/include/c++/15.2.1/climits:
 
 /usr/lib/Scrt1.o:
@@ -3874,8 +3900,6 @@ CMakeFiles/BugsBunnyCrazyCastle.dir/external/soil/src/stb_image_aug.c.o:
 
 /usr/include/bits/sched.h:
 
-/usr/include/c++/15.2.1/bits/forward_list.tcc:
-
 /usr/include/c++/15.2.1/bits/valarray_array.tcc:
 
 /usr/include/bits/types/__locale_t.h:
@@ -3900,14 +3924,6 @@ CMakeFiles/BugsBunnyCrazyCastle.dir/external/soil/src/stb_image_aug.c.o:
 
 /usr/include/bits/types/locale_t.h:
 
-/usr/lib/libXau.so.6:
-
-/usr/include/c++/15.2.1/x86_64-pc-linux-gnu/bits/messages_members.h:
-
-/usr/include/bits/mathcalls-narrow.h:
-
-/usr/include/c++/15.2.1/bits/erase_if.h:
-
 /usr/include/c++/15.2.1/bits/stl_pair.h:
 
 /usr/include/bits/waitflags.h:
@@ -3924,11 +3940,29 @@ CMakeFiles/BugsBunnyCrazyCastle.dir/external/soil/src/stb_image_aug.c.o:
 
 /usr/include/gnu/stubs-64.h:
 
+/usr/include/glm/detail/func_integer.inl:
+
+/usr/include/c++/15.2.1/map:
+
+/usr/include/c++/15.2.1/new:
+
+/usr/lib/gcc/x86_64-pc-linux-gnu/15.2.1/libgcc.a:
+
+/usr/include/c++/15.2.1/debug/assertions.h:
+
+/usr/include/c++/15.2.1/string:
+
+/usr/include/c++/15.2.1/tuple:
+
+/usr/include/errno.h:
+
+/usr/include/c++/15.2.1/type_traits:
+
 CMakeFiles/BugsBunnyCrazyCastle.dir/src/Texture.cpp.o:
 
 /usr/include/c++/15.2.1/typeinfo:
 
-/usr/include/glm/detail/func_integer.inl:
+/usr/include/c++/15.2.1/unordered_map:
 
 /usr/include/c++/15.2.1/x86_64-pc-linux-gnu/bits/c++locale.h:
 
@@ -4124,6 +4158,12 @@ CMakeFiles/BugsBunnyCrazyCastle.dir/src/TileMap.cpp.o:
 
 /usr/include/glm/ext/vector_double3.hpp:
 
+/usr/include/c++/15.2.1/bits/gslice.h:
+
+/usr/include/glm/detail/type_vec4.inl:
+
+/usr/include/glm/ext/quaternion_float_precision.hpp:
+
 /usr/include/glm/ext/vector_double3_precision.hpp:
 
 /usr/include/glm/ext/quaternion_common.hpp:
@@ -4151,8 +4191,6 @@ CMakeFiles/BugsBunnyCrazyCastle.dir/src/TileMap.cpp.o:
 /usr/include/c++/15.2.1/bits/stl_algo.h:
 
 /usr/include/glm/ext/vector_int2.hpp:
-
-/usr/include/glm/ext/vector_int2_sized.hpp:
 
 /usr/include/glm/detail/type_quat.inl:
 
@@ -4402,10 +4440,6 @@ CMakeFiles/BugsBunnyCrazyCastle.dir/src/TileMap.cpp.o:
 
 /usr/include/glm/gtc/epsilon.inl:
 
-/usr/include/c++/15.2.1/bits/shared_ptr_atomic.h:
-
-/usr/include/c++/15.2.1/bits/forward_list.h:
-
 /usr/include/endian.h:
 
 /usr/include/glm/ext/matrix_float4x3_precision.hpp:
@@ -4433,9 +4467,3 @@ CMakeFiles/BugsBunnyCrazyCastle.dir/src/TileMap.cpp.o:
 /usr/lib32/libbz2.so.1.0:
 
 /usr/include/c++/15.2.1/bits/atomic_base.h:
-
-/usr/include/glm/detail/type_vec4.inl:
-
-/usr/include/glm/ext/quaternion_float_precision.hpp:
-
-/usr/include/c++/15.2.1/bits/gslice.h:
