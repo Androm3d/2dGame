@@ -16,6 +16,7 @@ using namespace std;
 struct AnimKeyframes
 {
 	float millisecsPerKeyframe;
+	bool loop = true;
 	vector<glm::vec2> keyframeDispl;
 };
 

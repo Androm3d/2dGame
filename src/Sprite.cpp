@@ -13,6 +13,7 @@ Sprite *Sprite::createSprite(const glm::vec2 &quadSize, const glm::vec2 &sizeInS
 
 Sprite::Sprite(const glm::vec2 &quadSize, const glm::vec2 &sizeInSpritesheet, Texture *spritesheet, ShaderProgram *program)
 {
+	this->quadSize = quadSize;
 	float vertices[24] = {0.f, 0.f, 0.f, 0.f, 
 												quadSize.x, 0.f, sizeInSpritesheet.x, 0.f, 
 												quadSize.x, quadSize.y, sizeInSpritesheet.x, sizeInSpritesheet.y, 
@@ -31,6 +32,7 @@ Sprite::Sprite(const glm::vec2 &quadSize, const glm::vec2 &sizeInSpritesheet, Te
 	shaderProgram = program;
 	currentAnimation = -1;
 	position = glm::vec2(0.f);
+	flipHorizontal = false;
 }
 
 Sprite::~Sprite()
@@ -43,11 +45,19 @@ void Sprite::update(int deltaTime)
 {
 	if(currentAnimation >= 0)
 	{
+		if(animations[currentAnimation].keyframeDispl.empty())
+			return;
+
 		timeAnimation += deltaTime;
 		while(timeAnimation > animations[currentAnimation].millisecsPerKeyframe)
 		{
 			timeAnimation -= animations[currentAnimation].millisecsPerKeyframe;
-			currentKeyframe = (currentKeyframe + 1) % animations[currentAnimation].keyframeDispl.size();
+			if(animations[currentAnimation].loop)
+				currentKeyframe = (currentKeyframe + 1) % animations[currentAnimation].keyframeDispl.size();
+			else if(currentKeyframe + 1 < int(animations[currentAnimation].keyframeDispl.size()))
+				currentKeyframe += 1;
+			else
+				break;
 		}
 		texCoordDispl = animations[currentAnimation].keyframeDispl[currentKeyframe];
 	}
@@ -56,6 +66,11 @@ void Sprite::update(int deltaTime)
 void Sprite::render() const
 {
 	glm::mat4 modelview = glm::translate(glm::mat4(1.0f), glm::vec3(position.x, position.y, 0.f));
+	if(flipHorizontal)
+	{
+		modelview = glm::translate(modelview, glm::vec3(quadSize.x, 0.f, 0.f));
+		modelview = glm::scale(modelview, glm::vec3(-1.f, 1.f, 1.f));
+	}
 	shaderProgram->setUniformMatrix4f("modelview", modelview);
 	shaderProgram->setUniform2f("texCoordDispl", texCoordDispl.x, texCoordDispl.y);
 	glEnable(GL_TEXTURE_2D);
@@ -84,6 +99,12 @@ void Sprite::setAnimationSpeed(int animId, int keyframesPerSec)
 		animations[animId].millisecsPerKeyframe = 1000.f / keyframesPerSec;
 }
 
+void Sprite::setAnimationLoop(int animId, bool loop)
+{
+	if(animId < int(animations.size()))
+		animations[animId].loop = loop;
+}
+
 void Sprite::addKeyframe(int animId, const glm::vec2 &displacement)
 {
 	if(animId < int(animations.size()))
@@ -104,6 +125,11 @@ void Sprite::changeAnimation(int animId)
 int Sprite::animation() const
 {
 	return currentAnimation;
+}
+
+void Sprite::setFlipHorizontal(bool flip)
+{
+	flipHorizontal = flip;
 }
 
 void Sprite::setPosition(const glm::vec2 &pos)
