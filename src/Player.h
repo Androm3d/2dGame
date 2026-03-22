@@ -26,6 +26,7 @@ public:
 	
 private:
 	bool bJumping;
+	bool facingLeft;
 	glm::ivec2 tileMapDispl, posPlayer;
 	int jumpAngle, startY;
 	Texture spritesheet;

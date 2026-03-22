@@ -40,8 +40,15 @@ public:
 	
 	int getTileSize() const { return tileSize; }
 
+<<<<<<< HEAD
     bool checkCollision(const glm::ivec2 &pos, const glm::ivec2 &size, CollisionDir dir, int *correctedPos) const;
 	TileType getTileType(const int tileId) const;
+=======
+	bool collisionMoveLeft(const glm::ivec2 &pos, const glm::ivec2 &size) const;
+	bool collisionMoveRight(const glm::ivec2 &pos, const glm::ivec2 &size) const;
+	bool collisionMoveUp(const glm::ivec2 &pos, const glm::ivec2 &size, int *posY) const;
+	bool collisionMoveDown(const glm::ivec2 &pos, const glm::ivec2 &size, int *posY) const;
+>>>>>>> origin/jergasus
 	
 private:
 	bool loadLevelJSON(const std::string &levelFile);

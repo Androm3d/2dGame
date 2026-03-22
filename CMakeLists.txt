@@ -8,9 +8,26 @@ find_package(PkgConfig REQUIRED)
 
 # 2. Locate Dependencies
 find_package(GLEW REQUIRED)
-pkg_check_modules(GLFW REQUIRED glfw3)
+find_package(glfw3 CONFIG QUIET)
+if(NOT glfw3_FOUND)
+    pkg_check_modules(GLFW REQUIRED glfw3)
+endif()
 find_package(OpenGL REQUIRED)
 find_package(Freetype REQUIRED)
+
+# Handle both modern imported target and legacy variable-based GLEW discovery.
+set(GLEW_INCLUDE_PATHS ${GLEW_INCLUDE_DIRS})
+if(NOT GLEW_INCLUDE_PATHS AND DEFINED GLEW_INCLUDE_DIR)
+    set(GLEW_INCLUDE_PATHS ${GLEW_INCLUDE_DIR})
+endif()
+
+set(GLEW_LINK_LIBS ${GLEW_LIBRARIES})
+if(NOT GLEW_LINK_LIBS AND DEFINED GLEW_LIBRARY)
+    set(GLEW_LINK_LIBS ${GLEW_LIBRARY})
+endif()
+
+set(GLFW_INCLUDE_PATHS ${GLFW_INCLUDE_DIRS})
+set(GLFW_LINK_LIBS ${GLFW_LIBRARIES})
 
 # 3. SOIL Sources
 set(SOIL_ROOT "${CMAKE_CURRENT_SOURCE_DIR}/external/soil")
@@ -28,8 +45,8 @@ include_directories(
     external/soil/include
     external/soil/include/SOIL
     external/json/include        
-    ${GLEW_INCLUDE_DIRS}
-    ${GLFW_INCLUDE_DIRS}
+    ${GLEW_INCLUDE_PATHS}
+    ${GLFW_INCLUDE_PATHS}
     ${FREETYPE_INCLUDE_DIRS}
 )
 
@@ -41,11 +58,28 @@ add_executable(${PROJECT_NAME} ${SOURCES} ${SOIL_SOURCES})
 
 # 7. Linking
 target_link_libraries(${PROJECT_NAME}
-    ${GLEW_LIBRARIES}
-    ${GLFW_LIBRARIES}
     ${OPENGL_LIBRARIES}
     ${FREETYPE_LIBRARIES}
 )
+
+if(TARGET GLEW::GLEW)
+    target_link_libraries(${PROJECT_NAME} GLEW::GLEW)
+else()
+    target_link_libraries(${PROJECT_NAME} ${GLEW_LINK_LIBS})
+endif()
+
+if(TARGET glfw)
+    target_link_libraries(${PROJECT_NAME} glfw)
+elseif(TARGET glfw::glfw)
+    target_link_libraries(${PROJECT_NAME} glfw::glfw)
+else()
+    target_link_libraries(${PROJECT_NAME} ${GLFW_LINK_LIBS})
+endif()
+
+if(APPLE)
+    find_library(COREFOUNDATION_FRAMEWORK CoreFoundation REQUIRED)
+    target_link_libraries(${PROJECT_NAME} ${COREFOUNDATION_FRAMEWORK})
+endif()
 
 # 8. AUTOMATIC SYMLINKS
 # This ensures your executable can find your assets!
