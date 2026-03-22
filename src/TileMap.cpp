@@ -11,7 +11,7 @@ using json = nlohmann::json;
 TileMap *TileMap::createTileMap(const string &levelFile, const glm::vec2 &minCoords, ShaderProgram &program)
 {
 	TileMap *map = new TileMap(levelFile, minCoords, program);
-	
+	map->setupTileDictionary();
 	return map;
 }
 
@@ -35,6 +35,36 @@ TileMap::~TileMap()
 	free();
 }
 
+TileType TileMap::getTileType(const int tileId) const
+{
+	// Look up the tile ID in our dictionary
+	auto it = tileDictionary.find(tileId);
+	if (it != tileDictionary.end()) {
+		return it->second; // Return the type (SOLID, STAIR, etc.)
+	}
+
+	return TileType::EMPTY;
+}
+
+void TileMap::setupTileDictionary()
+{
+	// 1. One-Way Platforms (Tree leaves)
+	tileDictionary[109] = TileType::ONE_WAY_PLATFORM;
+	tileDictionary[110] = TileType::ONE_WAY_PLATFORM;
+	tileDictionary[111] = TileType::ONE_WAY_PLATFORM;
+	tileDictionary[117] = TileType::ONE_WAY_PLATFORM;
+	tileDictionary[118] = TileType::ONE_WAY_PLATFORM;
+	tileDictionary[119] = TileType::ONE_WAY_PLATFORM;
+
+	// 2. Solid Blocks (I am guessing these based on your JSON so Bugs has a floor!)
+	// You might need to add/remove some here depending on your sprite sheet
+	for (int i = 1; i <= 7; i++) tileDictionary[i] = TileType::SOLID; // Ground/Bridge
+	for (int i = 34; i <= 36; i++) tileDictionary[i] = TileType::SOLID; // Ground
+	
+	// Notice we DO NOT add the water (89, 97, 98) 
+	// or the vegetation/bridge base (65-72, 121-130). 
+	// Because they aren't here, they default to EMPTY!
+}
 
 void TileMap::render() const
 {
@@ -224,87 +254,70 @@ void TileMap::prepareArrays(const glm::vec2 &minCoords, ShaderProgram &program)
 // Collision tests for axis aligned bounding boxes.
 // Method collisionMoveDown also corrects Y coordinate if the box is
 // already intersecting a tile below.
-
-bool TileMap::collisionMoveLeft(const glm::ivec2 &pos, const glm::ivec2 &size) const
+bool TileMap::checkCollision(const glm::ivec2 &pos, const glm::ivec2 &size, CollisionDir dir, int *correctedPos) const
 {
-	int x, y0, y1;
-	
-	x = pos.x / tileSize;
-	y0 = pos.y / tileSize;
-	y1 = (pos.y + size.y - 1) / tileSize;
-	for(int y=y0; y<=y1; y++)
-	{
-		if(map[y*mapSize.x+x] != 0)
-			return true;
-	}
-	
-	return false;
-}
-
-bool TileMap::collisionMoveRight(const glm::ivec2 &pos, const glm::ivec2 &size) const
-{
-	int x, y0, y1;
-	
-	x = (pos.x + size.x - 1) / tileSize;
-	y0 = pos.y / tileSize;
-	y1 = (pos.y + size.y - 1) / tileSize;
-	for(int y=y0; y<=y1; y++)
-	{
-		if(map[y*mapSize.x+x] != 0)
-			return true;
-	}
-	
-	return false;
-}
-
-bool TileMap::collisionMoveDown(const glm::ivec2 &pos, const glm::ivec2 &size, int *posY) const
-{
-	int x0, x1, y;
+	int x0, x1, y0, y1;
 	
 	x0 = pos.x / tileSize;
 	x1 = (pos.x + size.x - 1) / tileSize;
-	y = (pos.y + size.y - 1) / tileSize;
-	for(int x=x0; x<=x1; x++)
-	{
-		if(map[y*mapSize.x+x] != 0)
-		{
-			if(*posY - tileSize * y + size.y <= 4)
-			{
-				*posY = tileSize * y - size.y;
-				return true;
+	y0 = pos.y / tileSize;
+	y1 = (pos.y + size.y - 1) / tileSize;
+
+	// Treat going out of map bounds as hitting a solid wall
+	if (x0 < 0 || x1 >= mapSize.x || y0 < 0 || y1 >= mapSize.y) return true;
+
+	switch (dir) {
+		case CollisionDir::LEFT:
+			for (int y = y0; y <= y1; y++) {
+				if (getTileType(map[y * mapSize.x + x0]) == TileType::SOLID) {
+					if (correctedPos) *correctedPos = (x0 + 1) * tileSize;
+					return true;
+				}
 			}
-		}
+			break;
+
+		case CollisionDir::RIGHT:
+			for (int y = y0; y <= y1; y++) {
+				if (getTileType(map[y * mapSize.x + x1]) == TileType::SOLID) {
+					if (correctedPos) *correctedPos = x1 * tileSize - size.x;
+					return true;
+				}
+			}
+			break;
+
+		case CollisionDir::DOWN:
+			for (int x = x0; x <= x1; x++) {
+				TileType type = getTileType(map[y1 * mapSize.x + x]);
+				
+				if (type == TileType::SOLID) {
+					if (correctedPos) *correctedPos = y1 * tileSize - size.y;
+					return true;
+				}
+				else if (type == TileType::ONE_WAY_PLATFORM) {
+					// ONE-WAY MAGIC: Only act solid if the player's feet are entering the top of the tile.
+					// This prevents snapping to the top when jumping UP through it.
+					int playerBottom = pos.y + size.y - 1;
+					int tileTop = y1 * tileSize;
+					
+					// If we are falling downwards into the top ~8 pixels of the leaf platform
+					if (playerBottom - tileTop < 8) { 
+						if (correctedPos) *correctedPos = tileTop - size.y;
+						return true;
+					}
+				}
+			}
+			break;
+
+		case CollisionDir::UP:
+			for (int x = x0; x <= x1; x++) {
+				// Notice ONE_WAY_PLATFORM isn't checked here. You pass right through!
+				if (getTileType(map[y0 * mapSize.x + x]) == TileType::SOLID) {
+					if (correctedPos) *correctedPos = (y0 + 1) * tileSize;
+					return true;
+				}
+			}
+			break;
 	}
 	
 	return false;
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
