@@ -111,11 +111,7 @@ void Player::update(int deltaTime)
 		if(!bJumping && sprite->animation() != MOVE_LEFT)
 			sprite->changeAnimation(MOVE_LEFT);
 		posPlayer.x -= 2;
-<<<<<<< HEAD
 		if(map->checkCollision(posPlayer, glm::ivec2(32, 32), CollisionDir::LEFT, &posPlayer.x))
-=======
-		if(map->collisionMoveLeft(posPlayer, glm::ivec2(PLAYER_HITBOX_WIDTH, PLAYER_HITBOX_HEIGHT)))
->>>>>>> origin/jergasus
 		{
 			posPlayer.x += 2;
 			if(!bJumping)
@@ -129,12 +125,7 @@ void Player::update(int deltaTime)
 		if(!bJumping && sprite->animation() != MOVE_RIGHT)
 			sprite->changeAnimation(MOVE_RIGHT);
 		posPlayer.x += 2;
-<<<<<<< HEAD
 			if(map->checkCollision(posPlayer, glm::ivec2(32, 32), CollisionDir::RIGHT, &posPlayer.x))		{
-=======
-		if(map->collisionMoveRight(posPlayer, glm::ivec2(PLAYER_HITBOX_WIDTH, PLAYER_HITBOX_HEIGHT)))
-		{
->>>>>>> origin/jergasus
 			posPlayer.x -= 2;
 			if(!bJumping)
 				sprite->changeAnimation(STAND_RIGHT);
@@ -183,28 +174,20 @@ void Player::update(int deltaTime)
 		else
 		{
 			posPlayer.y = int(startY - JUMP_HEIGHT * sin(3.14159f * jumpAngle / 180.f));
-			if(jumpAngle < 90 && map->collisionMoveUp(posPlayer, glm::ivec2(PLAYER_HITBOX_WIDTH, PLAYER_HITBOX_HEIGHT), &posPlayer.y))
+			if(jumpAngle < 90 && map->checkCollision(posPlayer, glm::ivec2(PLAYER_HITBOX_WIDTH, PLAYER_HITBOX_HEIGHT), CollisionDir::UP, &posPlayer.y))
 			{
 				jumpAngle = 90;
 				startY = posPlayer.y + JUMP_HEIGHT;
 				sprite->changeAnimation(JUMP_FALL);
 			}
 			if(jumpAngle > 90)
-<<<<<<< HEAD
 				bJumping = !map->checkCollision(posPlayer, glm::ivec2(32, 32), CollisionDir::UP, &posPlayer.y);
-=======
-				bJumping = !map->collisionMoveDown(posPlayer, glm::ivec2(PLAYER_HITBOX_WIDTH, PLAYER_HITBOX_HEIGHT), &posPlayer.y);
->>>>>>> origin/jergasus
 		}
 	}
 	else
 	{
 		posPlayer.y += FALL_STEP;
-<<<<<<< HEAD
 		if(map->checkCollision(posPlayer, glm::ivec2(32, 32), CollisionDir::DOWN, &posPlayer.y))
-=======
-		if(map->collisionMoveDown(posPlayer, glm::ivec2(PLAYER_HITBOX_WIDTH, PLAYER_HITBOX_HEIGHT), &posPlayer.y))
->>>>>>> origin/jergasus
 		{
 			if(Game::instance().getKey(GLFW_KEY_UP))
 			{
