@@ -44,19 +44,19 @@ cmake_force:
 SHELL = /bin/sh
 
 # The CMake executable.
-CMAKE_COMMAND = /opt/homebrew/bin/cmake
+CMAKE_COMMAND = /usr/bin/cmake
 
 # The command to remove a file.
-RM = /opt/homebrew/bin/cmake -E rm -f
+RM = /usr/bin/cmake -E rm -f
 
 # Escaping for special characters.
 EQUALS = =
 
 # The top-level source directory on which CMake was run.
-CMAKE_SOURCE_DIR = /Users/jergasus/UNI/VJ/2dGame
+CMAKE_SOURCE_DIR = /home/pibe/info/VJ/2d
 
 # The top-level build directory on which CMake was run.
-CMAKE_BINARY_DIR = /Users/jergasus/UNI/VJ/2dGame/build
+CMAKE_BINARY_DIR = /home/pibe/info/VJ/2d/build
 
 # Include any dependencies generated for this target.
 include CMakeFiles/BugsBunnyCrazyCastle.dir/depend.make
@@ -73,186 +73,186 @@ CMakeFiles/BugsBunnyCrazyCastle.dir/codegen:
 .PHONY : CMakeFiles/BugsBunnyCrazyCastle.dir/codegen
 
 CMakeFiles/BugsBunnyCrazyCastle.dir/src/Game.cpp.o: CMakeFiles/BugsBunnyCrazyCastle.dir/flags.make
-CMakeFiles/BugsBunnyCrazyCastle.dir/src/Game.cpp.o: /Users/jergasus/UNI/VJ/2dGame/src/Game.cpp
+CMakeFiles/BugsBunnyCrazyCastle.dir/src/Game.cpp.o: /home/pibe/info/VJ/2d/src/Game.cpp
 CMakeFiles/BugsBunnyCrazyCastle.dir/src/Game.cpp.o: CMakeFiles/BugsBunnyCrazyCastle.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/jergasus/UNI/VJ/2dGame/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_1) "Building CXX object CMakeFiles/BugsBunnyCrazyCastle.dir/src/Game.cpp.o"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/BugsBunnyCrazyCastle.dir/src/Game.cpp.o -MF CMakeFiles/BugsBunnyCrazyCastle.dir/src/Game.cpp.o.d -o CMakeFiles/BugsBunnyCrazyCastle.dir/src/Game.cpp.o -c /Users/jergasus/UNI/VJ/2dGame/src/Game.cpp
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/pibe/info/VJ/2d/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_1) "Building CXX object CMakeFiles/BugsBunnyCrazyCastle.dir/src/Game.cpp.o"
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/BugsBunnyCrazyCastle.dir/src/Game.cpp.o -MF CMakeFiles/BugsBunnyCrazyCastle.dir/src/Game.cpp.o.d -o CMakeFiles/BugsBunnyCrazyCastle.dir/src/Game.cpp.o -c /home/pibe/info/VJ/2d/src/Game.cpp
 
 CMakeFiles/BugsBunnyCrazyCastle.dir/src/Game.cpp.i: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Preprocessing CXX source to CMakeFiles/BugsBunnyCrazyCastle.dir/src/Game.cpp.i"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /Users/jergasus/UNI/VJ/2dGame/src/Game.cpp > CMakeFiles/BugsBunnyCrazyCastle.dir/src/Game.cpp.i
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/pibe/info/VJ/2d/src/Game.cpp > CMakeFiles/BugsBunnyCrazyCastle.dir/src/Game.cpp.i
 
 CMakeFiles/BugsBunnyCrazyCastle.dir/src/Game.cpp.s: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling CXX source to assembly CMakeFiles/BugsBunnyCrazyCastle.dir/src/Game.cpp.s"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /Users/jergasus/UNI/VJ/2dGame/src/Game.cpp -o CMakeFiles/BugsBunnyCrazyCastle.dir/src/Game.cpp.s
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/pibe/info/VJ/2d/src/Game.cpp -o CMakeFiles/BugsBunnyCrazyCastle.dir/src/Game.cpp.s
 
 CMakeFiles/BugsBunnyCrazyCastle.dir/src/Player.cpp.o: CMakeFiles/BugsBunnyCrazyCastle.dir/flags.make
-CMakeFiles/BugsBunnyCrazyCastle.dir/src/Player.cpp.o: /Users/jergasus/UNI/VJ/2dGame/src/Player.cpp
+CMakeFiles/BugsBunnyCrazyCastle.dir/src/Player.cpp.o: /home/pibe/info/VJ/2d/src/Player.cpp
 CMakeFiles/BugsBunnyCrazyCastle.dir/src/Player.cpp.o: CMakeFiles/BugsBunnyCrazyCastle.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/jergasus/UNI/VJ/2dGame/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_2) "Building CXX object CMakeFiles/BugsBunnyCrazyCastle.dir/src/Player.cpp.o"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/BugsBunnyCrazyCastle.dir/src/Player.cpp.o -MF CMakeFiles/BugsBunnyCrazyCastle.dir/src/Player.cpp.o.d -o CMakeFiles/BugsBunnyCrazyCastle.dir/src/Player.cpp.o -c /Users/jergasus/UNI/VJ/2dGame/src/Player.cpp
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/pibe/info/VJ/2d/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_2) "Building CXX object CMakeFiles/BugsBunnyCrazyCastle.dir/src/Player.cpp.o"
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/BugsBunnyCrazyCastle.dir/src/Player.cpp.o -MF CMakeFiles/BugsBunnyCrazyCastle.dir/src/Player.cpp.o.d -o CMakeFiles/BugsBunnyCrazyCastle.dir/src/Player.cpp.o -c /home/pibe/info/VJ/2d/src/Player.cpp
 
 CMakeFiles/BugsBunnyCrazyCastle.dir/src/Player.cpp.i: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Preprocessing CXX source to CMakeFiles/BugsBunnyCrazyCastle.dir/src/Player.cpp.i"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /Users/jergasus/UNI/VJ/2dGame/src/Player.cpp > CMakeFiles/BugsBunnyCrazyCastle.dir/src/Player.cpp.i
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/pibe/info/VJ/2d/src/Player.cpp > CMakeFiles/BugsBunnyCrazyCastle.dir/src/Player.cpp.i
 
 CMakeFiles/BugsBunnyCrazyCastle.dir/src/Player.cpp.s: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling CXX source to assembly CMakeFiles/BugsBunnyCrazyCastle.dir/src/Player.cpp.s"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /Users/jergasus/UNI/VJ/2dGame/src/Player.cpp -o CMakeFiles/BugsBunnyCrazyCastle.dir/src/Player.cpp.s
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/pibe/info/VJ/2d/src/Player.cpp -o CMakeFiles/BugsBunnyCrazyCastle.dir/src/Player.cpp.s
 
 CMakeFiles/BugsBunnyCrazyCastle.dir/src/Scene.cpp.o: CMakeFiles/BugsBunnyCrazyCastle.dir/flags.make
-CMakeFiles/BugsBunnyCrazyCastle.dir/src/Scene.cpp.o: /Users/jergasus/UNI/VJ/2dGame/src/Scene.cpp
+CMakeFiles/BugsBunnyCrazyCastle.dir/src/Scene.cpp.o: /home/pibe/info/VJ/2d/src/Scene.cpp
 CMakeFiles/BugsBunnyCrazyCastle.dir/src/Scene.cpp.o: CMakeFiles/BugsBunnyCrazyCastle.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/jergasus/UNI/VJ/2dGame/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_3) "Building CXX object CMakeFiles/BugsBunnyCrazyCastle.dir/src/Scene.cpp.o"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/BugsBunnyCrazyCastle.dir/src/Scene.cpp.o -MF CMakeFiles/BugsBunnyCrazyCastle.dir/src/Scene.cpp.o.d -o CMakeFiles/BugsBunnyCrazyCastle.dir/src/Scene.cpp.o -c /Users/jergasus/UNI/VJ/2dGame/src/Scene.cpp
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/pibe/info/VJ/2d/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_3) "Building CXX object CMakeFiles/BugsBunnyCrazyCastle.dir/src/Scene.cpp.o"
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/BugsBunnyCrazyCastle.dir/src/Scene.cpp.o -MF CMakeFiles/BugsBunnyCrazyCastle.dir/src/Scene.cpp.o.d -o CMakeFiles/BugsBunnyCrazyCastle.dir/src/Scene.cpp.o -c /home/pibe/info/VJ/2d/src/Scene.cpp
 
 CMakeFiles/BugsBunnyCrazyCastle.dir/src/Scene.cpp.i: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Preprocessing CXX source to CMakeFiles/BugsBunnyCrazyCastle.dir/src/Scene.cpp.i"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /Users/jergasus/UNI/VJ/2dGame/src/Scene.cpp > CMakeFiles/BugsBunnyCrazyCastle.dir/src/Scene.cpp.i
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/pibe/info/VJ/2d/src/Scene.cpp > CMakeFiles/BugsBunnyCrazyCastle.dir/src/Scene.cpp.i
 
 CMakeFiles/BugsBunnyCrazyCastle.dir/src/Scene.cpp.s: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling CXX source to assembly CMakeFiles/BugsBunnyCrazyCastle.dir/src/Scene.cpp.s"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /Users/jergasus/UNI/VJ/2dGame/src/Scene.cpp -o CMakeFiles/BugsBunnyCrazyCastle.dir/src/Scene.cpp.s
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/pibe/info/VJ/2d/src/Scene.cpp -o CMakeFiles/BugsBunnyCrazyCastle.dir/src/Scene.cpp.s
 
 CMakeFiles/BugsBunnyCrazyCastle.dir/src/Shader.cpp.o: CMakeFiles/BugsBunnyCrazyCastle.dir/flags.make
-CMakeFiles/BugsBunnyCrazyCastle.dir/src/Shader.cpp.o: /Users/jergasus/UNI/VJ/2dGame/src/Shader.cpp
+CMakeFiles/BugsBunnyCrazyCastle.dir/src/Shader.cpp.o: /home/pibe/info/VJ/2d/src/Shader.cpp
 CMakeFiles/BugsBunnyCrazyCastle.dir/src/Shader.cpp.o: CMakeFiles/BugsBunnyCrazyCastle.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/jergasus/UNI/VJ/2dGame/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_4) "Building CXX object CMakeFiles/BugsBunnyCrazyCastle.dir/src/Shader.cpp.o"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/BugsBunnyCrazyCastle.dir/src/Shader.cpp.o -MF CMakeFiles/BugsBunnyCrazyCastle.dir/src/Shader.cpp.o.d -o CMakeFiles/BugsBunnyCrazyCastle.dir/src/Shader.cpp.o -c /Users/jergasus/UNI/VJ/2dGame/src/Shader.cpp
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/pibe/info/VJ/2d/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_4) "Building CXX object CMakeFiles/BugsBunnyCrazyCastle.dir/src/Shader.cpp.o"
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/BugsBunnyCrazyCastle.dir/src/Shader.cpp.o -MF CMakeFiles/BugsBunnyCrazyCastle.dir/src/Shader.cpp.o.d -o CMakeFiles/BugsBunnyCrazyCastle.dir/src/Shader.cpp.o -c /home/pibe/info/VJ/2d/src/Shader.cpp
 
 CMakeFiles/BugsBunnyCrazyCastle.dir/src/Shader.cpp.i: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Preprocessing CXX source to CMakeFiles/BugsBunnyCrazyCastle.dir/src/Shader.cpp.i"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /Users/jergasus/UNI/VJ/2dGame/src/Shader.cpp > CMakeFiles/BugsBunnyCrazyCastle.dir/src/Shader.cpp.i
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/pibe/info/VJ/2d/src/Shader.cpp > CMakeFiles/BugsBunnyCrazyCastle.dir/src/Shader.cpp.i
 
 CMakeFiles/BugsBunnyCrazyCastle.dir/src/Shader.cpp.s: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling CXX source to assembly CMakeFiles/BugsBunnyCrazyCastle.dir/src/Shader.cpp.s"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /Users/jergasus/UNI/VJ/2dGame/src/Shader.cpp -o CMakeFiles/BugsBunnyCrazyCastle.dir/src/Shader.cpp.s
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/pibe/info/VJ/2d/src/Shader.cpp -o CMakeFiles/BugsBunnyCrazyCastle.dir/src/Shader.cpp.s
 
 CMakeFiles/BugsBunnyCrazyCastle.dir/src/ShaderProgram.cpp.o: CMakeFiles/BugsBunnyCrazyCastle.dir/flags.make
-CMakeFiles/BugsBunnyCrazyCastle.dir/src/ShaderProgram.cpp.o: /Users/jergasus/UNI/VJ/2dGame/src/ShaderProgram.cpp
+CMakeFiles/BugsBunnyCrazyCastle.dir/src/ShaderProgram.cpp.o: /home/pibe/info/VJ/2d/src/ShaderProgram.cpp
 CMakeFiles/BugsBunnyCrazyCastle.dir/src/ShaderProgram.cpp.o: CMakeFiles/BugsBunnyCrazyCastle.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/jergasus/UNI/VJ/2dGame/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_5) "Building CXX object CMakeFiles/BugsBunnyCrazyCastle.dir/src/ShaderProgram.cpp.o"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/BugsBunnyCrazyCastle.dir/src/ShaderProgram.cpp.o -MF CMakeFiles/BugsBunnyCrazyCastle.dir/src/ShaderProgram.cpp.o.d -o CMakeFiles/BugsBunnyCrazyCastle.dir/src/ShaderProgram.cpp.o -c /Users/jergasus/UNI/VJ/2dGame/src/ShaderProgram.cpp
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/pibe/info/VJ/2d/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_5) "Building CXX object CMakeFiles/BugsBunnyCrazyCastle.dir/src/ShaderProgram.cpp.o"
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/BugsBunnyCrazyCastle.dir/src/ShaderProgram.cpp.o -MF CMakeFiles/BugsBunnyCrazyCastle.dir/src/ShaderProgram.cpp.o.d -o CMakeFiles/BugsBunnyCrazyCastle.dir/src/ShaderProgram.cpp.o -c /home/pibe/info/VJ/2d/src/ShaderProgram.cpp
 
 CMakeFiles/BugsBunnyCrazyCastle.dir/src/ShaderProgram.cpp.i: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Preprocessing CXX source to CMakeFiles/BugsBunnyCrazyCastle.dir/src/ShaderProgram.cpp.i"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /Users/jergasus/UNI/VJ/2dGame/src/ShaderProgram.cpp > CMakeFiles/BugsBunnyCrazyCastle.dir/src/ShaderProgram.cpp.i
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/pibe/info/VJ/2d/src/ShaderProgram.cpp > CMakeFiles/BugsBunnyCrazyCastle.dir/src/ShaderProgram.cpp.i
 
 CMakeFiles/BugsBunnyCrazyCastle.dir/src/ShaderProgram.cpp.s: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling CXX source to assembly CMakeFiles/BugsBunnyCrazyCastle.dir/src/ShaderProgram.cpp.s"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /Users/jergasus/UNI/VJ/2dGame/src/ShaderProgram.cpp -o CMakeFiles/BugsBunnyCrazyCastle.dir/src/ShaderProgram.cpp.s
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/pibe/info/VJ/2d/src/ShaderProgram.cpp -o CMakeFiles/BugsBunnyCrazyCastle.dir/src/ShaderProgram.cpp.s
 
 CMakeFiles/BugsBunnyCrazyCastle.dir/src/Sprite.cpp.o: CMakeFiles/BugsBunnyCrazyCastle.dir/flags.make
-CMakeFiles/BugsBunnyCrazyCastle.dir/src/Sprite.cpp.o: /Users/jergasus/UNI/VJ/2dGame/src/Sprite.cpp
+CMakeFiles/BugsBunnyCrazyCastle.dir/src/Sprite.cpp.o: /home/pibe/info/VJ/2d/src/Sprite.cpp
 CMakeFiles/BugsBunnyCrazyCastle.dir/src/Sprite.cpp.o: CMakeFiles/BugsBunnyCrazyCastle.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/jergasus/UNI/VJ/2dGame/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_6) "Building CXX object CMakeFiles/BugsBunnyCrazyCastle.dir/src/Sprite.cpp.o"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/BugsBunnyCrazyCastle.dir/src/Sprite.cpp.o -MF CMakeFiles/BugsBunnyCrazyCastle.dir/src/Sprite.cpp.o.d -o CMakeFiles/BugsBunnyCrazyCastle.dir/src/Sprite.cpp.o -c /Users/jergasus/UNI/VJ/2dGame/src/Sprite.cpp
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/pibe/info/VJ/2d/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_6) "Building CXX object CMakeFiles/BugsBunnyCrazyCastle.dir/src/Sprite.cpp.o"
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/BugsBunnyCrazyCastle.dir/src/Sprite.cpp.o -MF CMakeFiles/BugsBunnyCrazyCastle.dir/src/Sprite.cpp.o.d -o CMakeFiles/BugsBunnyCrazyCastle.dir/src/Sprite.cpp.o -c /home/pibe/info/VJ/2d/src/Sprite.cpp
 
 CMakeFiles/BugsBunnyCrazyCastle.dir/src/Sprite.cpp.i: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Preprocessing CXX source to CMakeFiles/BugsBunnyCrazyCastle.dir/src/Sprite.cpp.i"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /Users/jergasus/UNI/VJ/2dGame/src/Sprite.cpp > CMakeFiles/BugsBunnyCrazyCastle.dir/src/Sprite.cpp.i
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/pibe/info/VJ/2d/src/Sprite.cpp > CMakeFiles/BugsBunnyCrazyCastle.dir/src/Sprite.cpp.i
 
 CMakeFiles/BugsBunnyCrazyCastle.dir/src/Sprite.cpp.s: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling CXX source to assembly CMakeFiles/BugsBunnyCrazyCastle.dir/src/Sprite.cpp.s"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /Users/jergasus/UNI/VJ/2dGame/src/Sprite.cpp -o CMakeFiles/BugsBunnyCrazyCastle.dir/src/Sprite.cpp.s
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/pibe/info/VJ/2d/src/Sprite.cpp -o CMakeFiles/BugsBunnyCrazyCastle.dir/src/Sprite.cpp.s
 
 CMakeFiles/BugsBunnyCrazyCastle.dir/src/Texture.cpp.o: CMakeFiles/BugsBunnyCrazyCastle.dir/flags.make
-CMakeFiles/BugsBunnyCrazyCastle.dir/src/Texture.cpp.o: /Users/jergasus/UNI/VJ/2dGame/src/Texture.cpp
+CMakeFiles/BugsBunnyCrazyCastle.dir/src/Texture.cpp.o: /home/pibe/info/VJ/2d/src/Texture.cpp
 CMakeFiles/BugsBunnyCrazyCastle.dir/src/Texture.cpp.o: CMakeFiles/BugsBunnyCrazyCastle.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/jergasus/UNI/VJ/2dGame/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_7) "Building CXX object CMakeFiles/BugsBunnyCrazyCastle.dir/src/Texture.cpp.o"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/BugsBunnyCrazyCastle.dir/src/Texture.cpp.o -MF CMakeFiles/BugsBunnyCrazyCastle.dir/src/Texture.cpp.o.d -o CMakeFiles/BugsBunnyCrazyCastle.dir/src/Texture.cpp.o -c /Users/jergasus/UNI/VJ/2dGame/src/Texture.cpp
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/pibe/info/VJ/2d/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_7) "Building CXX object CMakeFiles/BugsBunnyCrazyCastle.dir/src/Texture.cpp.o"
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/BugsBunnyCrazyCastle.dir/src/Texture.cpp.o -MF CMakeFiles/BugsBunnyCrazyCastle.dir/src/Texture.cpp.o.d -o CMakeFiles/BugsBunnyCrazyCastle.dir/src/Texture.cpp.o -c /home/pibe/info/VJ/2d/src/Texture.cpp
 
 CMakeFiles/BugsBunnyCrazyCastle.dir/src/Texture.cpp.i: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Preprocessing CXX source to CMakeFiles/BugsBunnyCrazyCastle.dir/src/Texture.cpp.i"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /Users/jergasus/UNI/VJ/2dGame/src/Texture.cpp > CMakeFiles/BugsBunnyCrazyCastle.dir/src/Texture.cpp.i
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/pibe/info/VJ/2d/src/Texture.cpp > CMakeFiles/BugsBunnyCrazyCastle.dir/src/Texture.cpp.i
 
 CMakeFiles/BugsBunnyCrazyCastle.dir/src/Texture.cpp.s: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling CXX source to assembly CMakeFiles/BugsBunnyCrazyCastle.dir/src/Texture.cpp.s"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /Users/jergasus/UNI/VJ/2dGame/src/Texture.cpp -o CMakeFiles/BugsBunnyCrazyCastle.dir/src/Texture.cpp.s
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/pibe/info/VJ/2d/src/Texture.cpp -o CMakeFiles/BugsBunnyCrazyCastle.dir/src/Texture.cpp.s
 
 CMakeFiles/BugsBunnyCrazyCastle.dir/src/TileMap.cpp.o: CMakeFiles/BugsBunnyCrazyCastle.dir/flags.make
-CMakeFiles/BugsBunnyCrazyCastle.dir/src/TileMap.cpp.o: /Users/jergasus/UNI/VJ/2dGame/src/TileMap.cpp
+CMakeFiles/BugsBunnyCrazyCastle.dir/src/TileMap.cpp.o: /home/pibe/info/VJ/2d/src/TileMap.cpp
 CMakeFiles/BugsBunnyCrazyCastle.dir/src/TileMap.cpp.o: CMakeFiles/BugsBunnyCrazyCastle.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/jergasus/UNI/VJ/2dGame/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_8) "Building CXX object CMakeFiles/BugsBunnyCrazyCastle.dir/src/TileMap.cpp.o"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/BugsBunnyCrazyCastle.dir/src/TileMap.cpp.o -MF CMakeFiles/BugsBunnyCrazyCastle.dir/src/TileMap.cpp.o.d -o CMakeFiles/BugsBunnyCrazyCastle.dir/src/TileMap.cpp.o -c /Users/jergasus/UNI/VJ/2dGame/src/TileMap.cpp
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/pibe/info/VJ/2d/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_8) "Building CXX object CMakeFiles/BugsBunnyCrazyCastle.dir/src/TileMap.cpp.o"
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/BugsBunnyCrazyCastle.dir/src/TileMap.cpp.o -MF CMakeFiles/BugsBunnyCrazyCastle.dir/src/TileMap.cpp.o.d -o CMakeFiles/BugsBunnyCrazyCastle.dir/src/TileMap.cpp.o -c /home/pibe/info/VJ/2d/src/TileMap.cpp
 
 CMakeFiles/BugsBunnyCrazyCastle.dir/src/TileMap.cpp.i: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Preprocessing CXX source to CMakeFiles/BugsBunnyCrazyCastle.dir/src/TileMap.cpp.i"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /Users/jergasus/UNI/VJ/2dGame/src/TileMap.cpp > CMakeFiles/BugsBunnyCrazyCastle.dir/src/TileMap.cpp.i
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/pibe/info/VJ/2d/src/TileMap.cpp > CMakeFiles/BugsBunnyCrazyCastle.dir/src/TileMap.cpp.i
 
 CMakeFiles/BugsBunnyCrazyCastle.dir/src/TileMap.cpp.s: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling CXX source to assembly CMakeFiles/BugsBunnyCrazyCastle.dir/src/TileMap.cpp.s"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /Users/jergasus/UNI/VJ/2dGame/src/TileMap.cpp -o CMakeFiles/BugsBunnyCrazyCastle.dir/src/TileMap.cpp.s
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/pibe/info/VJ/2d/src/TileMap.cpp -o CMakeFiles/BugsBunnyCrazyCastle.dir/src/TileMap.cpp.s
 
 CMakeFiles/BugsBunnyCrazyCastle.dir/src/main.cpp.o: CMakeFiles/BugsBunnyCrazyCastle.dir/flags.make
-CMakeFiles/BugsBunnyCrazyCastle.dir/src/main.cpp.o: /Users/jergasus/UNI/VJ/2dGame/src/main.cpp
+CMakeFiles/BugsBunnyCrazyCastle.dir/src/main.cpp.o: /home/pibe/info/VJ/2d/src/main.cpp
 CMakeFiles/BugsBunnyCrazyCastle.dir/src/main.cpp.o: CMakeFiles/BugsBunnyCrazyCastle.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/jergasus/UNI/VJ/2dGame/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_9) "Building CXX object CMakeFiles/BugsBunnyCrazyCastle.dir/src/main.cpp.o"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/BugsBunnyCrazyCastle.dir/src/main.cpp.o -MF CMakeFiles/BugsBunnyCrazyCastle.dir/src/main.cpp.o.d -o CMakeFiles/BugsBunnyCrazyCastle.dir/src/main.cpp.o -c /Users/jergasus/UNI/VJ/2dGame/src/main.cpp
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/pibe/info/VJ/2d/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_9) "Building CXX object CMakeFiles/BugsBunnyCrazyCastle.dir/src/main.cpp.o"
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/BugsBunnyCrazyCastle.dir/src/main.cpp.o -MF CMakeFiles/BugsBunnyCrazyCastle.dir/src/main.cpp.o.d -o CMakeFiles/BugsBunnyCrazyCastle.dir/src/main.cpp.o -c /home/pibe/info/VJ/2d/src/main.cpp
 
 CMakeFiles/BugsBunnyCrazyCastle.dir/src/main.cpp.i: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Preprocessing CXX source to CMakeFiles/BugsBunnyCrazyCastle.dir/src/main.cpp.i"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /Users/jergasus/UNI/VJ/2dGame/src/main.cpp > CMakeFiles/BugsBunnyCrazyCastle.dir/src/main.cpp.i
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/pibe/info/VJ/2d/src/main.cpp > CMakeFiles/BugsBunnyCrazyCastle.dir/src/main.cpp.i
 
 CMakeFiles/BugsBunnyCrazyCastle.dir/src/main.cpp.s: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling CXX source to assembly CMakeFiles/BugsBunnyCrazyCastle.dir/src/main.cpp.s"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /Users/jergasus/UNI/VJ/2dGame/src/main.cpp -o CMakeFiles/BugsBunnyCrazyCastle.dir/src/main.cpp.s
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/pibe/info/VJ/2d/src/main.cpp -o CMakeFiles/BugsBunnyCrazyCastle.dir/src/main.cpp.s
 
 CMakeFiles/BugsBunnyCrazyCastle.dir/external/soil/src/soil.c.o: CMakeFiles/BugsBunnyCrazyCastle.dir/flags.make
-CMakeFiles/BugsBunnyCrazyCastle.dir/external/soil/src/soil.c.o: /Users/jergasus/UNI/VJ/2dGame/external/soil/src/soil.c
+CMakeFiles/BugsBunnyCrazyCastle.dir/external/soil/src/soil.c.o: /home/pibe/info/VJ/2d/external/soil/src/soil.c
 CMakeFiles/BugsBunnyCrazyCastle.dir/external/soil/src/soil.c.o: CMakeFiles/BugsBunnyCrazyCastle.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/jergasus/UNI/VJ/2dGame/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_10) "Building C object CMakeFiles/BugsBunnyCrazyCastle.dir/external/soil/src/soil.c.o"
-	/usr/bin/cc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -MD -MT CMakeFiles/BugsBunnyCrazyCastle.dir/external/soil/src/soil.c.o -MF CMakeFiles/BugsBunnyCrazyCastle.dir/external/soil/src/soil.c.o.d -o CMakeFiles/BugsBunnyCrazyCastle.dir/external/soil/src/soil.c.o -c /Users/jergasus/UNI/VJ/2dGame/external/soil/src/soil.c
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/pibe/info/VJ/2d/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_10) "Building C object CMakeFiles/BugsBunnyCrazyCastle.dir/external/soil/src/soil.c.o"
+	/usr/bin/cc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -MD -MT CMakeFiles/BugsBunnyCrazyCastle.dir/external/soil/src/soil.c.o -MF CMakeFiles/BugsBunnyCrazyCastle.dir/external/soil/src/soil.c.o.d -o CMakeFiles/BugsBunnyCrazyCastle.dir/external/soil/src/soil.c.o -c /home/pibe/info/VJ/2d/external/soil/src/soil.c
 
 CMakeFiles/BugsBunnyCrazyCastle.dir/external/soil/src/soil.c.i: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Preprocessing C source to CMakeFiles/BugsBunnyCrazyCastle.dir/external/soil/src/soil.c.i"
-	/usr/bin/cc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -E /Users/jergasus/UNI/VJ/2dGame/external/soil/src/soil.c > CMakeFiles/BugsBunnyCrazyCastle.dir/external/soil/src/soil.c.i
+	/usr/bin/cc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -E /home/pibe/info/VJ/2d/external/soil/src/soil.c > CMakeFiles/BugsBunnyCrazyCastle.dir/external/soil/src/soil.c.i
 
 CMakeFiles/BugsBunnyCrazyCastle.dir/external/soil/src/soil.c.s: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling C source to assembly CMakeFiles/BugsBunnyCrazyCastle.dir/external/soil/src/soil.c.s"
-	/usr/bin/cc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -S /Users/jergasus/UNI/VJ/2dGame/external/soil/src/soil.c -o CMakeFiles/BugsBunnyCrazyCastle.dir/external/soil/src/soil.c.s
+	/usr/bin/cc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -S /home/pibe/info/VJ/2d/external/soil/src/soil.c -o CMakeFiles/BugsBunnyCrazyCastle.dir/external/soil/src/soil.c.s
 
 CMakeFiles/BugsBunnyCrazyCastle.dir/external/soil/src/image_dxt.c.o: CMakeFiles/BugsBunnyCrazyCastle.dir/flags.make
-CMakeFiles/BugsBunnyCrazyCastle.dir/external/soil/src/image_dxt.c.o: /Users/jergasus/UNI/VJ/2dGame/external/soil/src/image_dxt.c
+CMakeFiles/BugsBunnyCrazyCastle.dir/external/soil/src/image_dxt.c.o: /home/pibe/info/VJ/2d/external/soil/src/image_dxt.c
 CMakeFiles/BugsBunnyCrazyCastle.dir/external/soil/src/image_dxt.c.o: CMakeFiles/BugsBunnyCrazyCastle.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/jergasus/UNI/VJ/2dGame/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_11) "Building C object CMakeFiles/BugsBunnyCrazyCastle.dir/external/soil/src/image_dxt.c.o"
-	/usr/bin/cc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -MD -MT CMakeFiles/BugsBunnyCrazyCastle.dir/external/soil/src/image_dxt.c.o -MF CMakeFiles/BugsBunnyCrazyCastle.dir/external/soil/src/image_dxt.c.o.d -o CMakeFiles/BugsBunnyCrazyCastle.dir/external/soil/src/image_dxt.c.o -c /Users/jergasus/UNI/VJ/2dGame/external/soil/src/image_dxt.c
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/pibe/info/VJ/2d/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_11) "Building C object CMakeFiles/BugsBunnyCrazyCastle.dir/external/soil/src/image_dxt.c.o"
+	/usr/bin/cc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -MD -MT CMakeFiles/BugsBunnyCrazyCastle.dir/external/soil/src/image_dxt.c.o -MF CMakeFiles/BugsBunnyCrazyCastle.dir/external/soil/src/image_dxt.c.o.d -o CMakeFiles/BugsBunnyCrazyCastle.dir/external/soil/src/image_dxt.c.o -c /home/pibe/info/VJ/2d/external/soil/src/image_dxt.c
 
 CMakeFiles/BugsBunnyCrazyCastle.dir/external/soil/src/image_dxt.c.i: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Preprocessing C source to CMakeFiles/BugsBunnyCrazyCastle.dir/external/soil/src/image_dxt.c.i"
-	/usr/bin/cc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -E /Users/jergasus/UNI/VJ/2dGame/external/soil/src/image_dxt.c > CMakeFiles/BugsBunnyCrazyCastle.dir/external/soil/src/image_dxt.c.i
+	/usr/bin/cc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -E /home/pibe/info/VJ/2d/external/soil/src/image_dxt.c > CMakeFiles/BugsBunnyCrazyCastle.dir/external/soil/src/image_dxt.c.i
 
 CMakeFiles/BugsBunnyCrazyCastle.dir/external/soil/src/image_dxt.c.s: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling C source to assembly CMakeFiles/BugsBunnyCrazyCastle.dir/external/soil/src/image_dxt.c.s"
-	/usr/bin/cc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -S /Users/jergasus/UNI/VJ/2dGame/external/soil/src/image_dxt.c -o CMakeFiles/BugsBunnyCrazyCastle.dir/external/soil/src/image_dxt.c.s
+	/usr/bin/cc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -S /home/pibe/info/VJ/2d/external/soil/src/image_dxt.c -o CMakeFiles/BugsBunnyCrazyCastle.dir/external/soil/src/image_dxt.c.s
 
 CMakeFiles/BugsBunnyCrazyCastle.dir/external/soil/src/image_helper.c.o: CMakeFiles/BugsBunnyCrazyCastle.dir/flags.make
-CMakeFiles/BugsBunnyCrazyCastle.dir/external/soil/src/image_helper.c.o: /Users/jergasus/UNI/VJ/2dGame/external/soil/src/image_helper.c
+CMakeFiles/BugsBunnyCrazyCastle.dir/external/soil/src/image_helper.c.o: /home/pibe/info/VJ/2d/external/soil/src/image_helper.c
 CMakeFiles/BugsBunnyCrazyCastle.dir/external/soil/src/image_helper.c.o: CMakeFiles/BugsBunnyCrazyCastle.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/jergasus/UNI/VJ/2dGame/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_12) "Building C object CMakeFiles/BugsBunnyCrazyCastle.dir/external/soil/src/image_helper.c.o"
-	/usr/bin/cc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -MD -MT CMakeFiles/BugsBunnyCrazyCastle.dir/external/soil/src/image_helper.c.o -MF CMakeFiles/BugsBunnyCrazyCastle.dir/external/soil/src/image_helper.c.o.d -o CMakeFiles/BugsBunnyCrazyCastle.dir/external/soil/src/image_helper.c.o -c /Users/jergasus/UNI/VJ/2dGame/external/soil/src/image_helper.c
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/pibe/info/VJ/2d/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_12) "Building C object CMakeFiles/BugsBunnyCrazyCastle.dir/external/soil/src/image_helper.c.o"
+	/usr/bin/cc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -MD -MT CMakeFiles/BugsBunnyCrazyCastle.dir/external/soil/src/image_helper.c.o -MF CMakeFiles/BugsBunnyCrazyCastle.dir/external/soil/src/image_helper.c.o.d -o CMakeFiles/BugsBunnyCrazyCastle.dir/external/soil/src/image_helper.c.o -c /home/pibe/info/VJ/2d/external/soil/src/image_helper.c
 
 CMakeFiles/BugsBunnyCrazyCastle.dir/external/soil/src/image_helper.c.i: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Preprocessing C source to CMakeFiles/BugsBunnyCrazyCastle.dir/external/soil/src/image_helper.c.i"
-	/usr/bin/cc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -E /Users/jergasus/UNI/VJ/2dGame/external/soil/src/image_helper.c > CMakeFiles/BugsBunnyCrazyCastle.dir/external/soil/src/image_helper.c.i
+	/usr/bin/cc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -E /home/pibe/info/VJ/2d/external/soil/src/image_helper.c > CMakeFiles/BugsBunnyCrazyCastle.dir/external/soil/src/image_helper.c.i
 
 CMakeFiles/BugsBunnyCrazyCastle.dir/external/soil/src/image_helper.c.s: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling C source to assembly CMakeFiles/BugsBunnyCrazyCastle.dir/external/soil/src/image_helper.c.s"
-	/usr/bin/cc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -S /Users/jergasus/UNI/VJ/2dGame/external/soil/src/image_helper.c -o CMakeFiles/BugsBunnyCrazyCastle.dir/external/soil/src/image_helper.c.s
+	/usr/bin/cc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -S /home/pibe/info/VJ/2d/external/soil/src/image_helper.c -o CMakeFiles/BugsBunnyCrazyCastle.dir/external/soil/src/image_helper.c.s
 
 CMakeFiles/BugsBunnyCrazyCastle.dir/external/soil/src/stb_image_aug.c.o: CMakeFiles/BugsBunnyCrazyCastle.dir/flags.make
-CMakeFiles/BugsBunnyCrazyCastle.dir/external/soil/src/stb_image_aug.c.o: /Users/jergasus/UNI/VJ/2dGame/external/soil/src/stb_image_aug.c
+CMakeFiles/BugsBunnyCrazyCastle.dir/external/soil/src/stb_image_aug.c.o: /home/pibe/info/VJ/2d/external/soil/src/stb_image_aug.c
 CMakeFiles/BugsBunnyCrazyCastle.dir/external/soil/src/stb_image_aug.c.o: CMakeFiles/BugsBunnyCrazyCastle.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/jergasus/UNI/VJ/2dGame/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_13) "Building C object CMakeFiles/BugsBunnyCrazyCastle.dir/external/soil/src/stb_image_aug.c.o"
-	/usr/bin/cc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -MD -MT CMakeFiles/BugsBunnyCrazyCastle.dir/external/soil/src/stb_image_aug.c.o -MF CMakeFiles/BugsBunnyCrazyCastle.dir/external/soil/src/stb_image_aug.c.o.d -o CMakeFiles/BugsBunnyCrazyCastle.dir/external/soil/src/stb_image_aug.c.o -c /Users/jergasus/UNI/VJ/2dGame/external/soil/src/stb_image_aug.c
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/pibe/info/VJ/2d/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_13) "Building C object CMakeFiles/BugsBunnyCrazyCastle.dir/external/soil/src/stb_image_aug.c.o"
+	/usr/bin/cc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -MD -MT CMakeFiles/BugsBunnyCrazyCastle.dir/external/soil/src/stb_image_aug.c.o -MF CMakeFiles/BugsBunnyCrazyCastle.dir/external/soil/src/stb_image_aug.c.o.d -o CMakeFiles/BugsBunnyCrazyCastle.dir/external/soil/src/stb_image_aug.c.o -c /home/pibe/info/VJ/2d/external/soil/src/stb_image_aug.c
 
 CMakeFiles/BugsBunnyCrazyCastle.dir/external/soil/src/stb_image_aug.c.i: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Preprocessing C source to CMakeFiles/BugsBunnyCrazyCastle.dir/external/soil/src/stb_image_aug.c.i"
-	/usr/bin/cc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -E /Users/jergasus/UNI/VJ/2dGame/external/soil/src/stb_image_aug.c > CMakeFiles/BugsBunnyCrazyCastle.dir/external/soil/src/stb_image_aug.c.i
+	/usr/bin/cc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -E /home/pibe/info/VJ/2d/external/soil/src/stb_image_aug.c > CMakeFiles/BugsBunnyCrazyCastle.dir/external/soil/src/stb_image_aug.c.i
 
 CMakeFiles/BugsBunnyCrazyCastle.dir/external/soil/src/stb_image_aug.c.s: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling C source to assembly CMakeFiles/BugsBunnyCrazyCastle.dir/external/soil/src/stb_image_aug.c.s"
-	/usr/bin/cc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -S /Users/jergasus/UNI/VJ/2dGame/external/soil/src/stb_image_aug.c -o CMakeFiles/BugsBunnyCrazyCastle.dir/external/soil/src/stb_image_aug.c.s
+	/usr/bin/cc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -S /home/pibe/info/VJ/2d/external/soil/src/stb_image_aug.c -o CMakeFiles/BugsBunnyCrazyCastle.dir/external/soil/src/stb_image_aug.c.s
 
 # Object files for target BugsBunnyCrazyCastle
 BugsBunnyCrazyCastle_OBJECTS = \
@@ -287,18 +287,21 @@ BugsBunnyCrazyCastle: CMakeFiles/BugsBunnyCrazyCastle.dir/external/soil/src/imag
 BugsBunnyCrazyCastle: CMakeFiles/BugsBunnyCrazyCastle.dir/external/soil/src/image_helper.c.o
 BugsBunnyCrazyCastle: CMakeFiles/BugsBunnyCrazyCastle.dir/external/soil/src/stb_image_aug.c.o
 BugsBunnyCrazyCastle: CMakeFiles/BugsBunnyCrazyCastle.dir/build.make
-BugsBunnyCrazyCastle: /opt/homebrew/lib/libfreetype.dylib
-BugsBunnyCrazyCastle: /opt/homebrew/lib/libGLEW.2.3.1.dylib
-BugsBunnyCrazyCastle: /opt/homebrew/lib/libglfw.3.4.dylib
+BugsBunnyCrazyCastle: CMakeFiles/BugsBunnyCrazyCastle.dir/compiler_depend.ts
+BugsBunnyCrazyCastle: /usr/lib/libGL.so
+BugsBunnyCrazyCastle: /usr/lib/libGLU.so
+BugsBunnyCrazyCastle: /usr/lib/libfreetype.so
+BugsBunnyCrazyCastle: /usr/lib/libGLEW.so
+BugsBunnyCrazyCastle: /usr/lib/libglfw.so.3.4
 BugsBunnyCrazyCastle: CMakeFiles/BugsBunnyCrazyCastle.dir/link.txt
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --bold --progress-dir=/Users/jergasus/UNI/VJ/2dGame/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_14) "Linking CXX executable BugsBunnyCrazyCastle"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --bold --progress-dir=/home/pibe/info/VJ/2d/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_14) "Linking CXX executable BugsBunnyCrazyCastle"
 	$(CMAKE_COMMAND) -E cmake_link_script CMakeFiles/BugsBunnyCrazyCastle.dir/link.txt --verbose=$(VERBOSE)
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --blue --bold "Creating symlink for images"
-	/opt/homebrew/bin/cmake -E create_symlink /Users/jergasus/UNI/VJ/2dGame/images /Users/jergasus/UNI/VJ/2dGame/build/images
+	/usr/bin/cmake -E create_symlink /home/pibe/info/VJ/2d/images /home/pibe/info/VJ/2d/build/images
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --blue --bold "Creating symlink for levels"
-	/opt/homebrew/bin/cmake -E create_symlink /Users/jergasus/UNI/VJ/2dGame/levels /Users/jergasus/UNI/VJ/2dGame/build/levels
+	/usr/bin/cmake -E create_symlink /home/pibe/info/VJ/2d/levels /home/pibe/info/VJ/2d/build/levels
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --blue --bold "Creating symlink for shaders"
-	/opt/homebrew/bin/cmake -E create_symlink /Users/jergasus/UNI/VJ/2dGame/shaders /Users/jergasus/UNI/VJ/2dGame/build/shaders
+	/usr/bin/cmake -E create_symlink /home/pibe/info/VJ/2d/shaders /home/pibe/info/VJ/2d/build/shaders
 
 # Rule to build all files generated by this target.
 CMakeFiles/BugsBunnyCrazyCastle.dir/build: BugsBunnyCrazyCastle
@@ -309,6 +312,6 @@ CMakeFiles/BugsBunnyCrazyCastle.dir/clean:
 .PHONY : CMakeFiles/BugsBunnyCrazyCastle.dir/clean
 
 CMakeFiles/BugsBunnyCrazyCastle.dir/depend:
-	cd /Users/jergasus/UNI/VJ/2dGame/build && $(CMAKE_COMMAND) -E cmake_depends "Unix Makefiles" /Users/jergasus/UNI/VJ/2dGame /Users/jergasus/UNI/VJ/2dGame /Users/jergasus/UNI/VJ/2dGame/build /Users/jergasus/UNI/VJ/2dGame/build /Users/jergasus/UNI/VJ/2dGame/build/CMakeFiles/BugsBunnyCrazyCastle.dir/DependInfo.cmake "--color=$(COLOR)" BugsBunnyCrazyCastle
+	cd /home/pibe/info/VJ/2d/build && $(CMAKE_COMMAND) -E cmake_depends "Unix Makefiles" /home/pibe/info/VJ/2d /home/pibe/info/VJ/2d /home/pibe/info/VJ/2d/build /home/pibe/info/VJ/2d/build /home/pibe/info/VJ/2d/build/CMakeFiles/BugsBunnyCrazyCastle.dir/DependInfo.cmake "--color=$(COLOR)" BugsBunnyCrazyCastle
 .PHONY : CMakeFiles/BugsBunnyCrazyCastle.dir/depend
 

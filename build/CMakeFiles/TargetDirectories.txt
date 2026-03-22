@@ -1,3 +1,3 @@
-/Users/jergasus/UNI/VJ/2dGame/build/CMakeFiles/BugsBunnyCrazyCastle.dir
-/Users/jergasus/UNI/VJ/2dGame/build/CMakeFiles/edit_cache.dir
-/Users/jergasus/UNI/VJ/2dGame/build/CMakeFiles/rebuild_cache.dir
+/home/pibe/info/VJ/2d/build/CMakeFiles/BugsBunnyCrazyCastle.dir
+/home/pibe/info/VJ/2d/build/CMakeFiles/edit_cache.dir
+/home/pibe/info/VJ/2d/build/CMakeFiles/rebuild_cache.dir

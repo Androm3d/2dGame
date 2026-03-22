@@ -1,4 +1,5 @@
 file(REMOVE_RECURSE
+  "CMakeFiles/BugsBunnyCrazyCastle.dir/link.d"
   "BugsBunnyCrazyCastle"
   "BugsBunnyCrazyCastle.pdb"
   "CMakeFiles/BugsBunnyCrazyCastle.dir/external/soil/src/image_dxt.c.o"

@@ -5,17 +5,13 @@
 # compile CXX with /usr/bin/c++
 C_DEFINES = 
 
-C_INCLUDES = -I/Users/jergasus/UNI/VJ/2dGame/src -I/Users/jergasus/UNI/VJ/2dGame/include -I/Users/jergasus/UNI/VJ/2dGame/external/soil/include -I/Users/jergasus/UNI/VJ/2dGame/external/soil/include/SOIL -I/Users/jergasus/UNI/VJ/2dGame/external/json/include -I/opt/homebrew/include/freetype2 -F/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/System/Library/Frameworks -isystem /opt/homebrew/include
+C_INCLUDES = -I/home/pibe/info/VJ/2d/src -I/home/pibe/info/VJ/2d/include -I/home/pibe/info/VJ/2d/external/soil/include -I/home/pibe/info/VJ/2d/external/soil/include/SOIL -I/home/pibe/info/VJ/2d/external/json/include -I/usr/include/freetype2
 
-C_FLAGSarm64 =  -arch arm64 -F/Library/Developer/CommandLineTools/SDKs/MacOSX26.sdk/System/Library/Frameworks 
-
-C_FLAGS =  -arch arm64 -F/Library/Developer/CommandLineTools/SDKs/MacOSX26.sdk/System/Library/Frameworks 
+C_FLAGS = 
 
 CXX_DEFINES = 
 
-CXX_INCLUDES = -I/Users/jergasus/UNI/VJ/2dGame/src -I/Users/jergasus/UNI/VJ/2dGame/include -I/Users/jergasus/UNI/VJ/2dGame/external/soil/include -I/Users/jergasus/UNI/VJ/2dGame/external/soil/include/SOIL -I/Users/jergasus/UNI/VJ/2dGame/external/json/include -I/opt/homebrew/include/freetype2 -F/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/System/Library/Frameworks -isystem /opt/homebrew/include
+CXX_INCLUDES = -I/home/pibe/info/VJ/2d/src -I/home/pibe/info/VJ/2d/include -I/home/pibe/info/VJ/2d/external/soil/include -I/home/pibe/info/VJ/2d/external/soil/include/SOIL -I/home/pibe/info/VJ/2d/external/json/include -I/usr/include/freetype2
 
-CXX_FLAGSarm64 = -std=gnu++11 -arch arm64 -F/Library/Developer/CommandLineTools/SDKs/MacOSX26.sdk/System/Library/Frameworks 
-
-CXX_FLAGS = -std=gnu++11 -arch arm64 -F/Library/Developer/CommandLineTools/SDKs/MacOSX26.sdk/System/Library/Frameworks 
+CXX_FLAGS = -std=gnu++11
 
