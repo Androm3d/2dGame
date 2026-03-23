@@ -96,9 +96,9 @@ void Player::init(const glm::ivec2 &tileMapPos, ShaderProgram &shaderProgram)
 	sprite->setFlipHorizontal(false);
 	tileMapDispl = tileMapPos;
 	float renderOffsetX = 0.5f * float(PLAYER_FRAME_WIDTH - PLAYER_HITBOX_WIDTH);
-	float renderOffsetY = 0.f;
+	float renderOffsetY = float(PLAYER_FRAME_HEIGHT - PLAYER_HITBOX_HEIGHT);
 	sprite->setPosition(glm::vec2(float(tileMapDispl.x + posPlayer.x) - renderOffsetX, float(tileMapDispl.y + posPlayer.y) - renderOffsetY));
-	
+
 }
 
 void Player::update(int deltaTime)
@@ -201,7 +201,7 @@ void Player::update(int deltaTime)
 	}
 	
 	float renderOffsetX = 0.5f * float(PLAYER_FRAME_WIDTH - PLAYER_HITBOX_WIDTH);
-	float renderOffsetY = 0.f;
+	float renderOffsetY = float(PLAYER_FRAME_HEIGHT - PLAYER_HITBOX_HEIGHT);
 	sprite->setPosition(glm::vec2(float(tileMapDispl.x + posPlayer.x) - renderOffsetX, float(tileMapDispl.y + posPlayer.y) - renderOffsetY));
 }
 
@@ -219,7 +219,7 @@ void Player::setPosition(const glm::vec2 &pos)
 {
 	posPlayer = pos;
 	float renderOffsetX = 0.5f * float(PLAYER_FRAME_WIDTH - PLAYER_HITBOX_WIDTH);
-	float renderOffsetY = 0.f;
+	float renderOffsetY = float(PLAYER_FRAME_HEIGHT - PLAYER_HITBOX_HEIGHT);
 	sprite->setPosition(glm::vec2(float(tileMapDispl.x + posPlayer.x) - renderOffsetX, float(tileMapDispl.y + posPlayer.y) - renderOffsetY));
 }
 
