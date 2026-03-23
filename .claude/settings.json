@@ -1,0 +1,8 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(cmake -B build -S .)",
+      "Bash(cmake --build build)"
+    ]
+  }
+}

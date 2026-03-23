@@ -3,6 +3,8 @@
 
 
 #include <glm/glm.hpp>
+#include <unordered_map>
+#include <vector>
 #include "Texture.h"
 #include "ShaderProgram.h"
 
@@ -11,7 +13,17 @@
 // simple format (see level01.txt for an example). With this information
 // it builds a single VBO that contains all tiles. As a result the render
 // method draws the whole map independently of what is visible.
+enum class TileType {
+	EMPTY,
+	SOLID,
+	ONE_WAY_PLATFORM,
+	LADDER,
+	DOOR,
+	HAZARD,
+	KEY
+};
 
+enum class CollisionDir { LEFT, RIGHT, UP, DOWN };
 
 class TileMap
 {
@@ -30,10 +42,10 @@ public:
 	
 	int getTileSize() const { return tileSize; }
 
-	bool collisionMoveLeft(const glm::ivec2 &pos, const glm::ivec2 &size) const;
-	bool collisionMoveRight(const glm::ivec2 &pos, const glm::ivec2 &size) const;
-	bool collisionMoveUp(const glm::ivec2 &pos, const glm::ivec2 &size, int *posY) const;
-	bool collisionMoveDown(const glm::ivec2 &pos, const glm::ivec2 &size, int *posY) const;
+    bool checkCollision(const glm::ivec2 &pos, const glm::ivec2 &size, CollisionDir dir, int *correctedPos) const;
+	TileType getTileType(const int tileId) const;
+	const std::vector<glm::ivec2>& getDoorSpawns() const { return doorSpawnLocations; }
+	const std::vector<glm::ivec2>& getKeySpawns() const { return keySpawnLocations; }
 	
 private:
 	bool loadLevelJSON(const std::string &levelFile);
@@ -50,6 +62,9 @@ private:
 	Texture tilesheet;
 	glm::vec2 tileTexSize;
 	int *map;
+	std::unordered_map<int, TileType> tileDictionary;
+	std::vector<glm::ivec2> doorSpawnLocations;
+	std::vector<glm::ivec2> keySpawnLocations;
 
 };
 

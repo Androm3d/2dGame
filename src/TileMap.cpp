@@ -11,7 +11,6 @@ using json = nlohmann::json;
 TileMap *TileMap::createTileMap(const string &levelFile, const glm::vec2 &minCoords, ShaderProgram &program)
 {
 	TileMap *map = new TileMap(levelFile, minCoords, program);
-	
 	return map;
 }
 
@@ -33,6 +32,17 @@ TileMap::~TileMap()
 	if(map != NULL)
 		delete [] map;
 	free();
+}
+
+TileType TileMap::getTileType(const int tileId) const
+{
+	// Look up the tile ID in our dictionary
+	auto it = tileDictionary.find(tileId);
+	if (it != tileDictionary.end()) {
+		return it->second; // Return the type (SOLID, STAIR, etc.)
+	}
+
+	return TileType::EMPTY;
 }
 
 
@@ -106,6 +116,40 @@ bool TileMap::loadLevelJSON(const string &levelFile)
     
     tileTexSize = glm::vec2(1.f / tilesheetSize.x, 1.f / tilesheetSize.y);
     
+    // 1. CLEAR EVERYTHING IN CASE WE RELOAD A LEVEL
+    tileDictionary.clear();
+    doorSpawnLocations.clear();
+    keySpawnLocations.clear();
+
+    // 2. READ TILESET PROPERTIES FIRST (Build the Dictionary)
+    // (Changed jsonDocument to j)
+    for (const auto& tileset : j["tilesets"]) {
+        int firstgid = tileset["firstgid"];
+
+        if (tileset.contains("tiles")) {
+            for (const auto& tile : tileset["tiles"]) {
+                int localId = tile["id"];
+                int globalId = localId + firstgid;
+
+                if (tile.contains("properties")) {
+                    for (const auto& prop : tile["properties"]) {
+                        if (prop["name"] == "type") {
+                            std::string typeVal = prop["value"];
+                            
+                            // Map strings to our enums
+                            if (typeVal == "SOLID") tileDictionary[globalId] = TileType::SOLID;
+                            else if (typeVal == "ONE_WAY_PLATFORM") tileDictionary[globalId] = TileType::ONE_WAY_PLATFORM;
+                            else if (typeVal == "LADDER") tileDictionary[globalId] = TileType::LADDER;
+                            else if (typeVal == "DOOR") tileDictionary[globalId] = TileType::DOOR;
+                            else if (typeVal == "KEY") tileDictionary[globalId] = TileType::KEY;
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    // 3. READ THE MAP DATA SECOND (Place tiles and spawn entities)
     map = new int[mapSize.x * mapSize.y];
     auto data = j["layers"][0]["data"];
     
@@ -113,6 +157,26 @@ bool TileMap::loadLevelJSON(const string &levelFile)
     {
         unsigned int raw_tile = data[i];
         unsigned int tile_id = raw_tile & 0x1FFFFFFF; // Mask out flip flags
+
+        // Calculate the actual pixel coordinates for this specific tile
+        int x = (i % mapSize.x) * tileSize;
+        int y = (i / mapSize.x) * tileSize;
+
+        // Check our dictionary to see if this tile is an Entity
+        auto it = tileDictionary.find(tile_id);
+        if (it != tileDictionary.end()) {
+            
+            if (it->second == TileType::DOOR) {
+                doorSpawnLocations.push_back(glm::ivec2(x, y));
+                tile_id = 0; // Turn it into air so the TileMap doesn't draw it!
+            }
+            else if (it->second == TileType::KEY) {
+                keySpawnLocations.push_back(glm::ivec2(x, y));
+                tile_id = 0; // Turn it into air!
+            }
+        }
+
+        // Save the tile to the visual map (Entities are now saved as 0)
         map[i] = tile_id;
     }
 
@@ -224,109 +288,70 @@ void TileMap::prepareArrays(const glm::vec2 &minCoords, ShaderProgram &program)
 // Collision tests for axis aligned bounding boxes.
 // Method collisionMoveDown also corrects Y coordinate if the box is
 // already intersecting a tile below.
-
-bool TileMap::collisionMoveLeft(const glm::ivec2 &pos, const glm::ivec2 &size) const
+bool TileMap::checkCollision(const glm::ivec2 &pos, const glm::ivec2 &size, CollisionDir dir, int *correctedPos) const
 {
-	int x, y0, y1;
-	
-	x = pos.x / tileSize;
-	y0 = pos.y / tileSize;
-	y1 = (pos.y + size.y - 1) / tileSize;
-	for(int y=y0; y<=y1; y++)
-	{
-		if(map[y*mapSize.x+x] != 0)
-			return true;
-	}
-	
-	return false;
-}
-
-bool TileMap::collisionMoveRight(const glm::ivec2 &pos, const glm::ivec2 &size) const
-{
-	int x, y0, y1;
-	
-	x = (pos.x + size.x - 1) / tileSize;
-	y0 = pos.y / tileSize;
-	y1 = (pos.y + size.y - 1) / tileSize;
-	for(int y=y0; y<=y1; y++)
-	{
-		if(map[y*mapSize.x+x] != 0)
-			return true;
-	}
-	
-	return false;
-}
-
-bool TileMap::collisionMoveUp(const glm::ivec2 &pos, const glm::ivec2 &size, int *posY) const
-{
-	int x0, x1, y;
-
-	x0 = pos.x / tileSize;
-	x1 = (pos.x + size.x - 1) / tileSize;
-	y = pos.y / tileSize;
-	for(int x=x0; x<=x1; x++)
-	{
-		if(map[y*mapSize.x+x] != 0)
-		{
-			if(tileSize * (y + 1) - *posY <= 4)
-			{
-				*posY = tileSize * (y + 1);
-				return true;
-			}
-		}
-	}
-
-	return false;
-}
-
-bool TileMap::collisionMoveDown(const glm::ivec2 &pos, const glm::ivec2 &size, int *posY) const
-{
-	int x0, x1, y;
+	int x0, x1, y0, y1;
 	
 	x0 = pos.x / tileSize;
 	x1 = (pos.x + size.x - 1) / tileSize;
-	y = (pos.y + size.y - 1) / tileSize;
-	for(int x=x0; x<=x1; x++)
-	{
-		if(map[y*mapSize.x+x] != 0)
-		{
-			if(*posY - tileSize * y + size.y <= 4)
-			{
-				*posY = tileSize * y - size.y;
-				return true;
+	y0 = pos.y / tileSize;
+	y1 = (pos.y + size.y - 1) / tileSize;
+
+	// Treat going out of map bounds as hitting a solid wall
+	if (x0 < 0 || x1 >= mapSize.x || y0 < 0 || y1 >= mapSize.y) return true;
+
+	switch (dir) {
+		case CollisionDir::LEFT:
+			for (int y = y0; y <= y1; y++) {
+				if (getTileType(map[y * mapSize.x + x0]) == TileType::SOLID) {
+					if (correctedPos) *correctedPos = (x0 + 1) * tileSize;
+					return true;
+				}
 			}
-		}
+			break;
+
+		case CollisionDir::RIGHT:
+			for (int y = y0; y <= y1; y++) {
+				if (getTileType(map[y * mapSize.x + x1]) == TileType::SOLID) {
+					if (correctedPos) *correctedPos = x1 * tileSize - size.x;
+					return true;
+				}
+			}
+			break;
+
+		case CollisionDir::DOWN:
+			for (int x = x0; x <= x1; x++) {
+				TileType type = getTileType(map[y1 * mapSize.x + x]);
+
+				if (type == TileType::SOLID) {
+					if (correctedPos) *correctedPos = y1 * tileSize - size.y;
+					return true;
+				}
+				else if (type == TileType::ONE_WAY_PLATFORM) {
+					// ONE-WAY MAGIC: Only act solid if the player's feet are entering the top of the tile.
+					// This prevents snapping to the top when jumping UP through it.
+					int playerBottom = pos.y + size.y - 1;
+					int tileTop = y1 * tileSize;
+
+					// If we are falling downwards into the top ~8 pixels of the leaf platform
+					if (playerBottom - tileTop < 8) {
+						if (correctedPos) *correctedPos = tileTop - size.y;
+						return true;
+					}
+				}
+			}
+			break;
+
+		case CollisionDir::UP:
+			for (int x = x0; x <= x1; x++) {
+				// Notice ONE_WAY_PLATFORM isn't checked here. You pass right through!
+				if (getTileType(map[y0 * mapSize.x + x]) == TileType::SOLID) {
+					if (correctedPos) *correctedPos = (y0 + 1) * tileSize;
+					return true;
+				}
+			}
+			break;
 	}
 	
 	return false;
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
