@@ -322,7 +322,7 @@ bool TileMap::checkCollision(const glm::ivec2 &pos, const glm::ivec2 &size, Coll
 		case CollisionDir::DOWN:
 			for (int x = x0; x <= x1; x++) {
 				TileType type = getTileType(map[y1 * mapSize.x + x]);
-				
+
 				if (type == TileType::SOLID) {
 					if (correctedPos) *correctedPos = y1 * tileSize - size.y;
 					return true;
@@ -332,9 +332,9 @@ bool TileMap::checkCollision(const glm::ivec2 &pos, const glm::ivec2 &size, Coll
 					// This prevents snapping to the top when jumping UP through it.
 					int playerBottom = pos.y + size.y - 1;
 					int tileTop = y1 * tileSize;
-					
+
 					// If we are falling downwards into the top ~8 pixels of the leaf platform
-					if (playerBottom - tileTop < 8) { 
+					if (playerBottom - tileTop < 8) {
 						if (correctedPos) *correctedPos = tileTop - size.y;
 						return true;
 					}

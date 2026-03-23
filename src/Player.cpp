@@ -181,7 +181,7 @@ void Player::update(int deltaTime)
 				sprite->changeAnimation(JUMP_FALL);
 			}
 			if(jumpAngle > 90)
-				bJumping = !map->checkCollision(posPlayer, glm::ivec2(32, 32), CollisionDir::UP, &posPlayer.y);
+				bJumping = !map->checkCollision(posPlayer, glm::ivec2(32, 32), CollisionDir::DOWN, &posPlayer.y);
 		}
 	}
 	else
