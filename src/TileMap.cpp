@@ -11,7 +11,6 @@ using json = nlohmann::json;
 TileMap *TileMap::createTileMap(const string &levelFile, const glm::vec2 &minCoords, ShaderProgram &program)
 {
 	TileMap *map = new TileMap(levelFile, minCoords, program);
-	map->setupTileDictionary();
 	return map;
 }
 
@@ -46,25 +45,6 @@ TileType TileMap::getTileType(const int tileId) const
 	return TileType::EMPTY;
 }
 
-void TileMap::setupTileDictionary()
-{
-	// 1. One-Way Platforms (Tree leaves)
-	tileDictionary[109] = TileType::ONE_WAY_PLATFORM;
-	tileDictionary[110] = TileType::ONE_WAY_PLATFORM;
-	tileDictionary[111] = TileType::ONE_WAY_PLATFORM;
-	tileDictionary[117] = TileType::ONE_WAY_PLATFORM;
-	tileDictionary[118] = TileType::ONE_WAY_PLATFORM;
-	tileDictionary[119] = TileType::ONE_WAY_PLATFORM;
-
-	// 2. Solid Blocks (I am guessing these based on your JSON so Bugs has a floor!)
-	// You might need to add/remove some here depending on your sprite sheet
-	for (int i = 1; i <= 7; i++) tileDictionary[i] = TileType::SOLID; // Ground/Bridge
-	for (int i = 34; i <= 36; i++) tileDictionary[i] = TileType::SOLID; // Ground
-	
-	// Notice we DO NOT add the water (89, 97, 98) 
-	// or the vegetation/bridge base (65-72, 121-130). 
-	// Because they aren't here, they default to EMPTY!
-}
 
 void TileMap::render() const
 {
@@ -136,6 +116,40 @@ bool TileMap::loadLevelJSON(const string &levelFile)
     
     tileTexSize = glm::vec2(1.f / tilesheetSize.x, 1.f / tilesheetSize.y);
     
+    // 1. CLEAR EVERYTHING IN CASE WE RELOAD A LEVEL
+    tileDictionary.clear();
+    doorSpawnLocations.clear();
+    keySpawnLocations.clear();
+
+    // 2. READ TILESET PROPERTIES FIRST (Build the Dictionary)
+    // (Changed jsonDocument to j)
+    for (const auto& tileset : j["tilesets"]) {
+        int firstgid = tileset["firstgid"];
+
+        if (tileset.contains("tiles")) {
+            for (const auto& tile : tileset["tiles"]) {
+                int localId = tile["id"];
+                int globalId = localId + firstgid;
+
+                if (tile.contains("properties")) {
+                    for (const auto& prop : tile["properties"]) {
+                        if (prop["name"] == "type") {
+                            std::string typeVal = prop["value"];
+                            
+                            // Map strings to our enums
+                            if (typeVal == "SOLID") tileDictionary[globalId] = TileType::SOLID;
+                            else if (typeVal == "ONE_WAY_PLATFORM") tileDictionary[globalId] = TileType::ONE_WAY_PLATFORM;
+                            else if (typeVal == "LADDER") tileDictionary[globalId] = TileType::LADDER;
+                            else if (typeVal == "DOOR") tileDictionary[globalId] = TileType::DOOR;
+                            else if (typeVal == "KEY") tileDictionary[globalId] = TileType::KEY;
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    // 3. READ THE MAP DATA SECOND (Place tiles and spawn entities)
     map = new int[mapSize.x * mapSize.y];
     auto data = j["layers"][0]["data"];
     
@@ -143,6 +157,26 @@ bool TileMap::loadLevelJSON(const string &levelFile)
     {
         unsigned int raw_tile = data[i];
         unsigned int tile_id = raw_tile & 0x1FFFFFFF; // Mask out flip flags
+
+        // Calculate the actual pixel coordinates for this specific tile
+        int x = (i % mapSize.x) * tileSize;
+        int y = (i / mapSize.x) * tileSize;
+
+        // Check our dictionary to see if this tile is an Entity
+        auto it = tileDictionary.find(tile_id);
+        if (it != tileDictionary.end()) {
+            
+            if (it->second == TileType::DOOR) {
+                doorSpawnLocations.push_back(glm::ivec2(x, y));
+                tile_id = 0; // Turn it into air so the TileMap doesn't draw it!
+            }
+            else if (it->second == TileType::KEY) {
+                keySpawnLocations.push_back(glm::ivec2(x, y));
+                tile_id = 0; // Turn it into air!
+            }
+        }
+
+        // Save the tile to the visual map (Entities are now saved as 0)
         map[i] = tile_id;
     }
 

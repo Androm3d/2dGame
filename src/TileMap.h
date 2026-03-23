@@ -4,6 +4,7 @@
 
 #include <glm/glm.hpp>
 #include <unordered_map>
+#include <vector>
 #include "Texture.h"
 #include "ShaderProgram.h"
 
@@ -16,9 +17,10 @@ enum class TileType {
 	EMPTY,
 	SOLID,
 	ONE_WAY_PLATFORM,
-	STAIR,
+	LADDER,
 	DOOR,
-	HAZARD
+	HAZARD,
+	KEY
 };
 
 enum class CollisionDir { LEFT, RIGHT, UP, DOWN };
@@ -42,12 +44,13 @@ public:
 
     bool checkCollision(const glm::ivec2 &pos, const glm::ivec2 &size, CollisionDir dir, int *correctedPos) const;
 	TileType getTileType(const int tileId) const;
+	const std::vector<glm::ivec2>& getDoorSpawns() const { return doorSpawnLocations; }
+	const std::vector<glm::ivec2>& getKeySpawns() const { return keySpawnLocations; }
 	
 private:
 	bool loadLevelJSON(const std::string &levelFile);
 	bool loadLevel(const string &levelFile);
 	void prepareArrays(const glm::vec2 &minCoords, ShaderProgram &program);
-	void setupTileDictionary();
 
 private:
 	GLuint vao;
@@ -60,6 +63,8 @@ private:
 	glm::vec2 tileTexSize;
 	int *map;
 	std::unordered_map<int, TileType> tileDictionary;
+	std::vector<glm::ivec2> doorSpawnLocations;
+	std::vector<glm::ivec2> keySpawnLocations;
 
 };
 
