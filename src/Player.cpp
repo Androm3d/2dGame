@@ -17,7 +17,7 @@
 #define PLAYER_IDLE_ANIM_FRAMES 4
 #define PLAYER_IDLE_Y_OFFSET_PIXELS 12
 #define PLAYER_HITBOX_WIDTH 32
-#define PLAYER_HITBOX_HEIGHT 32
+#define PLAYER_HITBOX_HEIGHT 64
 
 
 enum PlayerAnims
@@ -41,6 +41,7 @@ Player::~Player()
 void Player::init(const glm::ivec2 &tileMapPos, ShaderProgram &shaderProgram)
 {
 	bJumping = false;
+	bClimbing = false;
 	facingLeft = false;
 	spritesheet.loadFromFile("images/Run_Jump_Idle_Animation.png", TEXTURE_PIXEL_FORMAT_RGBA);
 	spritesheet.setWrapS(GL_CLAMP_TO_EDGE);
@@ -111,7 +112,7 @@ void Player::update(int deltaTime)
 		if(!bJumping && sprite->animation() != MOVE_LEFT)
 			sprite->changeAnimation(MOVE_LEFT);
 		posPlayer.x -= 2;
-		if(map->checkCollision(posPlayer, glm::ivec2(32, 32), CollisionDir::LEFT, &posPlayer.x))
+		if(map->checkCollision(posPlayer, glm::ivec2(PLAYER_HITBOX_WIDTH, PLAYER_HITBOX_HEIGHT), CollisionDir::LEFT, &posPlayer.x))
 		{
 			posPlayer.x += 2;
 			if(!bJumping)
@@ -125,7 +126,7 @@ void Player::update(int deltaTime)
 		if(!bJumping && sprite->animation() != MOVE_RIGHT)
 			sprite->changeAnimation(MOVE_RIGHT);
 		posPlayer.x += 2;
-			if(map->checkCollision(posPlayer, glm::ivec2(32, 32), CollisionDir::RIGHT, &posPlayer.x))		{
+			if(map->checkCollision(posPlayer, glm::ivec2(PLAYER_HITBOX_WIDTH, PLAYER_HITBOX_HEIGHT), CollisionDir::RIGHT, &posPlayer.x))		{
 			posPlayer.x -= 2;
 			if(!bJumping)
 				sprite->changeAnimation(STAND_RIGHT);
@@ -151,43 +152,85 @@ void Player::update(int deltaTime)
 			sprite->changeAnimation(facingLeft ? STAND_LEFT : STAND_RIGHT);
 		}
 	}
-	
-	if(bJumping)
+
+	glm::ivec2 centerFeet = glm::ivec2(posPlayer.x + PLAYER_HITBOX_WIDTH / 2, posPlayer.y + PLAYER_HITBOX_HEIGHT - 2);
+	TileType tileAtFeet = map->getTileTypeAtPos(centerFeet);
+
+	// Grab the ladder if pressing UP
+	if (tileAtFeet == TileType::LADDER && Game::instance().getKey(GLFW_KEY_UP)) {
+		bClimbing = true;
+		bJumping = false; // Cancel jumping if we grab a ladder mid-air!
+	}
+	// Let go of the ladder if we walk off it or reach the top
+	if (bClimbing && tileAtFeet != TileType::LADDER) {
+		bClimbing = false; 
+	}
+
+	if (bClimbing)
 	{
-		sprite->setFlipHorizontal(facingLeft);
-		if(jumpAngle < 90)
-		{
-			if(sprite->animation() != JUMP_UP)
-				sprite->changeAnimation(JUMP_UP);
+		// Move linearly!
+		if (Game::instance().getKey(GLFW_KEY_UP)) {
+			posPlayer.y -= 2; // Climb up speed
+		} 
+		else if (Game::instance().getKey(GLFW_KEY_DOWN)) {
+			posPlayer.y += 2; // Climb down speed
+			// Prevent climbing straight down into the floor
+			map->checkCollision(posPlayer, glm::ivec2(PLAYER_HITBOX_WIDTH, PLAYER_HITBOX_HEIGHT), CollisionDir::DOWN, &posPlayer.y);
 		}
-		else
+	}
+
+	else if(bJumping)
 		{
-			if(sprite->animation() != JUMP_FALL)
-				sprite->changeAnimation(JUMP_FALL);
-		}
-		jumpAngle += JUMP_ANGLE_STEP;
-		if(jumpAngle == 180)
-		{
-			bJumping = false;
-			posPlayer.y = startY;
-		}
-		else
-		{
-			posPlayer.y = int(startY - JUMP_HEIGHT * sin(3.14159f * jumpAngle / 180.f));
-			if(jumpAngle < 90 && map->checkCollision(posPlayer, glm::ivec2(PLAYER_HITBOX_WIDTH, PLAYER_HITBOX_HEIGHT), CollisionDir::UP, &posPlayer.y))
+			sprite->setFlipHorizontal(facingLeft);
+			if(jumpAngle < 90)
 			{
-				jumpAngle = 90;
-				startY = posPlayer.y + JUMP_HEIGHT;
-				sprite->changeAnimation(JUMP_FALL);
+				if(sprite->animation() != JUMP_UP)
+					sprite->changeAnimation(JUMP_UP);
 			}
-			if(jumpAngle > 90)
-				bJumping = !map->checkCollision(posPlayer, glm::ivec2(32, 32), CollisionDir::DOWN, &posPlayer.y);
-		}
+			else
+			{
+				if(sprite->animation() != JUMP_FALL)
+					sprite->changeAnimation(JUMP_FALL);
+			}
+			
+			jumpAngle += JUMP_ANGLE_STEP;
+			
+			if(jumpAngle == 180)
+			{
+				bJumping = false;
+				// DELETED: posPlayer.y = startY; (This caused the teleporting!)
+			}
+			else
+			{
+				posPlayer.y = int(startY - JUMP_HEIGHT * sin(3.14159f * jumpAngle / 180.f));
+				
+				// Going UP: Check if we hit a ceiling
+				if(jumpAngle < 90 && map->checkCollision(posPlayer, glm::ivec2(PLAYER_HITBOX_WIDTH, PLAYER_HITBOX_HEIGHT), CollisionDir::UP, &posPlayer.y))
+				{
+					jumpAngle = 90;
+					startY = posPlayer.y + JUMP_HEIGHT;
+					sprite->changeAnimation(JUMP_FALL);
+				}
+				
+				// Falling DOWN: Check if we landed on a platform
+				if(jumpAngle > 90) {
+					// CHANGED UP TO DOWN HERE:
+					bool hitFloor = map->checkCollision(posPlayer, glm::ivec2(PLAYER_HITBOX_WIDTH, PLAYER_HITBOX_HEIGHT), CollisionDir::DOWN, &posPlayer.y);
+					if (hitFloor) {
+						bJumping = false; // We landed! Stop the jump arc.
+					}
+				}
+			}
 	}
 	else
 	{
+		// --- 3. GRAVITY & DROP THROUGH ---
 		posPlayer.y += FALL_STEP;
-		if(map->checkCollision(posPlayer, glm::ivec2(32, 32), CollisionDir::DOWN, &posPlayer.y))
+		
+		// If holding down, tell the collision check to ignore one-way platforms!
+		bool holdingDown = Game::instance().getKey(GLFW_KEY_DOWN);
+		
+		if(map->checkCollision(posPlayer, glm::ivec2(PLAYER_HITBOX_WIDTH, PLAYER_HITBOX_HEIGHT), CollisionDir::DOWN, &posPlayer.y, holdingDown))
 		{
 			if(Game::instance().getKey(GLFW_KEY_UP))
 			{

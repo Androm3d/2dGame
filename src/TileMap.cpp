@@ -45,6 +45,17 @@ TileType TileMap::getTileType(const int tileId) const
 	return TileType::EMPTY;
 }
 
+TileType TileMap::getTileTypeAtPos(const glm::ivec2 &pos) const
+{
+	int x = pos.x / tileSize;
+	int y = pos.y / tileSize;
+	
+	// Out of bounds check
+	if (x < 0 || x >= mapSize.x || y < 0 || y >= mapSize.y) return TileType::EMPTY;
+	
+	return getTileType(map[y * mapSize.x + x]);
+}
+
 
 void TileMap::render() const
 {
@@ -288,7 +299,7 @@ void TileMap::prepareArrays(const glm::vec2 &minCoords, ShaderProgram &program)
 // Collision tests for axis aligned bounding boxes.
 // Method collisionMoveDown also corrects Y coordinate if the box is
 // already intersecting a tile below.
-bool TileMap::checkCollision(const glm::ivec2 &pos, const glm::ivec2 &size, CollisionDir dir, int *correctedPos) const
+bool TileMap::checkCollision(const glm::ivec2 &pos, const glm::ivec2 &size, CollisionDir dir, int *correctedPos, bool dropThrough) const
 {
 	int x0, x1, y0, y1;
 	
@@ -327,14 +338,10 @@ bool TileMap::checkCollision(const glm::ivec2 &pos, const glm::ivec2 &size, Coll
 					if (correctedPos) *correctedPos = y1 * tileSize - size.y;
 					return true;
 				}
-				else if (type == TileType::ONE_WAY_PLATFORM) {
-					// ONE-WAY MAGIC: Only act solid if the player's feet are entering the top of the tile.
-					// This prevents snapping to the top when jumping UP through it.
+				else if (type == TileType::ONE_WAY_PLATFORM && !dropThrough) {
 					int playerBottom = pos.y + size.y - 1;
 					int tileTop = y1 * tileSize;
-
-					// If we are falling downwards into the top ~8 pixels of the leaf platform
-					if (playerBottom - tileTop < 8) {
+					if (playerBottom - tileTop < 8) { 
 						if (correctedPos) *correctedPos = tileTop - size.y;
 						return true;
 					}
