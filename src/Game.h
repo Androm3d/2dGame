@@ -7,11 +7,12 @@
 
 
 #define SCREEN_WIDTH 640
-#define SCREEN_HEIGHT 480
+#define SCREEN_HEIGHT 320
 
 
 // Game is a singleton (a class with a single instance) that represents our whole application
 
+enum class GameState { MENU, PLAY, INSTRUCTIONS, CREDITS };
 
 class Game
 {
@@ -20,6 +21,20 @@ private:
 	Game() {}
 	
 public:
+    GameState currentState = GameState::MENU;
+    
+    int currentLevel = 1;
+    int lives = 3;        
+    int keysCollected = 0; 
+    int totalKeysInLevel = 0; 
+
+    bool hasSword = false;
+    bool hasShield = false;
+
+    // Helper methods for the Scene to call
+    void addKey() { keysCollected++; }
+    bool isLevelCleared() { return keysCollected >= totalKeysInLevel; }
+    void loseLife(); // You can implement this to reset the room/go to menu later
 	static Game &instance()
 	{
 		static Game G;

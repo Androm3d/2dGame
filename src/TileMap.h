@@ -19,8 +19,11 @@ enum class TileType {
 	ONE_WAY_PLATFORM,
 	LADDER,
 	DOOR,
-	HAZARD,
-	KEY
+	KEY,
+	SWORD,
+	HEAL,
+	SHIELD, 
+	WEIGHT 
 };
 
 enum class CollisionDir { LEFT, RIGHT, UP, DOWN };
@@ -47,7 +50,11 @@ public:
 	TileType getTileTypeAtPos(const glm::ivec2 &pos) const;
 	const std::vector<glm::ivec2>& getDoorSpawns() const { return doorSpawnLocations; }
 	const std::vector<glm::ivec2>& getKeySpawns() const { return keySpawnLocations; }
-	
+	const std::vector<glm::ivec2>& getHealSpawns() const { return healSpawnLocations; }
+	const std::vector<glm::ivec2>& getShieldSpawns() const { return shieldSpawnLocations; }
+	const std::vector<glm::ivec2>& getWeightSpawns() const { return weightSpawnLocations; }
+	const std::vector<glm::ivec2>& getSwordSpawns() const { return swordSpawnLocations; }
+
 private:
 	bool loadLevelJSON(const std::string &levelFile);
 	bool loadLevel(const string &levelFile);
@@ -66,6 +73,10 @@ private:
 	std::unordered_map<int, TileType> tileDictionary;
 	std::vector<glm::ivec2> doorSpawnLocations;
 	std::vector<glm::ivec2> keySpawnLocations;
+	std::vector<glm::ivec2> healSpawnLocations;
+	std::vector<glm::ivec2> shieldSpawnLocations;
+	std::vector<glm::ivec2> weightSpawnLocations;
+	std::vector<glm::ivec2> swordSpawnLocations;
 
 };
 

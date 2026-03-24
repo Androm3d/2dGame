@@ -153,6 +153,10 @@ bool TileMap::loadLevelJSON(const string &levelFile)
                             else if (typeVal == "LADDER") tileDictionary[globalId] = TileType::LADDER;
                             else if (typeVal == "DOOR") tileDictionary[globalId] = TileType::DOOR;
                             else if (typeVal == "KEY") tileDictionary[globalId] = TileType::KEY;
+							else if (typeVal == "SWORD") tileDictionary[globalId] = TileType::SWORD;
+							else if (typeVal == "HEAL") tileDictionary[globalId] = TileType::HEAL;
+							else if (typeVal == "SHIELD") tileDictionary[globalId] = TileType::SHIELD;
+							else if (typeVal == "WEIGHT") tileDictionary[globalId] = TileType::WEIGHT;
                         }
                     }
                 }
@@ -184,6 +188,22 @@ bool TileMap::loadLevelJSON(const string &levelFile)
             else if (it->second == TileType::KEY) {
                 keySpawnLocations.push_back(glm::ivec2(x, y));
                 tile_id = 0; // Turn it into air!
+            }
+            else if (it->second == TileType::SWORD) {
+				swordSpawnLocations.push_back(glm::ivec2(x, y));
+				tile_id = 0; 
+            }
+            else if (it->second == TileType::HEAL) {
+				healSpawnLocations.push_back(glm::ivec2(x, y));
+				tile_id = 0;
+            }
+            else if (it->second == TileType::SHIELD) {
+				shieldSpawnLocations.push_back(glm::ivec2(x, y));
+				tile_id = 0;
+            }
+            else if (it->second == TileType::WEIGHT) {
+				weightSpawnLocations.push_back(glm::ivec2(x, y));
+				tile_id = 0;
             }
         }
 

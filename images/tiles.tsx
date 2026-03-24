@@ -281,4 +281,29 @@
    <property name="type" value="ONE_WAY_PLATFORM"/>
   </properties>
  </tile>
+ <tile id="108">
+  <properties>
+   <property name="type" value="KEY"/>
+  </properties>
+ </tile>
+ <tile id="109">
+  <properties>
+   <property name="type" value="SWORD"/>
+  </properties>
+ </tile>
+ <tile id="110">
+  <properties>
+   <property name="type" value="HEAL"/>
+  </properties>
+ </tile>
+ <tile id="111">
+  <properties>
+   <property name="type" value="SHIELD"/>
+  </properties>
+ </tile>
+ <tile id="112">
+  <properties>
+   <property name="type" value="WEIGHT"/>
+  </properties>
+ </tile>
 </tileset>

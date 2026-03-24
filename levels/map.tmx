@@ -285,14 +285,39 @@
     <property name="type" value="ONE_WAY_PLATFORM"/>
    </properties>
   </tile>
+  <tile id="108">
+   <properties>
+    <property name="type" value="KEY"/>
+   </properties>
+  </tile>
+  <tile id="109">
+   <properties>
+    <property name="type" value="SWORD"/>
+   </properties>
+  </tile>
+  <tile id="110">
+   <properties>
+    <property name="type" value="HEAL"/>
+   </properties>
+  </tile>
+  <tile id="111">
+   <properties>
+    <property name="type" value="SHIELD"/>
+   </properties>
+  </tile>
+  <tile id="112">
+   <properties>
+    <property name="type" value="WEIGHT"/>
+   </properties>
+  </tile>
  </tileset>
  <layer id="1" name="Tile Layer 1" width="20" height="10">
   <data encoding="csv">
-0,0,0,0,0,0,0,0,67,0,0,0,0,0,0,0,0,0,0,0,
+0,0,0,0,0,0,0,0,67,0,111,109,0,0,0,0,0,0,0,0,
 0,0,0,0,0,0,0,0,75,0,0,0,0,0,0,0,0,0,0,0,
-0,109,110,111,0,0,0,0,67,0,0,0,0,0,0,0,0,0,0,0,
-0,117,118,119,0,0,0,0,75,0,0,0,0,0,0,0,0,68,0,0,
-0,85,86,87,0,0,0,0,67,0,0,0,0,2,106,97,97,76,97,97,
+0,0,0,0,0,0,0,0,67,0,0,0,0,0,0,0,0,0,0,0,
+0,117,118,119,0,0,0,0,75,86,86,0,0,0,0,0,0,68,0,0,
+0,85,86,87,0,0,0,0,67,0,0,0,0,2,106,97,108,76,97,97,
 0,93,94,95,0,0,0,0,75,0,0,1,2,3,4,5,4,4,4,5,
 97,101,102,103,97,97,105,97,2,97,107,82,83,11,12,12,12,12,12,13,
 4,4,4,4,4,4,4,4,4,4,6,7,8,11,12,12,12,13,12,13,
