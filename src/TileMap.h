@@ -43,6 +43,7 @@ public:
 	int getTileSize() const { return tileSize; }
 
     bool checkCollision(const glm::ivec2 &pos, const glm::ivec2 &size, CollisionDir dir, int *correctedPos) const;
+	bool isOnLadder(const glm::ivec2 &pos, const glm::ivec2 &size) const;
 	TileType getTileType(const int tileId) const;
 	const std::vector<glm::ivec2>& getDoorSpawns() const { return doorSpawnLocations; }
 	const std::vector<glm::ivec2>& getKeySpawns() const { return keySpawnLocations; }

@@ -2,7 +2,9 @@
   "permissions": {
     "allow": [
       "Bash(cmake -B build -S .)",
-      "Bash(cmake --build build)"
+      "Bash(cmake --build build)",
+      "Bash(cmake ..)",
+      "Bash(cmake --build .)"
     ]
   }
 }

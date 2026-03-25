@@ -26,11 +26,14 @@ public:
 	
 private:
 	bool bJumping;
+	bool bClimbing;
+	bool bAttacking;
 	bool facingLeft;
 	glm::ivec2 tileMapDispl, posPlayer;
 	int jumpAngle, startY;
 	Texture spritesheet;
 	Sprite *sprite;
+	Sprite *attackSprite;
 	TileMap *map;
 
 };

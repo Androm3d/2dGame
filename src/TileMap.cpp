@@ -355,3 +355,21 @@ bool TileMap::checkCollision(const glm::ivec2 &pos, const glm::ivec2 &size, Coll
 	
 	return false;
 }
+
+bool TileMap::isOnLadder(const glm::ivec2 &pos, const glm::ivec2 &size) const
+{
+	// Check if the center-bottom area of the player overlaps a ladder tile
+	int centerX = (pos.x + size.x / 2) / tileSize;
+	int y0 = pos.y / tileSize;
+	int y1 = (pos.y + size.y - 1) / tileSize;
+
+	if (centerX < 0 || centerX >= mapSize.x || y0 < 0 || y1 >= mapSize.y)
+		return false;
+
+	for (int y = y0; y <= y1; y++)
+	{
+		if (getTileType(map[y * mapSize.x + centerX]) == TileType::LADDER)
+			return true;
+	}
+	return false;
+}
