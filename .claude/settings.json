@@ -4,7 +4,8 @@
       "Bash(cmake -B build -S .)",
       "Bash(cmake --build build)",
       "Bash(cmake ..)",
-      "Bash(cmake --build .)"
+      "Bash(cmake --build .)",
+      "Bash(cmake .. -DCMAKE_BUILD_TYPE=Debug)"
     ]
   }
 }
