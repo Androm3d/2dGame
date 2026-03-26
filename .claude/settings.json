@@ -6,7 +6,8 @@
       "Bash(cmake ..)",
       "Bash(cmake --build .)",
       "Bash(cmake .. -DCMAKE_BUILD_TYPE=Debug)",
-      "Bash(cmake .. -q)"
+      "Bash(cmake .. -q)",
+      "Bash(python3 -c \"import json; d=json.load\\(open\\(''/Users/jergasus/UNI/VJ/2dGame/levels/map_0_2.json''\\)\\); print\\(''width:'', d.get\\(''width''\\), ''height:'', d.get\\(''height''\\), ''tilewidth:'', d.get\\(''tilewidth''\\)\\)\")"
     ]
   }
 }

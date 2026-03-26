@@ -16,7 +16,7 @@ public:
 	Player();
 	~Player();
 	static constexpr int HITBOX_WIDTH = 32;
-	static constexpr int HITBOX_HEIGHT = 64;
+	static constexpr int HITBOX_HEIGHT = 32;
 
 public:
 	void init(const glm::ivec2 &tileMapPos, ShaderProgram &shaderProgram);
