@@ -35,6 +35,7 @@ public:
 
 private:
 	void initShaders();
+	void clearLevelEntities();
 
 private:
 	TileMap *map;

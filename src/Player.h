@@ -15,6 +15,8 @@ class Player
 public:
 	Player();
 	~Player();
+	static constexpr int HITBOX_WIDTH = 32;
+	static constexpr int HITBOX_HEIGHT = 64;
 
 public:
 	void init(const glm::ivec2 &tileMapPos, ShaderProgram &shaderProgram);
@@ -39,5 +41,4 @@ private:
 
 
 #endif // _PLAYER_INCLUDE
-
 

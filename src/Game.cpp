@@ -2,6 +2,23 @@
 #include <GLFW/glfw3.h>
 #include "Game.h"
 
+void Game::enterSideRoom(const std::string &roomMapName)
+{
+	inSideRoom = true;
+	sideRoomMapName = roomMapName;
+}
+
+void Game::exitSideRoom()
+{
+	inSideRoom = false;
+	sideRoomMapName.clear();
+}
+
+void Game::reloadScene()
+{
+	scene.init();
+}
+
 
 void Game::init()
 {

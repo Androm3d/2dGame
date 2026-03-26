@@ -16,8 +16,6 @@
 #define PLAYER_JUMP_FALL_START_FRAME 4
 #define PLAYER_IDLE_ANIM_FRAMES 4
 #define PLAYER_IDLE_Y_OFFSET_PIXELS 12
-#define PLAYER_HITBOX_WIDTH 32
-#define PLAYER_HITBOX_HEIGHT 64
 
 
 enum PlayerAnims
@@ -96,8 +94,8 @@ void Player::init(const glm::ivec2 &tileMapPos, ShaderProgram &shaderProgram)
 	sprite->changeAnimation(0);
 	sprite->setFlipHorizontal(false);
 	tileMapDispl = tileMapPos;
-	float renderOffsetX = 0.5f * float(PLAYER_FRAME_WIDTH - PLAYER_HITBOX_WIDTH);
-	float renderOffsetY = float(PLAYER_FRAME_HEIGHT - PLAYER_HITBOX_HEIGHT);
+	float renderOffsetX = 0.5f * float(PLAYER_FRAME_WIDTH - Player::HITBOX_WIDTH);
+	float renderOffsetY = float(PLAYER_FRAME_HEIGHT - Player::HITBOX_HEIGHT);
 	sprite->setPosition(glm::vec2(float(tileMapDispl.x + posPlayer.x) - renderOffsetX, float(tileMapDispl.y + posPlayer.y) - renderOffsetY));
 
 }
@@ -112,7 +110,7 @@ void Player::update(int deltaTime)
 		if(!bJumping && sprite->animation() != MOVE_LEFT)
 			sprite->changeAnimation(MOVE_LEFT);
 		posPlayer.x -= 2;
-		if(map->checkCollision(posPlayer, glm::ivec2(PLAYER_HITBOX_WIDTH, PLAYER_HITBOX_HEIGHT), CollisionDir::LEFT, &posPlayer.x))
+		if(map->checkCollision(posPlayer, glm::ivec2(Player::HITBOX_WIDTH, Player::HITBOX_HEIGHT), CollisionDir::LEFT, &posPlayer.x))
 		{
 			posPlayer.x += 2;
 			if(!bJumping)
@@ -126,7 +124,7 @@ void Player::update(int deltaTime)
 		if(!bJumping && sprite->animation() != MOVE_RIGHT)
 			sprite->changeAnimation(MOVE_RIGHT);
 		posPlayer.x += 2;
-			if(map->checkCollision(posPlayer, glm::ivec2(PLAYER_HITBOX_WIDTH, PLAYER_HITBOX_HEIGHT), CollisionDir::RIGHT, &posPlayer.x))		{
+			if(map->checkCollision(posPlayer, glm::ivec2(Player::HITBOX_WIDTH, Player::HITBOX_HEIGHT), CollisionDir::RIGHT, &posPlayer.x))		{
 			posPlayer.x -= 2;
 			if(!bJumping)
 				sprite->changeAnimation(STAND_RIGHT);
@@ -153,7 +151,7 @@ void Player::update(int deltaTime)
 		}
 	}
 
-	glm::ivec2 centerFeet = glm::ivec2(posPlayer.x + PLAYER_HITBOX_WIDTH / 2, posPlayer.y + PLAYER_HITBOX_HEIGHT - 2);
+	glm::ivec2 centerFeet = glm::ivec2(posPlayer.x + Player::HITBOX_WIDTH / 2, posPlayer.y + Player::HITBOX_HEIGHT - 2);
 	TileType tileAtFeet = map->getTileTypeAtPos(centerFeet);
 
 	// Grab the ladder if pressing UP
@@ -175,7 +173,7 @@ void Player::update(int deltaTime)
 		else if (Game::instance().getKey(GLFW_KEY_DOWN)) {
 			posPlayer.y += 2; // Climb down speed
 			// Prevent climbing straight down into the floor
-			map->checkCollision(posPlayer, glm::ivec2(PLAYER_HITBOX_WIDTH, PLAYER_HITBOX_HEIGHT), CollisionDir::DOWN, &posPlayer.y);
+			map->checkCollision(posPlayer, glm::ivec2(Player::HITBOX_WIDTH, Player::HITBOX_HEIGHT), CollisionDir::DOWN, &posPlayer.y);
 		}
 	}
 
@@ -205,7 +203,7 @@ void Player::update(int deltaTime)
 				posPlayer.y = int(startY - JUMP_HEIGHT * sin(3.14159f * jumpAngle / 180.f));
 				
 				// Going UP: Check if we hit a ceiling
-				if(jumpAngle < 90 && map->checkCollision(posPlayer, glm::ivec2(PLAYER_HITBOX_WIDTH, PLAYER_HITBOX_HEIGHT), CollisionDir::UP, &posPlayer.y))
+				if(jumpAngle < 90 && map->checkCollision(posPlayer, glm::ivec2(Player::HITBOX_WIDTH, Player::HITBOX_HEIGHT), CollisionDir::UP, &posPlayer.y))
 				{
 					jumpAngle = 90;
 					startY = posPlayer.y + JUMP_HEIGHT;
@@ -215,7 +213,7 @@ void Player::update(int deltaTime)
 				// Falling DOWN: Check if we landed on a platform
 				if(jumpAngle > 90) {
 					// CHANGED UP TO DOWN HERE:
-					bool hitFloor = map->checkCollision(posPlayer, glm::ivec2(PLAYER_HITBOX_WIDTH, PLAYER_HITBOX_HEIGHT), CollisionDir::DOWN, &posPlayer.y);
+					bool hitFloor = map->checkCollision(posPlayer, glm::ivec2(Player::HITBOX_WIDTH, Player::HITBOX_HEIGHT), CollisionDir::DOWN, &posPlayer.y);
 					if (hitFloor) {
 						bJumping = false; // We landed! Stop the jump arc.
 					}
@@ -230,7 +228,7 @@ void Player::update(int deltaTime)
 		// If holding down, tell the collision check to ignore one-way platforms!
 		bool holdingDown = Game::instance().getKey(GLFW_KEY_DOWN);
 		
-		if(map->checkCollision(posPlayer, glm::ivec2(PLAYER_HITBOX_WIDTH, PLAYER_HITBOX_HEIGHT), CollisionDir::DOWN, &posPlayer.y, holdingDown))
+		if(map->checkCollision(posPlayer, glm::ivec2(Player::HITBOX_WIDTH, Player::HITBOX_HEIGHT), CollisionDir::DOWN, &posPlayer.y, holdingDown))
 		{
 			if(Game::instance().getKey(GLFW_KEY_UP))
 			{
@@ -243,8 +241,8 @@ void Player::update(int deltaTime)
 		}
 	}
 	
-	float renderOffsetX = 0.5f * float(PLAYER_FRAME_WIDTH - PLAYER_HITBOX_WIDTH);
-	float renderOffsetY = float(PLAYER_FRAME_HEIGHT - PLAYER_HITBOX_HEIGHT);
+	float renderOffsetX = 0.5f * float(PLAYER_FRAME_WIDTH - Player::HITBOX_WIDTH);
+	float renderOffsetY = float(PLAYER_FRAME_HEIGHT - Player::HITBOX_HEIGHT);
 	sprite->setPosition(glm::vec2(float(tileMapDispl.x + posPlayer.x) - renderOffsetX, float(tileMapDispl.y + posPlayer.y) - renderOffsetY));
 }
 
@@ -261,11 +259,10 @@ void Player::setTileMap(TileMap *tileMap)
 void Player::setPosition(const glm::vec2 &pos)
 {
 	posPlayer = pos;
-	float renderOffsetX = 0.5f * float(PLAYER_FRAME_WIDTH - PLAYER_HITBOX_WIDTH);
-	float renderOffsetY = float(PLAYER_FRAME_HEIGHT - PLAYER_HITBOX_HEIGHT);
+	float renderOffsetX = 0.5f * float(PLAYER_FRAME_WIDTH - Player::HITBOX_WIDTH);
+	float renderOffsetY = float(PLAYER_FRAME_HEIGHT - Player::HITBOX_HEIGHT);
 	sprite->setPosition(glm::vec2(float(tileMapDispl.x + posPlayer.x) - renderOffsetX, float(tileMapDispl.y + posPlayer.y) - renderOffsetY));
 }
-
 
 
 

@@ -32,16 +32,23 @@ public:
     bool hasShield = false;
 
 	int currentRoomX = 0;
-	int currentRoomY = 0;
+	int currentRoomY = 2;
+	bool inSideRoom = false;
+	std::string sideRoomMapName;
 
 	std::string getCurrentMapName() {
+		if (inSideRoom && !sideRoomMapName.empty())
+			return sideRoomMapName;
         return "levels/map_" + std::to_string(currentRoomX) + "_" + std::to_string(currentRoomY) + ".json";
     }
+	void enterSideRoom(const std::string &roomMapName);
+	void exitSideRoom();
+	void reloadScene();
 
     // Helper methods for the Scene to call
     void addKey() { keysCollected++; }
     bool isLevelCleared() { return keysCollected >= totalKeysInLevel; }
-    void loseLife(); // You can implement this to reset the room/go to menu later
+	void loseLife(); // You can implement this to reset the room/go to menu later
 	static Game &instance()
 	{
 		static Game G;
@@ -72,5 +79,4 @@ private:
 
 
 #endif // _GAME_INCLUDE
-
 

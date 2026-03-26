@@ -10,27 +10,71 @@
 #define SCREEN_Y 0
 
 #define INIT_PLAYER_X_TILES 0
-#define INIT_PLAYER_Y_TILES 0
+#define INIT_PLAYER_Y_TILES 5
 
 
 Scene::Scene()
 {
 	map = NULL;
 	player = NULL;
+	sword = nullptr;
+	bgVao = 0;
+	bgVbo = 0;
 }
 
 Scene::~Scene()
 {
+	clearLevelEntities();
+	if (bgVbo != 0) glDeleteBuffers(1, &bgVbo);
+	if (bgVao != 0) glDeleteVertexArrays(1, &bgVao);
 	texProgram.free();
-	if(map != NULL)
+	bgProgram.free();
+}
+
+void Scene::clearLevelEntities()
+{
+	for (Sprite* key : keys) delete key;
+	keys.clear();
+	for (Sprite* heal : heals) delete heal;
+	heals.clear();
+	for (Sprite* shield : shields) delete shield;
+	shields.clear();
+	for (Sprite* weight : weights) delete weight;
+	weights.clear();
+	for (Sprite* door : doors) delete door;
+	doors.clear();
+	for (Sprite* portal : portals) delete portal;
+	portals.clear();
+
+	if (sword != nullptr) {
+		delete sword;
+		sword = nullptr;
+	}
+	if (map != nullptr) {
 		delete map;
-	if(player != NULL)
+		map = nullptr;
+	}
+	if (player != nullptr) {
 		delete player;
+		player = nullptr;
+	}
 }
 
 
 void Scene::init()
 {
+	clearLevelEntities();
+	if (bgVbo != 0) {
+		glDeleteBuffers(1, &bgVbo);
+		bgVbo = 0;
+	}
+	if (bgVao != 0) {
+		glDeleteVertexArrays(1, &bgVao);
+		bgVao = 0;
+	}
+	texProgram.free();
+	bgProgram.free();
+
 	initShaders();
     std::string mapFile = Game::instance().getCurrentMapName();
     map = TileMap::createTileMap(mapFile, glm::vec2(0, 0), texProgram);	player = new Player();
@@ -214,7 +258,7 @@ void Scene::update(int deltaTime)
     player->update(deltaTime);
 
     glm::vec2 pPos = player->getPosition();
-    glm::ivec2 pSize = glm::ivec2(32, 64); // TODO: ver si sería mejor coger el hitbox del define de player.cpp
+    glm::ivec2 pSize = glm::ivec2(Player::HITBOX_WIDTH, Player::HITBOX_HEIGHT);
 
     // un bucle por tipo de item, como solo hay 5 no pasa nada pero si añadimos más habría que crear una clase Item o algo así para no repetir código
     for (int i = keys.size() - 1; i >= 0; i--) {
@@ -255,48 +299,96 @@ void Scene::update(int deltaTime)
 
 	for (int i = weights.size() - 1; i >= 0; i--) {
 		if (checkAABB(pPos, pSize, weights[i]->getPosition(), glm::ivec2(32, 32))) {
-			// TODO: poder empujar el peso, por ahora se borra y ya
-			delete weights[i];
-			weights.erase(weights.begin() + i);
-			std::cout << "WEIGHT PICKED UP" << std::endl;
+			glm::vec2 wPos = weights[i]->getPosition();
+			int pushStep = 2;
+			int newX = static_cast<int>(wPos.x);
+			if (Game::instance().getKey(GLFW_KEY_LEFT))
+				newX -= pushStep;
+			else if (Game::instance().getKey(GLFW_KEY_RIGHT))
+				newX += pushStep;
+
+			if (newX != static_cast<int>(wPos.x)) {
+				glm::ivec2 weightSize(32, 32);
+				glm::ivec2 weightPos(newX, static_cast<int>(wPos.y));
+				bool blocked = false;
+				CollisionDir dir = (newX < static_cast<int>(wPos.x)) ? CollisionDir::LEFT : CollisionDir::RIGHT;
+				blocked = map->checkCollision(weightPos, weightSize, dir);
+				if (!blocked) {
+					weights[i]->setPosition(glm::vec2(float(newX), wPos.y));
+				}
+			}
 		}
 	}
 
     // --- CHECK EXIT DOORS ---
-    for (Sprite* door : portals) {
+    for (Sprite* portal : portals) {
         // We use a small AABB to make sure Bugs is standing right in front of it
-        if (checkAABB(pPos, pSize, door->getPosition(), glm::ivec2(32, 64))) {
+        if (checkAABB(pPos, pSize, portal->getPosition(), glm::ivec2(32, 64))) {
             
             // Player pressed UP?
-            if (Game::instance().getKey(GLFW_KEY_UP)) {
-                
-                // Do they have all the keys?
-                if (Game::instance().isLevelCleared()) {
-                    door->changeAnimation(1); // Open the door visually!
-                    
-                    // TODO in the future: Trigger a short delay, then tell Game 
-                    // to load the next level!
-                    cout << "LEVEL COMPLETE! LOADING NEXT LEVEL..." << endl;
-                } else {
-                    cout << "Door is locked! Find more keys." << endl;
-                }
-            }
+			if (Game::instance().getKey(GLFW_KEY_UP)) {
+				
+				glm::vec2 portPos = portal->getPosition();
+				int currentX = Game::instance().currentRoomX;
+				int currentY = Game::instance().currentRoomY;
+
+				// Is the portal on the Right side of the screen? (e.g., X > 800)
+				if (portPos.x > SCREEN_WIDTH * 0.8f) {
+					Game::instance().currentRoomX = currentX + 1; // Go Right
+				}
+				// Is it on the Left side?
+				else if (portPos.x < SCREEN_WIDTH * 0.2f) {
+					Game::instance().currentRoomX = currentX - 1; // Go Left
+				}
+				// Is it at the Top?
+				else if (portPos.y < SCREEN_HEIGHT * 0.2f) {
+					Game::instance().currentRoomY = currentY - 1; // Go Up
+				}
+				// Must be at the Bottom!
+				else {
+					Game::instance().currentRoomY = currentY + 1; // Go Down
+				}
+
+				// Now reload the Scene with the new map!
+				cout << "Teleporting to: " << Game::instance().getCurrentMapName() << endl;
+				
+				Game::instance().exitSideRoom();
+				Game::instance().reloadScene();
+				return;
+			}
         }
+		portal ->update(deltaTime); 
     }
 
     // --- CHECK ROOM DOORS ---
-    for (Sprite* door : doors) {
-        if (checkAABB(pPos, pSize, door->getPosition(), glm::ivec2(32, 64))) {
-            
-            // Room doors are never locked!
-            if (Game::instance().getKey(GLFW_KEY_UP)) {
-                door->changeAnimation(1); // Open it!
-                
-                // TODO in the future: Tell Game to load the side-room JSON
-                cout << "ENTERING SIDE ROOM..." << endl;
-            }
-        }
-    }
+	for (int i = 0; i < doors.size(); i++) {
+		Sprite* door = doors[i];
+
+		if (checkAABB(pPos, pSize, door->getPosition(), glm::ivec2(32, 64))) {
+			if (Game::instance().getKey(GLFW_KEY_UP)) {
+				door->changeAnimation(1); // Open the door!
+
+				std::string targetRoom = "";
+				std::string currentMap = Game::instance().getCurrentMapName();
+
+				// Hardcode your side-room destinations here:
+				if (currentMap == "levels/map_0_0.json") {
+					if (i == 0) targetRoom = "levels/room_A.json";
+					if (i == 1) targetRoom = "levels/room_B.json";
+				}
+				else if (currentMap == "levels/map_1_0.json") {
+					if (i == 0) targetRoom = "levels/room_C.json";
+				}
+
+				cout << "Entering side room: " << targetRoom << endl;
+				if (!targetRoom.empty()) {
+					Game::instance().enterSideRoom(targetRoom);
+					Game::instance().reloadScene();
+					return;
+				}
+			}
+		}
+	}
     
 
     
