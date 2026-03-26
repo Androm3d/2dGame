@@ -49,6 +49,7 @@ public:
 	glm::ivec2 getMapSize() const { return mapSize; }
 
 	bool checkCollision(const glm::ivec2 &pos, const glm::ivec2 &size, CollisionDir dir, int *correctedPos = nullptr, bool dropThrough = false) const;
+	bool isOnLadder(const glm::ivec2 &pos, const glm::ivec2 &size) const;
 	TileType getTileType(const int tileId) const;
 	TileType getTileTypeAtPos(const glm::ivec2 &pos) const;
 

@@ -51,11 +51,16 @@ void Sprite::update(int deltaTime)
 		timeAnimation += deltaTime;
 		while(timeAnimation > animations[currentAnimation].millisecsPerKeyframe)
 		{
-			timeAnimation -= animations[currentAnimation].millisecsPerKeyframe;
 			if(animations[currentAnimation].loop)
+			{
+				timeAnimation -= animations[currentAnimation].millisecsPerKeyframe;
 				currentKeyframe = (currentKeyframe + 1) % animations[currentAnimation].keyframeDispl.size();
+			}
 			else if(currentKeyframe + 1 < int(animations[currentAnimation].keyframeDispl.size()))
+			{
+				timeAnimation -= animations[currentAnimation].millisecsPerKeyframe;
 				currentKeyframe += 1;
+			}
 			else
 				break;
 		}
@@ -125,6 +130,17 @@ void Sprite::changeAnimation(int animId)
 int Sprite::animation() const
 {
 	return currentAnimation;
+}
+
+bool Sprite::animationFinished() const
+{
+	if(currentAnimation < 0)
+		return true;
+	if(animations[currentAnimation].loop)
+		return false;
+	// Only finished after the last keyframe has been displayed for 2x its normal duration
+	return currentKeyframe >= int(animations[currentAnimation].keyframeDispl.size()) - 1
+	       && timeAnimation >= animations[currentAnimation].millisecsPerKeyframe * 2.f;
 }
 
 void Sprite::setFlipHorizontal(bool flip)
