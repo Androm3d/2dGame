@@ -68,7 +68,7 @@ void Enemy::init(const glm::ivec2 &tileMapPos, ShaderProgram &shaderProgram)
 	tileMapDispl = tileMapPos;
 }
 
-void Enemy::update(int deltaTime, const glm::ivec2 &playerPos)
+void Enemy::update(int deltaTime, const glm::vec2 &playerPos)
 {
 	sprite->update(deltaTime);
 

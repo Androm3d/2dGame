@@ -14,7 +14,7 @@ public:
 
 public:
 	void init(const glm::ivec2 &tileMapPos, ShaderProgram &shaderProgram);
-	void update(int deltaTime, const glm::ivec2 &playerPos);
+	void update(int deltaTime, const glm::vec2 &playerPos);
 	void render();
 
 	void setTileMap(TileMap *tileMap);
