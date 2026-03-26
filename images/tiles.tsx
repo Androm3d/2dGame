@@ -251,6 +251,16 @@
    <property name="type" value="LADDER"/>
   </properties>
  </tile>
+ <tile id="75">
+  <properties>
+   <property name="type" value="DOOR"/>
+  </properties>
+ </tile>
+ <tile id="76">
+  <properties>
+   <property name="type" value="PORTAL"/>
+  </properties>
+ </tile>
  <tile id="84">
   <properties>
    <property name="type" value="ONE_WAY_PLATFORM"/>

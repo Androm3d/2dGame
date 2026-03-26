@@ -6,8 +6,8 @@
 #include "Scene.h"
 
 
-#define SCREEN_WIDTH 640
-#define SCREEN_HEIGHT 320
+#define SCREEN_WIDTH 960
+#define SCREEN_HEIGHT 480
 
 
 // Game is a singleton (a class with a single instance) that represents our whole application
@@ -30,6 +30,13 @@ public:
 
     bool hasSword = false;
     bool hasShield = false;
+
+	int currentRoomX = 0;
+	int currentRoomY = 0;
+
+	std::string getCurrentMapName() {
+        return "levels/map_" + std::to_string(currentRoomX) + "_" + std::to_string(currentRoomY) + ".json";
+    }
 
     // Helper methods for the Scene to call
     void addKey() { keysCollected++; }

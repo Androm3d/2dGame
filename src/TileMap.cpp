@@ -131,7 +131,7 @@ bool TileMap::loadLevelJSON(const string &levelFile)
     tileDictionary.clear();
     doorSpawnLocations.clear();
     keySpawnLocations.clear();
-
+    portalSpawnLocations.clear();
     // 2. READ TILESET PROPERTIES FIRST (Build the Dictionary)
     // (Changed jsonDocument to j)
     for (const auto& tileset : j["tilesets"]) {
@@ -152,6 +152,7 @@ bool TileMap::loadLevelJSON(const string &levelFile)
                             else if (typeVal == "ONE_WAY_PLATFORM") tileDictionary[globalId] = TileType::ONE_WAY_PLATFORM;
                             else if (typeVal == "LADDER") tileDictionary[globalId] = TileType::LADDER;
                             else if (typeVal == "DOOR") tileDictionary[globalId] = TileType::DOOR;
+							else if (typeVal == "PORTAL") tileDictionary[globalId] = TileType::PORTAL;
                             else if (typeVal == "KEY") tileDictionary[globalId] = TileType::KEY;
 							else if (typeVal == "SWORD") tileDictionary[globalId] = TileType::SWORD;
 							else if (typeVal == "HEAL") tileDictionary[globalId] = TileType::HEAL;
@@ -183,8 +184,21 @@ bool TileMap::loadLevelJSON(const string &levelFile)
             
             if (it->second == TileType::DOOR) {
                 doorSpawnLocations.push_back(glm::ivec2(x, y));
-                tile_id = 0; // Turn it into air so the TileMap doesn't draw it!
+                tile_id = 0; // borrar tile para renderizar el sprite por encima
+				
+				// borrar parte de arriba de la puerta
+				if (i >= mapSize.x) {
+					map[i - mapSize.x] = 0; 
+				}
             }
+			else if (it->second == TileType::PORTAL) {
+				portalSpawnLocations.push_back(glm::ivec2(x, y));
+				tile_id = 0;
+
+				if (i >= mapSize.x) {
+					map[i - mapSize.x] = 0; 
+				}
+			}
             else if (it->second == TileType::KEY) {
                 keySpawnLocations.push_back(glm::ivec2(x, y));
                 tile_id = 0; // Turn it into air!

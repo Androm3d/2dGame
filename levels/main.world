@@ -1,0 +1,11 @@
+{
+    "maps": [
+        {
+            "pattern": "map_{x}_{y}.tmx",
+            "multiplierX": 960,
+            "multiplierY": 480
+        }
+    ],
+    "type": "world"
+}
+

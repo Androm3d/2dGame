@@ -32,8 +32,8 @@ Scene::~Scene()
 void Scene::init()
 {
 	initShaders();
-	map = TileMap::createTileMap("levels/map.json", glm::vec2(SCREEN_X, SCREEN_Y), texProgram);
-	player = new Player();
+    std::string mapFile = Game::instance().getCurrentMapName();
+    map = TileMap::createTileMap(mapFile, glm::vec2(0, 0), texProgram);	player = new Player();
 	player->init(glm::ivec2(SCREEN_X, SCREEN_Y), texProgram);
 	player->setPosition(glm::vec2(INIT_PLAYER_X_TILES * map->getTileSize(), INIT_PLAYER_Y_TILES * map->getTileSize()));
 	player->setTileMap(map);
@@ -97,6 +97,70 @@ void Scene::init()
 	}
 
 
+	// puertas y portales
+	// 1. Load the texture
+	texDoor.loadFromFile("images/door.png", TEXTURE_PIXEL_FORMAT_RGBA);
+	texDoor.setMinFilter(GL_NEAREST);
+	texDoor.setMagFilter(GL_NEAREST);
+
+	glm::vec2 doorSizeInTexture(
+		float(32.0f) / float(texDoor.width()),
+		float(64.0f) / float(texDoor.height())
+	);
+
+	// 2. Spawn Doors
+	for (glm::ivec2 pos : map->getDoors()) {
+		Sprite* door = Sprite::createSprite(glm::vec2(32, 64), doorSizeInTexture, &texDoor, &texProgram);
+		
+		door->setNumberAnimations(2);
+		
+		// Animation 0: Closed (Just the very first frame)
+		door->setAnimationSpeed(0, 1);
+		door->addKeyframe(0, glm::vec2(0.0f, 0.0f)); 
+		
+		// Animation 1: Opening (7 frames, horizontally)
+		door->setAnimationSpeed(1, 10); // 10 frames per second looks good
+		door->setAnimationLoop(1, false); // CRITICAL: Don't loop! Stop when fully open.
+		for (int f = 0; f < 7; f++) {
+			// Change the X coordinate (f * width), leave Y at 0.0f
+			door->addKeyframe(1, glm::vec2(f * doorSizeInTexture.x, 0.0f)); 
+		}
+		
+		door->changeAnimation(0); // Start closed
+		door->setPosition(glm::vec2(pos.x, pos.y - 32));
+		doors.push_back(door);
+	}
+
+
+	// portales
+	texPortal.loadFromFile("images/portal.png", TEXTURE_PIXEL_FORMAT_RGBA);
+	texPortal.setMinFilter(GL_NEAREST);
+	texPortal.setMagFilter(GL_NEAREST);
+
+	glm::vec2 portalSizeInTexture(
+		float(32.0f) / float(texPortal.width()),
+		float(64.0f) / float(texPortal.height())
+	);
+
+	for (glm::ivec2 pos : map->getPortals()) {
+		Sprite* portal = Sprite::createSprite(glm::vec2(32, 64), portalSizeInTexture, &texPortal, &texProgram);
+		
+		portal->setNumberAnimations(1);
+		portal->setAnimationSpeed(0, 10); 
+		portal->setAnimationLoop(0, true); // CRITICAL: Loop forever
+		
+		// 10 frames, horizontally
+		for (int f = 0; f < 10; f++) {
+			// Notice the first argument is 0 (we are adding frames to Animation 0)
+			portal->addKeyframe(0, glm::vec2(f * portalSizeInTexture.x, 0.0f)); 
+		}
+		
+		portal->changeAnimation(0); 
+		portal->setPosition(glm::vec2(pos.x, pos.y - 32));
+		portals.push_back(portal);
+	}
+
+
 	// fondo con shaders
 	    // 1. Compile the Background Shader
     Shader bgVert, bgFrag;
@@ -116,11 +180,11 @@ void Scene::init()
     // These are the X, Y coordinates for two triangles making a 640x320 rectangle
     float vertices[12] = {
         0.0f, 0.0f,
-        640.0f, 0.0f,
-        640.0f, 320.0f,
+        SCREEN_WIDTH, 0.0f,
+        SCREEN_WIDTH, SCREEN_HEIGHT,
         0.0f, 0.0f,
-        640.0f, 320.0f,
-        0.0f, 320.0f
+        SCREEN_WIDTH, SCREEN_HEIGHT,
+        0.0f, SCREEN_HEIGHT
     };
 
     glGenVertexArrays(1, &bgVao);
@@ -197,6 +261,42 @@ void Scene::update(int deltaTime)
 			std::cout << "WEIGHT PICKED UP" << std::endl;
 		}
 	}
+
+    // --- CHECK EXIT DOORS ---
+    for (Sprite* door : portals) {
+        // We use a small AABB to make sure Bugs is standing right in front of it
+        if (checkAABB(pPos, pSize, door->getPosition(), glm::ivec2(32, 64))) {
+            
+            // Player pressed UP?
+            if (Game::instance().getKey(GLFW_KEY_UP)) {
+                
+                // Do they have all the keys?
+                if (Game::instance().isLevelCleared()) {
+                    door->changeAnimation(1); // Open the door visually!
+                    
+                    // TODO in the future: Trigger a short delay, then tell Game 
+                    // to load the next level!
+                    cout << "LEVEL COMPLETE! LOADING NEXT LEVEL..." << endl;
+                } else {
+                    cout << "Door is locked! Find more keys." << endl;
+                }
+            }
+        }
+    }
+
+    // --- CHECK ROOM DOORS ---
+    for (Sprite* door : doors) {
+        if (checkAABB(pPos, pSize, door->getPosition(), glm::ivec2(32, 64))) {
+            
+            // Room doors are never locked!
+            if (Game::instance().getKey(GLFW_KEY_UP)) {
+                door->changeAnimation(1); // Open it!
+                
+                // TODO in the future: Tell Game to load the side-room JSON
+                cout << "ENTERING SIDE ROOM..." << endl;
+            }
+        }
+    }
     
 
     
@@ -222,13 +322,16 @@ void Scene::render()
 	texProgram.setUniformMatrix4f("modelview", modelview);
 	texProgram.setUniform2f("texCoordDispl", 0.f, 0.f);
 	map->render();
-	player->render();
 
 	for (Sprite* key : keys) { key->render(); }
 	if (sword) sword->render();
 	for (Sprite* heal : heals) { heal->render(); }
 	for (Sprite* shield : shields) { shield->render(); }
 	for (Sprite* weight : weights) { weight->render(); }
+	for (Sprite* door : doors) { door->render(); }
+	for (Sprite* portal : portals) { portal->render(); }
+
+	player->render();
 
 }
 

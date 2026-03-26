@@ -19,6 +19,7 @@ enum class TileType {
 	ONE_WAY_PLATFORM,
 	LADDER,
 	DOOR,
+	PORTAL,
 	KEY,
 	SWORD,
 	HEAL,
@@ -54,6 +55,8 @@ public:
 	const std::vector<glm::ivec2>& getShieldSpawns() const { return shieldSpawnLocations; }
 	const std::vector<glm::ivec2>& getWeightSpawns() const { return weightSpawnLocations; }
 	const std::vector<glm::ivec2>& getSwordSpawns() const { return swordSpawnLocations; }
+	const std::vector<glm::ivec2>& getPortals() const { return portalSpawnLocations; }
+	const std::vector<glm::ivec2>& getDoors() const { return doorSpawnLocations; }
 
 private:
 	bool loadLevelJSON(const std::string &levelFile);
@@ -77,7 +80,7 @@ private:
 	std::vector<glm::ivec2> shieldSpawnLocations;
 	std::vector<glm::ivec2> weightSpawnLocations;
 	std::vector<glm::ivec2> swordSpawnLocations;
-
+	std::vector<glm::ivec2> portalSpawnLocations;
 };
 
 
