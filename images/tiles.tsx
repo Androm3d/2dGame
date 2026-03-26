@@ -316,4 +316,9 @@
    <property name="type" value="WEIGHT"/>
   </properties>
  </tile>
+ <tile id="113">
+  <properties>
+   <property name="type" value="SPAWN"/>
+  </properties>
+ </tile>
 </tileset>

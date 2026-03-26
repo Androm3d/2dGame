@@ -33,6 +33,7 @@ public:
 
 	int currentRoomX = 0;
 	int currentRoomY = 2;
+
 	bool inSideRoom = false;
 	std::string sideRoomMapName;
 

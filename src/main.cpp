@@ -27,6 +27,9 @@ void mouse_button_callback(GLFWwindow* window, int button, int action, int mods)
 		Game::instance().mouseRelease(button);
 }
 
+void framebuffer_size_callback(GLFWwindow* window, int width, int height) {
+    glViewport(0, 0, width, height);
+}
 
 int main(void)
 {
@@ -52,6 +55,7 @@ int main(void)
 		glfwTerminate();
 		return -1;
 	}
+	glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
 
 	/* Set window initial position */
 	glfwSetWindowPos(window, 100, 100);
@@ -62,7 +66,7 @@ int main(void)
 	glfwSetKeyCallback(window, key_callback);
 	glfwSetCursorPosCallback(window, cursor_position_callback);
 	glfwSetMouseButtonCallback(window, mouse_button_callback);
-
+	
 	/* Init glew to have access to GL extensions */
 	glewExperimental = GL_TRUE;
 	glewInit();

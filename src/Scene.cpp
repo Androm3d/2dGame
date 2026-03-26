@@ -9,9 +9,6 @@
 #define SCREEN_X 0
 #define SCREEN_Y 0
 
-#define INIT_PLAYER_X_TILES 0
-#define INIT_PLAYER_Y_TILES 5
-
 
 Scene::Scene()
 {
@@ -78,11 +75,35 @@ void Scene::init()
 	initShaders();
     std::string mapFile = Game::instance().getCurrentMapName();
     map = TileMap::createTileMap(mapFile, glm::vec2(0, 0), texProgram);	player = new Player();
+
+	glm::ivec2 mapTiles = map->getMapSize();
+	float mapPixelWidth = mapTiles.x * map->getTileSize();
+	float mapPixelHeight = mapTiles.y * map->getTileSize();
+
+	glm::vec2 playerInitPos(0, 0);
+
 	player->init(glm::ivec2(SCREEN_X, SCREEN_Y), texProgram);
-	player->setPosition(glm::vec2(INIT_PLAYER_X_TILES * map->getTileSize(), INIT_PLAYER_Y_TILES * map->getTileSize()));
+	if (map->getSpawnLocations().empty()) {
+		std::cerr << "Warning: No spawn point defined in the map! Defaulting to (0,0)." << std::endl;
+		
+	}
+	else {
+		std::cout << "Player spawn point: (" << map->getSpawnLocations()[0].x << ", " << map->getSpawnLocations()[0].y << ")" << std::endl;
+		playerInitPos =  glm::vec2(map->getSpawnLocations()[0]);
+	}
+	
+	player->setPosition(playerInitPos);
 	player->setTileMap(map);
-	projection = glm::ortho(0.f, float(SCREEN_WIDTH), float(SCREEN_HEIGHT), 0.f);
+	projection = glm::ortho(0.f, mapPixelWidth, mapPixelHeight, 0.f);
 	currentTime = 0.0f;
+
+	for (Sprite* k : keys) delete k; keys.clear();
+	for (Sprite* d : doors) delete d; doors.clear();
+	for (Sprite* p : portals) delete p; portals.clear();
+	for (Sprite* h : heals) delete h; heals.clear();
+	for (Sprite* s : shields) delete s; shields.clear();
+	for (Sprite* w : weights) delete w; weights.clear();
+	if (sword != nullptr) {  delete sword;  sword = nullptr; }
 
 	// texturas
     texKey.loadFromFile("../images/key.png", TEXTURE_PIXEL_FORMAT_RGBA);
@@ -298,9 +319,12 @@ void Scene::update(int deltaTime)
 	}
 
 	for (int i = weights.size() - 1; i >= 0; i--) {
-		if (checkAABB(pPos, pSize, weights[i]->getPosition(), glm::ivec2(32, 32))) {
-			glm::vec2 wPos = weights[i]->getPosition();
-			int pushStep = 2;
+		glm::vec2 wPos = weights[i]->getPosition();
+		int pushStep = 2;
+		int fallStep = 2;
+		glm::ivec2 weightSize(32, 32);
+
+		if (checkAABB(pPos, pSize, wPos, weightSize)) {
 			int newX = static_cast<int>(wPos.x);
 			if (Game::instance().getKey(GLFW_KEY_LEFT))
 				newX -= pushStep;
@@ -308,16 +332,28 @@ void Scene::update(int deltaTime)
 				newX += pushStep;
 
 			if (newX != static_cast<int>(wPos.x)) {
-				glm::ivec2 weightSize(32, 32);
 				glm::ivec2 weightPos(newX, static_cast<int>(wPos.y));
-				bool blocked = false;
 				CollisionDir dir = (newX < static_cast<int>(wPos.x)) ? CollisionDir::LEFT : CollisionDir::RIGHT;
-				blocked = map->checkCollision(weightPos, weightSize, dir);
-				if (!blocked) {
+				if (!map->checkCollision(weightPos, weightSize, dir)) {
 					weights[i]->setPosition(glm::vec2(float(newX), wPos.y));
+					wPos.x = float(newX);
 				}
 			}
 		}
+
+		// Gravity: weights should fall when nothing supports them below e
+		glm::ivec2 fallCheckPos(static_cast<int>(wPos.x), static_cast<int>(wPos.y) + fallStep);
+		int correctedY = 0;
+		// no cayendo 
+		if (map->checkCollision(fallCheckPos, weightSize, CollisionDir::DOWN, &correctedY)) {
+			weights[i]->setPosition(glm::vec2(wPos.x, float(correctedY)));
+		} 
+		// cayendo
+		else {
+			weights[i]->setPosition(glm::vec2(wPos.x, wPos.y + 2*float(fallStep)));
+		}
+
+		weights[i]->update(deltaTime);
 	}
 
     // --- CHECK EXIT DOORS ---
@@ -372,11 +408,11 @@ void Scene::update(int deltaTime)
 				std::string currentMap = Game::instance().getCurrentMapName();
 
 				// Hardcode your side-room destinations here:
-				if (currentMap == "levels/map_0_0.json") {
+				if (currentMap == "levels/map_0_2.json") {
 					if (i == 0) targetRoom = "levels/room_A.json";
 					if (i == 1) targetRoom = "levels/room_B.json";
 				}
-				else if (currentMap == "levels/map_1_0.json") {
+				else if (currentMap == "levels/map_1_2.json") {
 					if (i == 0) targetRoom = "levels/room_C.json";
 				}
 
@@ -388,6 +424,7 @@ void Scene::update(int deltaTime)
 				}
 			}
 		}
+		door->update(deltaTime);
 	}
     
 

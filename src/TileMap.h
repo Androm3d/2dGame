@@ -24,7 +24,8 @@ enum class TileType {
 	SWORD,
 	HEAL,
 	SHIELD, 
-	WEIGHT 
+	WEIGHT,
+	SPAWN
 };
 
 enum class CollisionDir { LEFT, RIGHT, UP, DOWN };
@@ -45,10 +46,13 @@ public:
 	void free();
 	
 	int getTileSize() const { return tileSize; }
+	glm::ivec2 getMapSize() const { return mapSize; }
 
 	bool checkCollision(const glm::ivec2 &pos, const glm::ivec2 &size, CollisionDir dir, int *correctedPos = nullptr, bool dropThrough = false) const;
 	TileType getTileType(const int tileId) const;
 	TileType getTileTypeAtPos(const glm::ivec2 &pos) const;
+
+
 	const std::vector<glm::ivec2>& getDoorSpawns() const { return doorSpawnLocations; }
 	const std::vector<glm::ivec2>& getKeySpawns() const { return keySpawnLocations; }
 	const std::vector<glm::ivec2>& getHealSpawns() const { return healSpawnLocations; }
@@ -57,6 +61,7 @@ public:
 	const std::vector<glm::ivec2>& getSwordSpawns() const { return swordSpawnLocations; }
 	const std::vector<glm::ivec2>& getPortals() const { return portalSpawnLocations; }
 	const std::vector<glm::ivec2>& getDoors() const { return doorSpawnLocations; }
+	const std::vector<glm::ivec2>& getSpawnLocations() const { return spawnLocations; }
 
 private:
 	bool loadLevelJSON(const std::string &levelFile);
@@ -81,6 +86,7 @@ private:
 	std::vector<glm::ivec2> weightSpawnLocations;
 	std::vector<glm::ivec2> swordSpawnLocations;
 	std::vector<glm::ivec2> portalSpawnLocations;
+	std::vector<glm::ivec2> spawnLocations;
 };
 
 

@@ -132,6 +132,12 @@ bool TileMap::loadLevelJSON(const string &levelFile)
     doorSpawnLocations.clear();
     keySpawnLocations.clear();
     portalSpawnLocations.clear();
+	healSpawnLocations.clear();
+	shieldSpawnLocations.clear();
+	weightSpawnLocations.clear();
+	swordSpawnLocations.clear();
+	spawnLocations.clear();
+
     // 2. READ TILESET PROPERTIES FIRST (Build the Dictionary)
     // (Changed jsonDocument to j)
     for (const auto& tileset : j["tilesets"]) {
@@ -158,6 +164,7 @@ bool TileMap::loadLevelJSON(const string &levelFile)
 							else if (typeVal == "HEAL") tileDictionary[globalId] = TileType::HEAL;
 							else if (typeVal == "SHIELD") tileDictionary[globalId] = TileType::SHIELD;
 							else if (typeVal == "WEIGHT") tileDictionary[globalId] = TileType::WEIGHT;
+							else if (typeVal == "SPAWN") tileDictionary[globalId] = TileType::SPAWN;
                         }
                     }
                 }
@@ -219,6 +226,11 @@ bool TileMap::loadLevelJSON(const string &levelFile)
 				weightSpawnLocations.push_back(glm::ivec2(x, y));
 				tile_id = 0;
             }
+            else if (it->second == TileType::SPAWN) {
+				spawnLocations.push_back(glm::ivec2(x, y));
+				tile_id = 0;
+            }
+
         }
 
         // Save the tile to the visual map (Entities are now saved as 0)
@@ -347,6 +359,10 @@ bool TileMap::checkCollision(const glm::ivec2 &pos, const glm::ivec2 &size, Coll
 
 	switch (dir) {
 		case CollisionDir::LEFT:
+			// SHAVE 1 PIXEL OFF TOP AND BOTTOM:
+			y0 = (pos.y + 1) / tileSize;
+			y1 = (pos.y + size.y - 2) / tileSize;
+			
 			for (int y = y0; y <= y1; y++) {
 				if (getTileType(map[y * mapSize.x + x0]) == TileType::SOLID) {
 					if (correctedPos) *correctedPos = (x0 + 1) * tileSize;
@@ -356,6 +372,10 @@ bool TileMap::checkCollision(const glm::ivec2 &pos, const glm::ivec2 &size, Coll
 			break;
 
 		case CollisionDir::RIGHT:
+			// SHAVE 1 PIXEL OFF TOP AND BOTTOM:
+			y0 = (pos.y + 1) / tileSize;
+			y1 = (pos.y + size.y - 2) / tileSize;
+			
 			for (int y = y0; y <= y1; y++) {
 				if (getTileType(map[y * mapSize.x + x1]) == TileType::SOLID) {
 					if (correctedPos) *correctedPos = x1 * tileSize - size.x;
