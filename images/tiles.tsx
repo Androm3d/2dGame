@@ -251,6 +251,16 @@
    <property name="type" value="LADDER"/>
   </properties>
  </tile>
+ <tile id="75">
+  <properties>
+   <property name="type" value="DOOR"/>
+  </properties>
+ </tile>
+ <tile id="76">
+  <properties>
+   <property name="type" value="PORTAL"/>
+  </properties>
+ </tile>
  <tile id="84">
   <properties>
    <property name="type" value="ONE_WAY_PLATFORM"/>
@@ -279,6 +289,36 @@
  <tile id="106">
   <properties>
    <property name="type" value="ONE_WAY_PLATFORM"/>
+  </properties>
+ </tile>
+ <tile id="108">
+  <properties>
+   <property name="type" value="KEY"/>
+  </properties>
+ </tile>
+ <tile id="109">
+  <properties>
+   <property name="type" value="SWORD"/>
+  </properties>
+ </tile>
+ <tile id="110">
+  <properties>
+   <property name="type" value="HEAL"/>
+  </properties>
+ </tile>
+ <tile id="111">
+  <properties>
+   <property name="type" value="SHIELD"/>
+  </properties>
+ </tile>
+ <tile id="112">
+  <properties>
+   <property name="type" value="WEIGHT"/>
+  </properties>
+ </tile>
+ <tile id="113">
+  <properties>
+   <property name="type" value="SPAWN"/>
   </properties>
  </tile>
 </tileset>

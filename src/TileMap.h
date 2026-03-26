@@ -19,8 +19,13 @@ enum class TileType {
 	ONE_WAY_PLATFORM,
 	LADDER,
 	DOOR,
-	HAZARD,
-	KEY
+	PORTAL,
+	KEY,
+	SWORD,
+	HEAL,
+	SHIELD, 
+	WEIGHT,
+	SPAWN
 };
 
 enum class CollisionDir { LEFT, RIGHT, UP, DOWN };
@@ -41,13 +46,24 @@ public:
 	void free();
 	
 	int getTileSize() const { return tileSize; }
+	glm::ivec2 getMapSize() const { return mapSize; }
 
-    bool checkCollision(const glm::ivec2 &pos, const glm::ivec2 &size, CollisionDir dir, int *correctedPos) const;
+	bool checkCollision(const glm::ivec2 &pos, const glm::ivec2 &size, CollisionDir dir, int *correctedPos = nullptr, bool dropThrough = false) const;
 	bool isOnLadder(const glm::ivec2 &pos, const glm::ivec2 &size) const;
 	TileType getTileType(const int tileId) const;
+	TileType getTileTypeAtPos(const glm::ivec2 &pos) const;
+
+
 	const std::vector<glm::ivec2>& getDoorSpawns() const { return doorSpawnLocations; }
 	const std::vector<glm::ivec2>& getKeySpawns() const { return keySpawnLocations; }
-	
+	const std::vector<glm::ivec2>& getHealSpawns() const { return healSpawnLocations; }
+	const std::vector<glm::ivec2>& getShieldSpawns() const { return shieldSpawnLocations; }
+	const std::vector<glm::ivec2>& getWeightSpawns() const { return weightSpawnLocations; }
+	const std::vector<glm::ivec2>& getSwordSpawns() const { return swordSpawnLocations; }
+	const std::vector<glm::ivec2>& getPortals() const { return portalSpawnLocations; }
+	const std::vector<glm::ivec2>& getDoors() const { return doorSpawnLocations; }
+	const std::vector<glm::ivec2>& getSpawnLocations() const { return spawnLocations; }
+
 private:
 	bool loadLevelJSON(const std::string &levelFile);
 	bool loadLevel(const string &levelFile);
@@ -66,7 +82,12 @@ private:
 	std::unordered_map<int, TileType> tileDictionary;
 	std::vector<glm::ivec2> doorSpawnLocations;
 	std::vector<glm::ivec2> keySpawnLocations;
-
+	std::vector<glm::ivec2> healSpawnLocations;
+	std::vector<glm::ivec2> shieldSpawnLocations;
+	std::vector<glm::ivec2> weightSpawnLocations;
+	std::vector<glm::ivec2> swordSpawnLocations;
+	std::vector<glm::ivec2> portalSpawnLocations;
+	std::vector<glm::ivec2> spawnLocations;
 };
 
 

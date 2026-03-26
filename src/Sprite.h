@@ -36,7 +36,7 @@ public:
 	int animation() const;
 	bool animationFinished() const;
 	void setFlipHorizontal(bool flip);
-	
+	glm::vec2 getPosition() const { return position; }
 	void setPosition(const glm::vec2 &pos);
 
 private:

@@ -15,11 +15,14 @@ class Player
 public:
 	Player();
 	~Player();
+	static constexpr int HITBOX_WIDTH = 32;
+	static constexpr int HITBOX_HEIGHT = 64;
 
 public:
 	void init(const glm::ivec2 &tileMapPos, ShaderProgram &shaderProgram);
 	void update(int deltaTime);
 	void render();
+	glm::vec2 getPosition() const { return posPlayer; }
 	
 	void setTileMap(TileMap *tileMap);
 	void setPosition(const glm::vec2 &pos);
@@ -41,5 +44,4 @@ private:
 
 
 #endif // _PLAYER_INCLUDE
-
 

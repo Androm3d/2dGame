@@ -16,8 +16,6 @@
 #define PLAYER_JUMP_FALL_START_FRAME 4
 #define PLAYER_IDLE_ANIM_FRAMES 4
 #define PLAYER_IDLE_Y_OFFSET_PIXELS 12
-#define PLAYER_HITBOX_WIDTH 32
-#define PLAYER_HITBOX_HEIGHT 32
 #define PLAYER_ATTACK_ANIM_FRAMES 5
 #define PLAYER_ATTACK_FRAME_WIDTH 96
 #define PLAYER_ATTACK_FRAME_HEIGHT 104
@@ -134,8 +132,8 @@ void Player::init(const glm::ivec2 &tileMapPos, ShaderProgram &shaderProgram)
 	sprite->changeAnimation(0);
 	sprite->setFlipHorizontal(false);
 	tileMapDispl = tileMapPos;
-	float renderOffsetX = 0.5f * float(PLAYER_FRAME_WIDTH - PLAYER_HITBOX_WIDTH);
-	float renderOffsetY = float(PLAYER_FRAME_HEIGHT - PLAYER_HITBOX_HEIGHT);
+	float renderOffsetX = 0.5f * float(PLAYER_FRAME_WIDTH - Player::HITBOX_WIDTH);
+	float renderOffsetY = float(PLAYER_FRAME_HEIGHT - Player::HITBOX_HEIGHT);
 	sprite->setPosition(glm::vec2(float(tileMapDispl.x + posPlayer.x) - renderOffsetX, float(tileMapDispl.y + posPlayer.y) - renderOffsetY));
 
 }
@@ -200,7 +198,7 @@ void Player::update(int deltaTime)
 			if(!bJumping && sprite->animation() != MOVE_LEFT)
 				sprite->changeAnimation(MOVE_LEFT);
 			posPlayer.x -= 3;
-			if(map->checkCollision(posPlayer, glm::ivec2(32, 32), CollisionDir::LEFT, &posPlayer.x))
+			if(map->checkCollision(posPlayer, glm::ivec2(Player::HITBOX_WIDTH, Player::HITBOX_HEIGHT), CollisionDir::LEFT, &posPlayer.x))
 			{
 				posPlayer.x += 3;
 				if(!bJumping)
@@ -214,7 +212,7 @@ void Player::update(int deltaTime)
 			if(!bJumping && sprite->animation() != MOVE_RIGHT)
 				sprite->changeAnimation(MOVE_RIGHT);
 			posPlayer.x += 3;
-			if(map->checkCollision(posPlayer, glm::ivec2(32, 32), CollisionDir::RIGHT, &posPlayer.x))
+			if(map->checkCollision(posPlayer, glm::ivec2(Player::HITBOX_WIDTH, Player::HITBOX_HEIGHT), CollisionDir::RIGHT, &posPlayer.x))
 			{
 				posPlayer.x -= 3;
 				if(!bJumping)
@@ -328,11 +326,10 @@ void Player::setTileMap(TileMap *tileMap)
 void Player::setPosition(const glm::vec2 &pos)
 {
 	posPlayer = pos;
-	float renderOffsetX = 0.5f * float(PLAYER_FRAME_WIDTH - PLAYER_HITBOX_WIDTH);
-	float renderOffsetY = float(PLAYER_FRAME_HEIGHT - PLAYER_HITBOX_HEIGHT);
+	float renderOffsetX = 0.5f * float(PLAYER_FRAME_WIDTH - Player::HITBOX_WIDTH);
+	float renderOffsetY = float(PLAYER_FRAME_HEIGHT - Player::HITBOX_HEIGHT);
 	sprite->setPosition(glm::vec2(float(tileMapDispl.x + posPlayer.x) - renderOffsetX, float(tileMapDispl.y + posPlayer.y) - renderOffsetY));
 }
-
 
 
 
