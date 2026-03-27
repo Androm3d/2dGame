@@ -299,23 +299,20 @@ void Player::update(int deltaTime)
 				}
 			}
 			jumpAngle += JUMP_ANGLE_STEP;
-			if(jumpAngle == 180)
-			{
-				bJumping = false;
-				posPlayer.y = startY;
-			}
-			else
+			if(jumpAngle < 90)
 			{
 				posPlayer.y = int(startY - JUMP_HEIGHT * sin(3.14159f * jumpAngle / 180.f));
-				if(jumpAngle < 90 && map->checkCollision(posPlayer, glm::ivec2(Player::HITBOX_WIDTH, Player::HITBOX_HEIGHT), CollisionDir::UP, &posPlayer.y))
+				if(map->checkCollision(posPlayer, glm::ivec2(Player::HITBOX_WIDTH, Player::HITBOX_HEIGHT), CollisionDir::UP, &posPlayer.y))
 				{
 					jumpAngle = 90;
-					startY = posPlayer.y + JUMP_HEIGHT;
 					if(!bAttacking)
 						sprite->changeAnimation(JUMP_FALL);
 				}
-				if(jumpAngle > 90)
-					bJumping = !map->checkCollision(posPlayer, glm::ivec2(Player::HITBOX_WIDTH, Player::HITBOX_HEIGHT), CollisionDir::DOWN, &posPlayer.y);
+			}
+			else
+			{
+				posPlayer.y += FALL_STEP;
+				bJumping = !map->checkCollision(posPlayer, glm::ivec2(Player::HITBOX_WIDTH, Player::HITBOX_HEIGHT), CollisionDir::DOWN, &posPlayer.y);
 			}
 		}
 		else
