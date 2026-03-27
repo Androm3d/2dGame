@@ -26,7 +26,9 @@ public:
 
 	void setTileMap(TileMap *tileMap);
 	void setPosition(const glm::vec2 &pos);
-	
+	bool isAttacking() const { return bAttacking; }
+	glm::vec4 getAttackHitbox() const;
+
 private:
 	bool bJumping;
 	bool bClimbing;

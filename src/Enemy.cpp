@@ -1,4 +1,5 @@
 #include <cmath>
+#include <iostream>
 #include <queue>
 #include <map>
 #include <algorithm>
@@ -23,6 +24,18 @@
 #define ROW_JUMP_TOP_PX 48
 
 #define PATH_RECALC_FRAMES 30
+
+// Shot animation constants (Enemy1_Shot.png: 768x232, 96x116 per frame, 13 total: 8 row0 + 5 row1)
+#define SHOT_FRAME_WIDTH    96
+#define SHOT_FRAME_HEIGHT   116
+#define SHOT_RENDER_HEIGHT  64
+#define SHOT_FRAMES_ROW0     8
+#define SHOT_FRAMES_ROW1     5
+#define SHOT_DETECT_RANGE  200
+#define SHOT_DETECT_VERTICAL 48
+#define SHOT_COOLDOWN_FRAMES 90
+#define ARROW_SPEED        4
+#define ARROW_SIZE         64
 
 
 enum EnemyAnims
@@ -79,6 +92,8 @@ static int landingY(int tx, int startTY, const TileMap *m)
 Enemy::Enemy()
 {
 	sprite = NULL;
+	shotSprite = NULL;
+	arrowSprite = NULL;
 	map = NULL;
 }
 
@@ -86,6 +101,10 @@ Enemy::~Enemy()
 {
 	if (sprite != NULL)
 		delete sprite;
+	if (shotSprite != NULL)
+		delete shotSprite;
+	if (arrowSprite != NULL)
+		delete arrowSprite;
 }
 
 void Enemy::init(const glm::ivec2 &tileMapPos, ShaderProgram &shaderProgram)
@@ -93,11 +112,16 @@ void Enemy::init(const glm::ivec2 &tileMapPos, ShaderProgram &shaderProgram)
 	facingLeft = false;
 	bJumping = false;
 	onGround = false;
+	bShooting = false;
+	alive = true;
+	health = 2;
 	jumpAngle = 0;
 	startY = 0;
 	pathRecalcTimer = 0;
 	pathIndex = 0;
+	shotCooldown = 0;
 
+	// --- Run/Jump sprite (existing) ---
 	spritesheet.loadFromFile("images/Enemy1_Run_Jump.png", TEXTURE_PIXEL_FORMAT_RGBA);
 	spritesheet.setWrapS(GL_CLAMP_TO_EDGE);
 	spritesheet.setWrapT(GL_CLAMP_TO_EDGE);
@@ -133,20 +157,53 @@ void Enemy::init(const glm::ivec2 &tileMapPos, ShaderProgram &shaderProgram)
 
 	sprite->changeAnimation(RUN);
 	sprite->setFlipHorizontal(false);
+
+	// --- Shot sprite (Enemy1_Shot.png: 768x232, 12 frames at 64x116) ---
+	shotSpritesheet.loadFromFile("images/Enemy1_Shot.png", TEXTURE_PIXEL_FORMAT_RGBA);
+	shotSpritesheet.setWrapS(GL_CLAMP_TO_EDGE);
+	shotSpritesheet.setWrapT(GL_CLAMP_TO_EDGE);
+	shotSpritesheet.setMinFilter(GL_NEAREST);
+	shotSpritesheet.setMagFilter(GL_NEAREST);
+
+	float shotTexW = float(shotSpritesheet.width());
+	float shotTexH = float(shotSpritesheet.height());
+	glm::vec2 shotFrameSize(
+		float(SHOT_FRAME_WIDTH) / shotTexW,
+		float(SHOT_FRAME_HEIGHT) / shotTexH
+	);
+
+	shotSprite = Sprite::createSprite(glm::ivec2(ENEMY_FRAME_WIDTH, SHOT_RENDER_HEIGHT), shotFrameSize, &shotSpritesheet, &shaderProgram);
+	shotSprite->setNumberAnimations(1);
+	shotSprite->setAnimationSpeed(0, 12);
+	shotSprite->setAnimationLoop(0, false);
+	// Row 0: 8 frames
+	for (int f = 0; f < SHOT_FRAMES_ROW0; ++f)
+		shotSprite->addKeyframe(0, glm::vec2(f * shotFrameSize.x, 0.0f));
+	// Row 1: 5 remaining frames
+	for (int f = 0; f < SHOT_FRAMES_ROW1; ++f)
+		shotSprite->addKeyframe(0, glm::vec2(f * shotFrameSize.x, shotFrameSize.y));
+	shotSprite->changeAnimation(0);
+
+	// --- Arrow sprite (Arrow.png: 64x64, single frame) ---
+	arrowTexture.loadFromFile("images/Arrow.png", TEXTURE_PIXEL_FORMAT_RGBA);
+	arrowTexture.setWrapS(GL_CLAMP_TO_EDGE);
+	arrowTexture.setWrapT(GL_CLAMP_TO_EDGE);
+	arrowTexture.setMinFilter(GL_NEAREST);
+	arrowTexture.setMagFilter(GL_NEAREST);
+
+	arrowSprite = Sprite::createSprite(glm::ivec2(ARROW_SIZE, ARROW_SIZE), glm::vec2(1.0f, 1.0f), &arrowTexture, &shaderProgram);
+	arrowSprite->setNumberAnimations(1);
+	arrowSprite->setAnimationSpeed(0, 1);
+	arrowSprite->setAnimationLoop(0, true);
+	arrowSprite->addKeyframe(0, glm::vec2(0.0f, 0.0f));
+	arrowSprite->changeAnimation(0);
+
 	tileMapDispl = tileMapPos;
 }
 
 
 // =====================================================================
 //  BFS pathfinding
-//
-//  State = tile (x, y).  Only "standing" tiles are valid nodes
-//  (empty tile with solid/one-way ground directly below).
-//
-//  Edges (from each standing tile):
-//    Walk left/right  → adjacent standing tile
-//    Fall             → walk to empty tile, simulate gravity to find landing
-//    Jump left/right/up → simulate parabolic arc, find landing tile
 // =====================================================================
 
 void Enemy::computePath(const glm::vec2 &playerPos)
@@ -300,11 +357,115 @@ void Enemy::computePath(const glm::vec2 &playerPos)
 
 
 // =====================================================================
-//  Update — follow the BFS path instead of blindly chasing player X
+//  Update — follow the BFS path, shoot arrows when player is in range
 // =====================================================================
 
 void Enemy::update(int deltaTime, const glm::vec2 &playerPos)
 {
+	if (!alive) return;
+
+	// Decrease shot cooldown
+	if (shotCooldown > 0) shotCooldown--;
+
+	// --- Update arrows (move horizontally, remove on wall/off-screen) ---
+	int ts = map->getTileSize();
+	glm::ivec2 mapPixels = glm::ivec2(map->getMapSize().x * ts, map->getMapSize().y * ts);
+	for (int i = (int)arrows.size() - 1; i >= 0; --i)
+	{
+		arrows[i].pos.x += arrows[i].goingLeft ? -ARROW_SPEED : ARROW_SPEED;
+
+		// Remove if off-screen
+		if (arrows[i].pos.x < -ARROW_SIZE || arrows[i].pos.x > mapPixels.x)
+		{
+			arrows.erase(arrows.begin() + i);
+			continue;
+		}
+
+		// Remove if hits a solid tile (check the leading edge of the arrow)
+		int checkX = (int)arrows[i].pos.x + (arrows[i].goingLeft ? 0 : ARROW_SIZE);
+		int checkY = (int)arrows[i].pos.y + ARROW_SIZE / 2;
+		int tileX = checkX / ts;
+		int tileY = checkY / ts;
+		if (isSolid(tileX, tileY, map))
+		{
+			arrows.erase(arrows.begin() + i);
+			continue;
+		}
+	}
+
+	// --- Shooting logic ---
+	if (bShooting)
+	{
+		shotSprite->update(deltaTime);
+		if (shotSprite->animationFinished())
+		{
+			// Spawn an arrow at the enemy's position
+			Arrow newArrow;
+			float arrowY = posEnemy.y + ENEMY_HITBOX_HEIGHT / 2.f - ARROW_SIZE / 2.f;
+			if (facingLeft)
+				newArrow.pos = glm::vec2(posEnemy.x - ARROW_SIZE, arrowY);
+			else
+				newArrow.pos = glm::vec2(posEnemy.x + ENEMY_HITBOX_WIDTH, arrowY);
+			newArrow.goingLeft = facingLeft;
+			arrows.push_back(newArrow);
+
+			bShooting = false;
+			shotCooldown = SHOT_COOLDOWN_FRAMES;
+			sprite->changeAnimation(RUN);
+		}
+
+		// While shooting: still apply gravity but no horizontal movement
+		if (bJumping)
+		{
+			jumpAngle += ENEMY_JUMP_ANGLE_STEP;
+			if (jumpAngle >= 180)
+			{
+				bJumping = false;
+				posEnemy.y = startY;
+			}
+			else
+			{
+				posEnemy.y = int(startY - ENEMY_JUMP_HEIGHT * sin(3.14159f * jumpAngle / 180.f));
+				if (jumpAngle > 90)
+					bJumping = !map->checkCollision(posEnemy, glm::ivec2(ENEMY_HITBOX_WIDTH, ENEMY_HITBOX_HEIGHT), CollisionDir::DOWN, &posEnemy.y);
+			}
+		}
+		else
+		{
+			posEnemy.y += ENEMY_FALL_STEP;
+			onGround = map->checkCollision(posEnemy, glm::ivec2(ENEMY_HITBOX_WIDTH, ENEMY_HITBOX_HEIGHT), CollisionDir::DOWN, &posEnemy.y);
+		}
+
+		// Position shot sprite (feet aligned with hitbox bottom, centered on hitbox)
+		float shotRenderOffsetX = 0.5f * float(ENEMY_FRAME_WIDTH - ENEMY_HITBOX_WIDTH);
+		float shotRenderOffsetY = float(SHOT_RENDER_HEIGHT - ENEMY_HITBOX_HEIGHT);
+		shotSprite->setFlipHorizontal(facingLeft);
+		shotSprite->setPosition(glm::vec2(float(tileMapDispl.x + posEnemy.x) - shotRenderOffsetX, float(tileMapDispl.y + posEnemy.y) - shotRenderOffsetY));
+
+		// Also update run/jump sprite position for when we switch back
+		float renderOffsetX = 0.5f * float(ENEMY_FRAME_WIDTH - ENEMY_HITBOX_WIDTH);
+		float renderOffsetY = float(ENEMY_FRAME_HEIGHT - ENEMY_HITBOX_HEIGHT);
+		sprite->setPosition(glm::vec2(float(tileMapDispl.x + posEnemy.x) - renderOffsetX, float(tileMapDispl.y + posEnemy.y) - renderOffsetY));
+		return;
+	}
+
+	// --- Check if we should start shooting ---
+	if (shotCooldown <= 0 && onGround && !bJumping)
+	{
+		float dx = playerPos.x - posEnemy.x;
+		float dy = playerPos.y - (posEnemy.y - 16.f); // approximate vertical alignment
+		bool playerInFront = (facingLeft && dx < 0) || (!facingLeft && dx > 0);
+
+		if (playerInFront && abs(dx) < SHOT_DETECT_RANGE && abs(dy) < SHOT_DETECT_VERTICAL)
+		{
+			bShooting = true;
+			shotSprite->changeAnimation(0);
+			shotSprite->setFlipHorizontal(facingLeft);
+			return;
+		}
+	}
+
+	// --- Normal movement (BFS pathfinding) ---
 	sprite->update(deltaTime);
 
 	// Recompute path periodically
@@ -315,7 +476,6 @@ void Enemy::update(int deltaTime, const glm::vec2 &playerPos)
 	}
 
 	// --- Determine desired movement from path ---
-	int ts = map->getTileSize();
 	int myTX = (posEnemy.x + ENEMY_HITBOX_WIDTH / 2) / ts;
 	int myTY = posEnemy.y / ts;
 
@@ -388,7 +548,7 @@ void Enemy::update(int deltaTime, const glm::vec2 &playerPos)
 			sprite->changeAnimation(JUMP_FALL);
 	}
 
-	// --- Jump / gravity physics (unchanged) ---
+	// --- Jump / gravity physics ---
 	if (bJumping)
 	{
 		jumpAngle += ENEMY_JUMP_ANGLE_STEP;
@@ -423,7 +583,21 @@ void Enemy::update(int deltaTime, const glm::vec2 &playerPos)
 
 void Enemy::render()
 {
-	sprite->render();
+	if (!alive) return;
+
+	// Render arrows
+	for (const Arrow &a : arrows)
+	{
+		arrowSprite->setFlipHorizontal(a.goingLeft);
+		arrowSprite->setPosition(glm::vec2(float(tileMapDispl.x) + a.pos.x, float(tileMapDispl.y) + a.pos.y));
+		arrowSprite->render();
+	}
+
+	// Render enemy (shot sprite or run/jump sprite)
+	if (bShooting)
+		shotSprite->render();
+	else
+		sprite->render();
 }
 
 void Enemy::setTileMap(TileMap *tileMap)
@@ -437,4 +611,17 @@ void Enemy::setPosition(const glm::vec2 &pos)
 	float renderOffsetX = 0.5f * float(ENEMY_FRAME_WIDTH - ENEMY_HITBOX_WIDTH);
 	float renderOffsetY = float(ENEMY_FRAME_HEIGHT - ENEMY_HITBOX_HEIGHT);
 	sprite->setPosition(glm::vec2(float(tileMapDispl.x + posEnemy.x) - renderOffsetX, float(tileMapDispl.y + posEnemy.y) - renderOffsetY));
+}
+
+void Enemy::takeDamage()
+{
+	if (!alive) return;
+	health--;
+	if (health <= 0)
+		alive = false;
+}
+
+glm::vec4 Enemy::getHitbox() const
+{
+	return glm::vec4(posEnemy.x, posEnemy.y, ENEMY_HITBOX_WIDTH, ENEMY_HITBOX_HEIGHT);
 }

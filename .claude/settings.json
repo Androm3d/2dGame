@@ -5,7 +5,12 @@
       "Bash(cmake --build build)",
       "Bash(cmake ..)",
       "Bash(cmake --build .)",
-      "Bash(cmake .. -DCMAKE_BUILD_TYPE=Debug)"
+      "Bash(cmake .. -DCMAKE_BUILD_TYPE=Debug)",
+      "Bash(python3 -c \"from PIL import Image; img=Image.open\\(''images/Enemy1_Shot.png''\\); print\\(f''Enemy1_Shot: {img.size}''\\); img2=Image.open\\(''images/Arrow.png''\\); print\\(f''Arrow: {img2.size}''\\)\")",
+      "Bash(identify images/Enemy1_Shot.png images/Arrow.png)",
+      "Bash(make)",
+      "Bash(rm /Users/jergasus/UNI/VJ/2dGame/build/CMakeFiles/BugsBunnyCrazyCastle.dir/src/Enemy.cpp.o)",
+      "Bash(make -j4)"
     ]
   }
 }

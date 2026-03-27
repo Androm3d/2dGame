@@ -362,6 +362,15 @@ void Player::setTileMap(TileMap *tileMap)
 	map = tileMap;
 }
 
+glm::vec4 Player::getAttackHitbox() const
+{
+	float attackRange = 24.f;
+	if (facingLeft)
+		return glm::vec4(posPlayer.x - attackRange, posPlayer.y, attackRange, HITBOX_HEIGHT);
+	else
+		return glm::vec4(posPlayer.x + HITBOX_WIDTH, posPlayer.y, attackRange, HITBOX_HEIGHT);
+}
+
 void Player::setPosition(const glm::vec2 &pos)
 {
 	posPlayer = pos;

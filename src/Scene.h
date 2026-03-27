@@ -60,6 +60,8 @@ private:
 	ShaderProgram bgProgram;
 	GLuint bgVao, bgVbo;
 
+	bool attackHitThisSwing;
+
 };
 
 

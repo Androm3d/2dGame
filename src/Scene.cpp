@@ -18,6 +18,7 @@ Scene::Scene()
 	sword = nullptr;
 	bgVao = 0;
 	bgVbo = 0;
+	attackHitThisSwing = false;
 }
 
 Scene::~Scene()
@@ -286,7 +287,25 @@ void Scene::update(int deltaTime)
 {
 	currentTime += deltaTime;
     player->update(deltaTime);
-	enemy->update(deltaTime, player->getPosition());
+	if (enemy->isAlive())
+		enemy->update(deltaTime, player->getPosition());
+
+	// --- Player attack vs Enemy ---
+	if (player->isAttacking() && enemy->isAlive() && !attackHitThisSwing)
+	{
+		glm::vec4 atkBox = player->getAttackHitbox();
+		glm::vec4 enemyBox = enemy->getHitbox();
+		if (atkBox.x < enemyBox.x + enemyBox.z &&
+			atkBox.x + atkBox.z > enemyBox.x &&
+			atkBox.y < enemyBox.y + enemyBox.w &&
+			atkBox.y + atkBox.w > enemyBox.y)
+		{
+			enemy->takeDamage();
+			attackHitThisSwing = true;
+		}
+	}
+	if (!player->isAttacking())
+		attackHitThisSwing = false;
 
     glm::vec2 pPos = player->getPosition();
     glm::ivec2 pSize = glm::ivec2(Player::HITBOX_WIDTH, Player::HITBOX_HEIGHT);
@@ -470,7 +489,8 @@ void Scene::render()
 	for (Sprite* door : doors) { door->render(); }
 	for (Sprite* portal : portals) { portal->render(); }
 
-	enemy->render();
+	if (enemy->isAlive())
+		enemy->render();
 	player->render();
 
 }
