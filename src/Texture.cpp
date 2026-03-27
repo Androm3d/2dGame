@@ -7,6 +7,9 @@ using namespace std;
 
 Texture::Texture()
 {
+	widthTex = 0;
+	heightTex = 0;
+	texId = 0;
 	wrapS = GL_REPEAT;
 	wrapT = GL_REPEAT;
 	minFilter = GL_LINEAR_MIPMAP_LINEAR;
@@ -46,7 +49,7 @@ bool Texture::loadFromFile(const string &filename, PixelFormat format)
 		break;
 	}
 	glGenerateMipmap(GL_TEXTURE_2D);
-	delete[] image;
+	SOIL_free_image_data(image);
 	
 	return true;
 }

@@ -23,6 +23,8 @@ void Game::reloadScene()
 void Game::init()
 {
 	bPlay = true;
+	for(int i = 0; i <= GLFW_KEY_LAST; ++i)
+		keys[i] = false;
 	glClearColor(0.3f, 0.3f, 0.3f, 1.0f);
 	scene.init();
 }

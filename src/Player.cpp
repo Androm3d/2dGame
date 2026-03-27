@@ -8,18 +8,23 @@
 #define JUMP_ANGLE_STEP 4
 #define JUMP_HEIGHT 96
 #define FALL_STEP 4
-#define PLAYER_FRAME_WIDTH 64
+#define PLAYER_FRAME_WIDTH 32
 #define PLAYER_FRAME_HEIGHT 64
 #define PLAYER_RUN_ANIM_FRAMES 8
-#define PLAYER_JUMP_UP_ANIM_FRAMES 2
-#define PLAYER_JUMP_FALL_ANIM_FRAMES 2
+#define PLAYER_JUMP_UP_ANIM_FRAMES 4
+#define PLAYER_JUMP_FALL_ANIM_FRAMES 4
 #define PLAYER_JUMP_FALL_START_FRAME 4
-#define PLAYER_IDLE_ANIM_FRAMES 4
-#define PLAYER_IDLE_Y_OFFSET_PIXELS 12
+#define PLAYER_IDLE_ANIM_FRAMES 6
 #define PLAYER_ATTACK_ANIM_FRAMES 5
-#define PLAYER_ATTACK_FRAME_WIDTH 96
-#define PLAYER_ATTACK_FRAME_HEIGHT 104
+#define PLAYER_ATTACK_FRAME_WIDTH 64
+#define PLAYER_ATTACK_FRAME_HEIGHT 92
 #define PLAYER_CLIMB_ANIM_FRAMES 2
+
+#define ROW_RUN_TOP_PX 0
+#define ROW_JUMP_TOP_PX 64
+#define ROW_IDLE_TOP_PX 128
+#define ROW_ATTACK_TOP_PX 192
+#define ROW_CLIMB_TOP_PX 284
 
 
 enum PlayerAnims
@@ -79,23 +84,26 @@ void Player::init(const glm::ivec2 &tileMapPos, ShaderProgram &shaderProgram)
 	for(int frame = 0; frame < PLAYER_RUN_ANIM_FRAMES; ++frame)
 	{
 		float u = frame * frameSizeInTexture.x;
-		sprite->addKeyframe(MOVE_LEFT, glm::vec2(u, 0.f));
-		sprite->addKeyframe(MOVE_RIGHT, glm::vec2(u, 0.f));
+		float v = float(ROW_RUN_TOP_PX) / float(spritesheet.height());
+		sprite->addKeyframe(MOVE_LEFT, glm::vec2(u, v));
+		sprite->addKeyframe(MOVE_RIGHT, glm::vec2(u, v));
 	}
 	for(int frame = 0; frame < PLAYER_JUMP_UP_ANIM_FRAMES; ++frame)
 	{
 		float u = frame * frameSizeInTexture.x;
-		sprite->addKeyframe(JUMP_UP, glm::vec2(u, frameSizeInTexture.y));
+		float v = float(ROW_JUMP_TOP_PX) / float(spritesheet.height());
+		sprite->addKeyframe(JUMP_UP, glm::vec2(u, v));
 	}
 	for(int frame = 0; frame < PLAYER_JUMP_FALL_ANIM_FRAMES; ++frame)
 	{
 		float u = (frame + PLAYER_JUMP_FALL_START_FRAME) * frameSizeInTexture.x;
-		sprite->addKeyframe(JUMP_FALL, glm::vec2(u, frameSizeInTexture.y));
+		float v = float(ROW_JUMP_TOP_PX) / float(spritesheet.height());
+		sprite->addKeyframe(JUMP_FALL, glm::vec2(u, v));
 	}
 	for(int frame = 0; frame < PLAYER_IDLE_ANIM_FRAMES; ++frame)
 	{
 		float u = frame * frameSizeInTexture.x;
-		float v = 2.f * frameSizeInTexture.y + float(PLAYER_IDLE_Y_OFFSET_PIXELS) / float(spritesheet.height());
+		float v = float(ROW_IDLE_TOP_PX) / float(spritesheet.height());
 		glm::vec2 idleFrame(u, v);
 		sprite->addKeyframe(STAND_LEFT, idleFrame);
 		sprite->addKeyframe(STAND_RIGHT, idleFrame);
@@ -104,10 +112,12 @@ void Player::init(const glm::ivec2 &tileMapPos, ShaderProgram &shaderProgram)
 	// Climb stairs animation (2 frames)
 	float texW = float(spritesheet.width());
 	float texH = float(spritesheet.height());
-	float halfW = float(PLAYER_FRAME_WIDTH) / 2.f;
-	float halfH = float(PLAYER_FRAME_HEIGHT) / 2.f;
-	sprite->addKeyframe(CLIMB_STAIRS, glm::vec2((37.f - halfW) / texW, (369.f - halfH) / texH));
-	sprite->addKeyframe(CLIMB_STAIRS, glm::vec2((97.f - halfW) / texW, (369.f - halfH) / texH));
+	float climbV = float(ROW_CLIMB_TOP_PX) / texH;
+	for(int frame = 0; frame < PLAYER_CLIMB_ANIM_FRAMES; ++frame)
+	{
+		float climbU = frame * frameSizeInTexture.x;
+		sprite->addKeyframe(CLIMB_STAIRS, glm::vec2(climbU, climbV));
+	}
 
 	// Attack sprite (separate, larger frame: 96x104 to fit sword + slash)
 	glm::vec2 attackFrameSize(
@@ -118,14 +128,12 @@ void Player::init(const glm::ivec2 &tileMapPos, ShaderProgram &shaderProgram)
 	attackSprite->setNumberAnimations(1);
 	attackSprite->setAnimationSpeed(0, 18);
 	attackSprite->setAnimationLoop(0, false);
-	// Align each frame by its BOTTOM edge (feet on ground) to the bottom of the 104px quad.
-	// X: body center at x=48 in the 96-wide quad (centered, so flip works symmetrically).
-	// UV top-left: x = (center_x - 48) / texW,  y = (center_y + height/2 - 104) / texH
-	attackSprite->addKeyframe(0, glm::vec2( 7.f   / texW, 219.5f / texH));  // (55-48,  286+37.5-104)
-	attackSprite->addKeyframe(0, glm::vec2(97.f   / texW, 218.f  / texH));  // (145-48, 273+49-104)
-	attackSprite->addKeyframe(0, glm::vec2(184.f  / texW, 221.f  / texH));  // (232-48, 273+52-104)
-	attackSprite->addKeyframe(0, glm::vec2(278.f  / texW, 222.f  / texH));  // (326-48, 277+49-104)
-	attackSprite->addKeyframe(0, glm::vec2(390.f  / texW, 216.5f / texH));  // (438-48, 282+38.5-104)
+	float attackV = float(ROW_ATTACK_TOP_PX) / texH;
+	for(int frame = 0; frame < PLAYER_ATTACK_ANIM_FRAMES; ++frame)
+	{
+		float attackU = frame * attackFrameSize.x;
+		attackSprite->addKeyframe(0, glm::vec2(attackU, attackV));
+	}
 	attackSprite->changeAnimation(0);
 	attackSprite->setFlipHorizontal(false);
 		
@@ -141,7 +149,11 @@ void Player::init(const glm::ivec2 &tileMapPos, ShaderProgram &shaderProgram)
 void Player::update(int deltaTime)
 {
 	sprite->update(deltaTime);
-	bool onLadder = map->isOnLadder(posPlayer, glm::ivec2(PLAYER_HITBOX_WIDTH, PLAYER_HITBOX_HEIGHT));
+	bool onLadder = map->isOnLadder(posPlayer, glm::ivec2(Player::HITBOX_WIDTH, Player::HITBOX_HEIGHT));
+	bool upPressed = Game::instance().getKey(GLFW_KEY_UP);
+	bool downPressed = Game::instance().getKey(GLFW_KEY_DOWN);
+	bool leftPressed = Game::instance().getKey(GLFW_KEY_LEFT);
+	bool rightPressed = Game::instance().getKey(GLFW_KEY_RIGHT);
 	bool skipMovement = false;
 
 	// Attack with SPACE
@@ -159,28 +171,56 @@ void Player::update(int deltaTime)
 		// Only skip horizontal movement, but keep gravity/jump physics running
 	}
 
-	// Climbing logic
-	if(!skipMovement && onLadder && (Game::instance().getKey(GLFW_KEY_UP) || Game::instance().getKey(GLFW_KEY_DOWN)))
+	// Climbing logic:
+	// - Stay attached to ladder while overlapping it
+	// - Move only with UP/DOWN
+	// - Hold position when no vertical input
+	if(!skipMovement && onLadder && !bAttacking && !bJumping)
 	{
+		bool ladderJumpLeft = upPressed && leftPressed && !rightPressed;
+		bool ladderJumpRight = upPressed && rightPressed && !leftPressed;
+		bool detachLeftOrRight = (leftPressed || rightPressed) && !upPressed;
+
+		if(ladderJumpLeft || ladderJumpRight)
+		{
+			bClimbing = false;
+			bJumping = true;
+			jumpAngle = 0;
+			startY = posPlayer.y;
+			facingLeft = ladderJumpLeft;
+			sprite->setFlipHorizontal(facingLeft);
+			sprite->changeAnimation(JUMP_UP);
+		}
+		else if(detachLeftOrRight)
+		{
+			bClimbing = false;
+		}
+		else
+		{
 		if(!bClimbing)
 		{
 			bClimbing = true;
-			bJumping = false;
 			sprite->changeAnimation(CLIMB_STAIRS);
 		}
-		if(Game::instance().getKey(GLFW_KEY_UP))
+
+		// Keep the player centered on ladder column to avoid side-wall collisions.
+		int tileSize = map->getTileSize();
+		int ladderCol = (posPlayer.x + Player::HITBOX_WIDTH / 2) / tileSize;
+		posPlayer.x = ladderCol * tileSize + (tileSize - Player::HITBOX_WIDTH) / 2;
+
+		if(upPressed)
 		{
 			posPlayer.y -= 2;
-			if(map->checkCollision(posPlayer, glm::ivec2(PLAYER_HITBOX_WIDTH, PLAYER_HITBOX_HEIGHT), CollisionDir::UP, &posPlayer.y))
-				posPlayer.y += 2;
+			map->checkCollision(posPlayer, glm::ivec2(Player::HITBOX_WIDTH, Player::HITBOX_HEIGHT), CollisionDir::UP, &posPlayer.y);
 		}
-		if(Game::instance().getKey(GLFW_KEY_DOWN))
+		else if(downPressed)
 		{
 			posPlayer.y += 2;
-			if(map->checkCollision(posPlayer, glm::ivec2(PLAYER_HITBOX_WIDTH, PLAYER_HITBOX_HEIGHT), CollisionDir::DOWN, &posPlayer.y))
-				posPlayer.y -= 2;
+			map->checkCollision(posPlayer, glm::ivec2(Player::HITBOX_WIDTH, Player::HITBOX_HEIGHT), CollisionDir::DOWN, &posPlayer.y);
 		}
+
 		skipMovement = true;
+		}
 	}
 	else if(bClimbing && !skipMovement)
 	{
@@ -191,7 +231,7 @@ void Player::update(int deltaTime)
 	// Horizontal movement (blocked during attack and climbing)
 	if(!skipMovement && !bAttacking)
 	{
-		if(Game::instance().getKey(GLFW_KEY_LEFT))
+		if(leftPressed && !rightPressed)
 		{
 			facingLeft = true;
 			sprite->setFlipHorizontal(true);
@@ -200,12 +240,11 @@ void Player::update(int deltaTime)
 			posPlayer.x -= 3;
 			if(map->checkCollision(posPlayer, glm::ivec2(Player::HITBOX_WIDTH, Player::HITBOX_HEIGHT), CollisionDir::LEFT, &posPlayer.x))
 			{
-				posPlayer.x += 3;
 				if(!bJumping)
 					sprite->changeAnimation(STAND_LEFT);
 			}
 		}
-		else if(Game::instance().getKey(GLFW_KEY_RIGHT))
+		else if(rightPressed && !leftPressed)
 		{
 			facingLeft = false;
 			sprite->setFlipHorizontal(false);
@@ -214,7 +253,6 @@ void Player::update(int deltaTime)
 			posPlayer.x += 3;
 			if(map->checkCollision(posPlayer, glm::ivec2(Player::HITBOX_WIDTH, Player::HITBOX_HEIGHT), CollisionDir::RIGHT, &posPlayer.x))
 			{
-				posPlayer.x -= 3;
 				if(!bJumping)
 					sprite->changeAnimation(STAND_RIGHT);
 			}
@@ -269,7 +307,7 @@ void Player::update(int deltaTime)
 			else
 			{
 				posPlayer.y = int(startY - JUMP_HEIGHT * sin(3.14159f * jumpAngle / 180.f));
-				if(jumpAngle < 90 && map->checkCollision(posPlayer, glm::ivec2(PLAYER_HITBOX_WIDTH, PLAYER_HITBOX_HEIGHT), CollisionDir::UP, &posPlayer.y))
+				if(jumpAngle < 90 && map->checkCollision(posPlayer, glm::ivec2(Player::HITBOX_WIDTH, Player::HITBOX_HEIGHT), CollisionDir::UP, &posPlayer.y))
 				{
 					jumpAngle = 90;
 					startY = posPlayer.y + JUMP_HEIGHT;
@@ -277,15 +315,16 @@ void Player::update(int deltaTime)
 						sprite->changeAnimation(JUMP_FALL);
 				}
 				if(jumpAngle > 90)
-					bJumping = !map->checkCollision(posPlayer, glm::ivec2(32, 32), CollisionDir::DOWN, &posPlayer.y);
+					bJumping = !map->checkCollision(posPlayer, glm::ivec2(Player::HITBOX_WIDTH, Player::HITBOX_HEIGHT), CollisionDir::DOWN, &posPlayer.y);
 			}
 		}
 		else
 		{
 			posPlayer.y += FALL_STEP;
-			if(map->checkCollision(posPlayer, glm::ivec2(32, 32), CollisionDir::DOWN, &posPlayer.y))
+			bool dropThrough = downPressed && !onLadder;
+			if(map->checkCollision(posPlayer, glm::ivec2(Player::HITBOX_WIDTH, Player::HITBOX_HEIGHT), CollisionDir::DOWN, &posPlayer.y, dropThrough))
 			{
-				if(Game::instance().getKey(GLFW_KEY_UP) && !onLadder && !bAttacking)
+				if(upPressed && !onLadder && !bAttacking)
 				{
 					bJumping = true;
 					jumpAngle = 0;
@@ -297,15 +336,15 @@ void Player::update(int deltaTime)
 		}
 	}
 
-	float renderOffsetX = 0.5f * float(PLAYER_FRAME_WIDTH - PLAYER_HITBOX_WIDTH);
-	float renderOffsetY = float(PLAYER_FRAME_HEIGHT - PLAYER_HITBOX_HEIGHT);
+	float renderOffsetX = 0.5f * float(PLAYER_FRAME_WIDTH - Player::HITBOX_WIDTH);
+	float renderOffsetY = float(PLAYER_FRAME_HEIGHT - Player::HITBOX_HEIGHT);
 	sprite->setPosition(glm::vec2(float(tileMapDispl.x + posPlayer.x) - renderOffsetX, float(tileMapDispl.y + posPlayer.y) - renderOffsetY));
 
-	// Position attack sprite: feet at quad bottom (y=104), aligned with hitbox bottom
-	// quadBottom = spritePos.y + 104 = posPlayer.y + 32  →  spritePos.y = posPlayer.y - 72
-	// Body center x at 48 in quad, hitbox center at posPlayer.x + 16  →  spritePos.x = posPlayer.x - 32
-	float atkRenderOffsetX = 32.f;
-	float atkRenderOffsetY = 72.f;
+	// Position attack sprite with feet aligned to hitbox bottom.
+	// hitbox bottom = posPlayer.y + 64, attack quad height = 92 -> sprite.y = posPlayer.y - 28
+	// attack quad width = 64, hitbox width = 32 (centered) -> sprite.x = posPlayer.x - 16
+	float atkRenderOffsetX = 16.f;
+	float atkRenderOffsetY = 28.f;
 	attackSprite->setFlipHorizontal(facingLeft);
 	attackSprite->setPosition(glm::vec2(float(tileMapDispl.x + posPlayer.x) - atkRenderOffsetX, float(tileMapDispl.y + posPlayer.y) - atkRenderOffsetY));
 }
