@@ -28,7 +28,18 @@ void mouse_button_callback(GLFWwindow* window, int button, int action, int mods)
 }
 
 void framebuffer_size_callback(GLFWwindow* window, int width, int height) {
-    glViewport(0, 0, width, height);
+	float targetAspect = float(SCREEN_WIDTH) / float(SCREEN_HEIGHT);
+	int viewportWidth = width;
+	int viewportHeight = int(float(viewportWidth) / targetAspect);
+
+	if (viewportHeight > height) {
+		viewportHeight = height;
+		viewportWidth = int(float(viewportHeight) * targetAspect);
+	}
+
+	int viewportX = (width - viewportWidth) / 2;
+	int viewportY = (height - viewportHeight) / 2;
+	glViewport(viewportX, viewportY, viewportWidth, viewportHeight);
 }
 
 int main(void)
@@ -70,6 +81,11 @@ int main(void)
 	/* Init glew to have access to GL extensions */
 	glewExperimental = GL_TRUE;
 	glewInit();
+
+	int fbWidth = 0;
+	int fbHeight = 0;
+	glfwGetFramebufferSize(window, &fbWidth, &fbHeight);
+	framebuffer_size_callback(window, fbWidth, fbHeight);
 
 	/* Init step of the game loop */
 	Game::instance().init();

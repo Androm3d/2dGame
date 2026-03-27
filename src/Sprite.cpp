@@ -2,6 +2,8 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include "Sprite.h"
 
+glm::vec2 Sprite::globalRenderOffset = glm::vec2(0.f, 0.f);
+
 
 Sprite *Sprite::createSprite(const glm::vec2 &quadSize, const glm::vec2 &sizeInSpritesheet, Texture *spritesheet, ShaderProgram *program)
 {
@@ -70,7 +72,7 @@ void Sprite::update(int deltaTime)
 
 void Sprite::render() const
 {
-	glm::mat4 modelview = glm::translate(glm::mat4(1.0f), glm::vec3(position.x, position.y, 0.f));
+	glm::mat4 modelview = glm::translate(glm::mat4(1.0f), glm::vec3(position.x + globalRenderOffset.x, position.y + globalRenderOffset.y, 0.f));
 	if(flipHorizontal)
 	{
 		modelview = glm::translate(modelview, glm::vec3(quadSize.x, 0.f, 0.f));
@@ -151,6 +153,11 @@ void Sprite::setFlipHorizontal(bool flip)
 void Sprite::setPosition(const glm::vec2 &pos)
 {
 	position = pos;
+}
+
+void Sprite::setGlobalRenderOffset(const glm::vec2 &offset)
+{
+	globalRenderOffset = offset;
 }
 
 

@@ -38,6 +38,7 @@ public:
 	void setFlipHorizontal(bool flip);
 	glm::vec2 getPosition() const { return position; }
 	void setPosition(const glm::vec2 &pos);
+	static void setGlobalRenderOffset(const glm::vec2 &offset);
 
 private:
 	Texture *texture;
@@ -52,6 +53,7 @@ private:
 	glm::vec2 texCoordDispl;
 	bool flipHorizontal;
 	vector<AnimKeyframes> animations;
+	static glm::vec2 globalRenderOffset;
 
 };
 

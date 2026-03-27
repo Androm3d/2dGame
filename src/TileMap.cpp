@@ -2,11 +2,36 @@
 #include <fstream>
 #include <sstream>
 #include <vector>
+#include <unordered_set>
 #include "TileMap.h"
 #include "../external/json/nlohmann/json.hpp"
 
 using namespace std;
 using json = nlohmann::json;
+
+namespace {
+bool openWithFallback(ifstream &fin, const string &path, string &resolvedPath)
+{
+	fin.clear();
+	fin.open(path.c_str());
+	if(fin.is_open())
+	{
+		resolvedPath = path;
+		return true;
+	}
+
+	const string fallback = "../" + path;
+	fin.clear();
+	fin.open(fallback.c_str());
+	if(fin.is_open())
+	{
+		resolvedPath = fallback;
+		return true;
+	}
+
+	return false;
+}
+}
 
 TileMap *TileMap::createTileMap(const string &levelFile, const glm::vec2 &minCoords, ShaderProgram &program)
 {
@@ -14,17 +39,78 @@ TileMap *TileMap::createTileMap(const string &levelFile, const glm::vec2 &minCoo
 	return map;
 }
 
+int TileMap::countKeysInLevelFile(const std::string &levelFile)
+{
+	if (levelFile.length() < 5 || levelFile.substr(levelFile.length() - 5) != ".json")
+		return 0;
+
+	ifstream fin;
+	string resolvedPath;
+	if (!openWithFallback(fin, levelFile, resolvedPath)) {
+		cout << "Warning: Could not open JSON file for key count: " << levelFile << endl;
+		return 0;
+	}
+
+	json j;
+	fin >> j;
+
+	std::unordered_set<int> keyTileIds;
+	for (const auto &tileset : j["tilesets"]) {
+		int firstgid = tileset.value("firstgid", 1);
+		if (!tileset.contains("tiles"))
+			continue;
+
+		for (const auto &tile : tileset["tiles"]) {
+			if (!tile.contains("properties"))
+				continue;
+
+			for (const auto &prop : tile["properties"]) {
+				if (prop.value("name", "") == "type" && prop.value("value", "") == "KEY") {
+					int localId = tile.value("id", -1);
+					if (localId >= 0)
+						keyTileIds.insert(firstgid + localId);
+				}
+			}
+		}
+	}
+
+	int keyCount = 0;
+	if (j.contains("layers") && !j["layers"].empty() && j["layers"][0].contains("data")) {
+		for (const auto &raw : j["layers"][0]["data"]) {
+			int tileId = int(raw) & 0x1FFFFFFF;
+			if (keyTileIds.find(tileId) != keyTileIds.end())
+				keyCount++;
+		}
+	}
+
+	return keyCount;
+}
+
 
 TileMap::TileMap(const string &levelFile, const glm::vec2 &minCoords, ShaderProgram &program)
 {
+	vao = 0;
+	vbo = 0;
+	posLocation = -1;
+	texCoordLocation = -1;
+	nTiles = 0;
+	map = NULL;
+	mapSize = glm::ivec2(0);
+	tilesheetSize = glm::ivec2(1);
+	tileSize = 1;
+	blockSize = 1;
+	tileTexSize = glm::vec2(1.f, 1.f);
+
+	bool loaded = false;
 
     if (levelFile.length() >= 5 && levelFile.substr(levelFile.length() - 5) == ".json") {
-        loadLevelJSON(levelFile);
+        loaded = loadLevelJSON(levelFile);
     } else {
-        loadLevel(levelFile); 
+        loaded = loadLevel(levelFile);
     }
-    
-    prepareArrays(minCoords, program);
+
+	if(loaded)
+		prepareArrays(minCoords, program);
 }
 
 TileMap::~TileMap()
@@ -59,6 +145,9 @@ TileType TileMap::getTileTypeAtPos(const glm::ivec2 &pos) const
 
 void TileMap::render() const
 {
+	if(nTiles <= 0 || vao == 0)
+		return;
+
 	glEnable(GL_TEXTURE_2D);
 	tilesheet.use();
 	glBindVertexArray(vao);
@@ -76,8 +165,9 @@ void TileMap::free()
 
 bool TileMap::loadLevelJSON(const string &levelFile)
 {
-    ifstream fin(levelFile.c_str());
-    if(!fin.is_open()) {
+	ifstream fin;
+	string resolvedPath;
+	if(!openWithFallback(fin, levelFile, resolvedPath)) {
         cout << "Error: Could not open JSON file: " << levelFile << endl;
         return false;
     }
@@ -90,6 +180,18 @@ bool TileMap::loadLevelJSON(const string &levelFile)
     mapSize.y = j["height"];
     tileSize = j["tilewidth"];
     blockSize = tileSize;
+
+    // Room size fallback (default view layout)
+    roomSize = glm::ivec2(20, 10);
+    if (j.contains("properties")) {
+        for (const auto& prop : j["properties"]) {
+            if (prop["name"] == "roomWidth") {
+                roomSize.x = prop["value"];
+            } else if (prop["name"] == "roomHeight") {
+                roomSize.y = prop["value"];
+            }
+        }
+    }
 
     // --- SAFELY READ TILESET INFO ---
     string rawImagePath;
@@ -114,7 +216,7 @@ bool TileMap::loadLevelJSON(const string &levelFile)
     // Robust Image Path Handling
     size_t lastSlash = rawImagePath.find_last_of("/\\");
     string filename = (lastSlash == string::npos) ? rawImagePath : rawImagePath.substr(lastSlash + 1);
-    string tilesheetFile = "images/" + filename;
+    string tilesheetFile = "../images/" + filename;
     
     tilesheetSize.x = imgWidth / tileSize;
     tilesheetSize.y = imgHeight / tileSize;
@@ -246,9 +348,9 @@ bool TileMap::loadLevel(const string &levelFile)
 	string line, tilesheetFile;
 	stringstream sstream;
 	char tile;
+	string resolvedPath;
 	
-	fin.open(levelFile.c_str());
-	if(!fin.is_open())
+	if(!openWithFallback(fin, levelFile, resolvedPath))
 		return false;
 	getline(fin, line);
 	if(line.compare(0, 7, "TILEMAP") != 0)
@@ -295,6 +397,9 @@ bool TileMap::loadLevel(const string &levelFile)
 
 void TileMap::prepareArrays(const glm::vec2 &minCoords, ShaderProgram &program)
 {
+	if(map == NULL || mapSize.x <= 0 || mapSize.y <= 0)
+		return;
+
 	int tile;
 	glm::vec2 posTile, texCoordTile[2], halfTexel;
 	vector<float> vertices;
@@ -348,6 +453,7 @@ void TileMap::prepareArrays(const glm::vec2 &minCoords, ShaderProgram &program)
 bool TileMap::checkCollision(const glm::ivec2 &pos, const glm::ivec2 &size, CollisionDir dir, int *correctedPos, bool dropThrough) const
 {
 	int x0, x1, y0, y1;
+	const int sideShave = 2;
 	
 	x0 = pos.x / tileSize;
 	x1 = (pos.x + size.x - 1) / tileSize;
@@ -359,9 +465,9 @@ bool TileMap::checkCollision(const glm::ivec2 &pos, const glm::ivec2 &size, Coll
 
 	switch (dir) {
 		case CollisionDir::LEFT:
-			// SHAVE 1 PIXEL OFF TOP AND BOTTOM:
-			y0 = (pos.y + 1) / tileSize;
-			y1 = (pos.y + size.y - 2) / tileSize;
+			// Shave a couple pixels top/bottom to avoid snagging on tile seams while moving sideways.
+			y0 = (pos.y + sideShave) / tileSize;
+			y1 = (pos.y + size.y - 1 - sideShave) / tileSize;
 			
 			for (int y = y0; y <= y1; y++) {
 				if (getTileType(map[y * mapSize.x + x0]) == TileType::SOLID) {
@@ -372,9 +478,8 @@ bool TileMap::checkCollision(const glm::ivec2 &pos, const glm::ivec2 &size, Coll
 			break;
 
 		case CollisionDir::RIGHT:
-			// SHAVE 1 PIXEL OFF TOP AND BOTTOM:
-			y0 = (pos.y + 1) / tileSize;
-			y1 = (pos.y + size.y - 2) / tileSize;
+			y0 = (pos.y + sideShave) / tileSize;
+			y1 = (pos.y + size.y - 1 - sideShave) / tileSize;
 			
 			for (int y = y0; y <= y1; y++) {
 				if (getTileType(map[y * mapSize.x + x1]) == TileType::SOLID) {

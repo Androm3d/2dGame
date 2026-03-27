@@ -1,4 +1,6 @@
 #include <SOIL.h>
+#include <vector>
+#include <iostream>
 #include "Texture.h"
 
 
@@ -25,37 +27,67 @@ Texture::~Texture()
 bool Texture::loadFromFile(const string &filename, PixelFormat format)
 {
 	unsigned char *image = NULL;
+	int loadedWidth = 0;
+	int loadedHeight = 0;
+
+	// Try common runtime working directories (project root and build/).
+	vector<string> candidates;
+	candidates.push_back(filename);
+	if(filename.compare(0, 3, "../") != 0)
+		candidates.push_back("../" + filename);
 	
-	switch(format)
+	for(const string &candidate : candidates)
 	{
-	case TEXTURE_PIXEL_FORMAT_RGB:
-		image = SOIL_load_image(filename.c_str(), &widthTex, &heightTex, 0, SOIL_LOAD_RGB);
-		break;
-	case TEXTURE_PIXEL_FORMAT_RGBA:
-		image = SOIL_load_image(filename.c_str(), &widthTex, &heightTex, 0, SOIL_LOAD_RGBA);
-		break;
+		switch(format)
+		{
+		case TEXTURE_PIXEL_FORMAT_RGB:
+			image = SOIL_load_image(candidate.c_str(), &loadedWidth, &loadedHeight, 0, SOIL_LOAD_RGB);
+			break;
+		case TEXTURE_PIXEL_FORMAT_RGBA:
+			image = SOIL_load_image(candidate.c_str(), &loadedWidth, &loadedHeight, 0, SOIL_LOAD_RGBA);
+			break;
+		}
+		if(image != NULL)
+			break;
 	}
+
 	if(image == NULL)
+	{
+		cerr << "Texture load failed: " << filename << endl;
 		return false;
-	glGenTextures(1, &texId);
-	glBindTexture(GL_TEXTURE_2D, texId);
+}
+
+	GLuint newTexId = 0;
+	glGenTextures(1, &newTexId);
+	glBindTexture(GL_TEXTURE_2D, newTexId);
 	switch(format)
 	{
 	case TEXTURE_PIXEL_FORMAT_RGB:
-		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, widthTex, heightTex, 0, GL_RGB, GL_UNSIGNED_BYTE, image);
+		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, loadedWidth, loadedHeight, 0, GL_RGB, GL_UNSIGNED_BYTE, image);
 		break;
 	case TEXTURE_PIXEL_FORMAT_RGBA:
-		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, widthTex, heightTex, 0, GL_RGBA, GL_UNSIGNED_BYTE, image);
+		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, loadedWidth, loadedHeight, 0, GL_RGBA, GL_UNSIGNED_BYTE, image);
 		break;
 	}
 	glGenerateMipmap(GL_TEXTURE_2D);
 	SOIL_free_image_data(image);
+
+	if(texId != 0)
+		glDeleteTextures(1, &texId);
+	texId = newTexId;
+	widthTex = loadedWidth;
+	heightTex = loadedHeight;
 	
 	return true;
 }
 
 void Texture::loadFromGlyphBuffer(unsigned char *buffer, int width, int height)
 {
+	if(texId != 0)
+	{
+		glDeleteTextures(1, &texId);
+		texId = 0;
+	}
 	glGenTextures(1, &texId);
 	glBindTexture(GL_TEXTURE_2D, texId);
 	glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
@@ -66,6 +98,11 @@ void Texture::loadFromGlyphBuffer(unsigned char *buffer, int width, int height)
 
 void Texture::createEmptyTexture(int width, int height)
 {
+	if(texId != 0)
+	{
+		glDeleteTextures(1, &texId);
+		texId = 0;
+	}
 	glGenTextures(1, &texId);
 	glBindTexture(GL_TEXTURE_2D, texId);
 	glPixelStorei(GL_UNPACK_ALIGNMENT, 1);

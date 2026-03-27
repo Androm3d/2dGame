@@ -10,6 +10,7 @@
 #define FALL_STEP 4
 #define PLAYER_FRAME_WIDTH 32
 #define PLAYER_FRAME_HEIGHT 64
+#define PLAYER_VISUAL_SCALE_X 1.2f
 #define PLAYER_RUN_ANIM_FRAMES 8
 #define PLAYER_JUMP_UP_ANIM_FRAMES 4
 #define PLAYER_JUMP_FALL_ANIM_FRAMES 4
@@ -18,6 +19,7 @@
 #define PLAYER_ATTACK_ANIM_FRAMES 5
 #define PLAYER_ATTACK_FRAME_WIDTH 64
 #define PLAYER_ATTACK_FRAME_HEIGHT 92
+#define PLAYER_ATTACK_VISUAL_SCALE_X 1.2f
 #define PLAYER_CLIMB_ANIM_FRAMES 2
 
 #define ROW_RUN_TOP_PX 0
@@ -63,7 +65,8 @@ void Player::init(const glm::ivec2 &tileMapPos, ShaderProgram &shaderProgram)
 		float(PLAYER_FRAME_WIDTH) / float(spritesheet.width()),
 		float(PLAYER_FRAME_HEIGHT) / float(spritesheet.height())
 	);
-	sprite = Sprite::createSprite(glm::ivec2(PLAYER_FRAME_WIDTH, PLAYER_FRAME_HEIGHT), frameSizeInTexture, &spritesheet, &shaderProgram);
+	float visualFrameWidth = float(PLAYER_FRAME_WIDTH) * PLAYER_VISUAL_SCALE_X;
+	sprite = Sprite::createSprite(glm::vec2(visualFrameWidth, float(PLAYER_FRAME_HEIGHT)), frameSizeInTexture, &spritesheet, &shaderProgram);
 	sprite->setNumberAnimations(8);
 
 	sprite->setAnimationSpeed(STAND_LEFT, 8);
@@ -124,7 +127,8 @@ void Player::init(const glm::ivec2 &tileMapPos, ShaderProgram &shaderProgram)
 		float(PLAYER_ATTACK_FRAME_WIDTH) / texW,
 		float(PLAYER_ATTACK_FRAME_HEIGHT) / texH
 	);
-	attackSprite = Sprite::createSprite(glm::ivec2(PLAYER_ATTACK_FRAME_WIDTH, PLAYER_ATTACK_FRAME_HEIGHT), attackFrameSize, &spritesheet, &shaderProgram);
+	float visualAttackFrameWidth = float(PLAYER_ATTACK_FRAME_WIDTH) * PLAYER_ATTACK_VISUAL_SCALE_X;
+	attackSprite = Sprite::createSprite(glm::vec2(visualAttackFrameWidth, float(PLAYER_ATTACK_FRAME_HEIGHT)), attackFrameSize, &spritesheet, &shaderProgram);
 	attackSprite->setNumberAnimations(1);
 	attackSprite->setAnimationSpeed(0, 18);
 	attackSprite->setAnimationLoop(0, false);
@@ -140,7 +144,7 @@ void Player::init(const glm::ivec2 &tileMapPos, ShaderProgram &shaderProgram)
 	sprite->changeAnimation(0);
 	sprite->setFlipHorizontal(false);
 	tileMapDispl = tileMapPos;
-	float renderOffsetX = 0.5f * float(PLAYER_FRAME_WIDTH - Player::HITBOX_WIDTH);
+	float renderOffsetX = 0.5f * (float(PLAYER_FRAME_WIDTH) * PLAYER_VISUAL_SCALE_X - float(Player::HITBOX_WIDTH));
 	float renderOffsetY = float(PLAYER_FRAME_HEIGHT - Player::HITBOX_HEIGHT);
 	sprite->setPosition(glm::vec2(float(tileMapDispl.x + posPlayer.x) - renderOffsetX, float(tileMapDispl.y + posPlayer.y) - renderOffsetY));
 
@@ -231,18 +235,25 @@ void Player::update(int deltaTime)
 	// Horizontal movement (blocked during attack and climbing)
 	if(!skipMovement && !bAttacking)
 	{
+		const int walkSpeed = 3;
 		if(leftPressed && !rightPressed)
 		{
 			facingLeft = true;
 			sprite->setFlipHorizontal(true);
 			if(!bJumping && sprite->animation() != MOVE_LEFT)
 				sprite->changeAnimation(MOVE_LEFT);
-			posPlayer.x -= 3;
-			if(map->checkCollision(posPlayer, glm::ivec2(Player::HITBOX_WIDTH, Player::HITBOX_HEIGHT), CollisionDir::LEFT, &posPlayer.x))
+			bool hitWall = false;
+			for(int step = 0; step < walkSpeed; ++step)
 			{
-				if(!bJumping)
-					sprite->changeAnimation(STAND_LEFT);
+				posPlayer.x -= 1;
+				if(map->checkCollision(posPlayer, glm::ivec2(Player::HITBOX_WIDTH, Player::HITBOX_HEIGHT), CollisionDir::LEFT, &posPlayer.x))
+				{
+					hitWall = true;
+					break;
+				}
 			}
+			if(hitWall && !bJumping)
+				sprite->changeAnimation(STAND_LEFT);
 		}
 		else if(rightPressed && !leftPressed)
 		{
@@ -250,12 +261,18 @@ void Player::update(int deltaTime)
 			sprite->setFlipHorizontal(false);
 			if(!bJumping && sprite->animation() != MOVE_RIGHT)
 				sprite->changeAnimation(MOVE_RIGHT);
-			posPlayer.x += 3;
-			if(map->checkCollision(posPlayer, glm::ivec2(Player::HITBOX_WIDTH, Player::HITBOX_HEIGHT), CollisionDir::RIGHT, &posPlayer.x))
+			bool hitWall = false;
+			for(int step = 0; step < walkSpeed; ++step)
 			{
-				if(!bJumping)
-					sprite->changeAnimation(STAND_RIGHT);
+				posPlayer.x += 1;
+				if(map->checkCollision(posPlayer, glm::ivec2(Player::HITBOX_WIDTH, Player::HITBOX_HEIGHT), CollisionDir::RIGHT, &posPlayer.x))
+				{
+					hitWall = true;
+					break;
+				}
 			}
+			if(hitWall && !bJumping)
+				sprite->changeAnimation(STAND_RIGHT);
 		}
 		else if(!bJumping)
 		{
@@ -333,15 +350,15 @@ void Player::update(int deltaTime)
 		}
 	}
 
-	float renderOffsetX = 0.5f * float(PLAYER_FRAME_WIDTH - Player::HITBOX_WIDTH);
+	float renderOffsetX = 0.5f * (float(PLAYER_FRAME_WIDTH) * PLAYER_VISUAL_SCALE_X - float(Player::HITBOX_WIDTH));
 	float renderOffsetY = float(PLAYER_FRAME_HEIGHT - Player::HITBOX_HEIGHT);
 	sprite->setPosition(glm::vec2(float(tileMapDispl.x + posPlayer.x) - renderOffsetX, float(tileMapDispl.y + posPlayer.y) - renderOffsetY));
 
 	// Position attack sprite with feet aligned to hitbox bottom.
 	// hitbox bottom = posPlayer.y + 64, attack quad height = 92 -> sprite.y = posPlayer.y - 28
 	// attack quad width = 64, hitbox width = 32 (centered) -> sprite.x = posPlayer.x - 16
-	float atkRenderOffsetX = 16.f;
-	float atkRenderOffsetY = 28.f;
+	float atkRenderOffsetX = 0.5f * (float(PLAYER_ATTACK_FRAME_WIDTH) * PLAYER_ATTACK_VISUAL_SCALE_X - float(Player::HITBOX_WIDTH));
+	float atkRenderOffsetY = float(PLAYER_ATTACK_FRAME_HEIGHT - Player::HITBOX_HEIGHT);
 	attackSprite->setFlipHorizontal(facingLeft);
 	attackSprite->setPosition(glm::vec2(float(tileMapDispl.x + posPlayer.x) - atkRenderOffsetX, float(tileMapDispl.y + posPlayer.y) - atkRenderOffsetY));
 }
@@ -371,7 +388,7 @@ glm::vec4 Player::getAttackHitbox() const
 void Player::setPosition(const glm::vec2 &pos)
 {
 	posPlayer = pos;
-	float renderOffsetX = 0.5f * float(PLAYER_FRAME_WIDTH - Player::HITBOX_WIDTH);
+	float renderOffsetX = 0.5f * (float(PLAYER_FRAME_WIDTH) * PLAYER_VISUAL_SCALE_X - float(Player::HITBOX_WIDTH));
 	float renderOffsetY = float(PLAYER_FRAME_HEIGHT - Player::HITBOX_HEIGHT);
 	sprite->setPosition(glm::vec2(float(tileMapDispl.x + posPlayer.x) - renderOffsetX, float(tileMapDispl.y + posPlayer.y) - renderOffsetY));
 }

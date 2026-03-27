@@ -1,22 +1,25 @@
 { "compressionlevel":-1,
- "height":7,
+ "height":10,
  "infinite":false,
  "layers":[
         {
-         "data":[0, 0, 0, 0, 0, 0, 0, 0, 112, 75, 0, 0, 0, 0, 0,
-            0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 109, 0,
-            0, 68, 250, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 86, 0,
-            97, 76, 97, 97, 0, 0, 0, 86, 0, 0, 67, 107, 0, 0, 0,
-            4, 4, 5, 6, 7, 8, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-            12, 13, 13, 14, 65, 66, 66, 66, 66, 65, 66, 66, 66, 66, 66,
-            12, 12, 13, 14, 73, 74, 74, 74, 74, 73, 74, 74, 74, 74, 74],
-         "height":7,
+         "data":[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+            0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+            0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+            0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+            0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+            0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+            0, 0, 68, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+            0, 0, 76, 0, 0, 0, 0, 0, 0, 0, 110, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+            4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4,
+            13, 13, 13, 13, 13, 13, 13, 13, 13, 13, 13, 13, 13, 13, 13, 13, 13, 13, 13, 13],
+         "height":10,
          "id":1,
          "name":"Tile Layer 1",
          "opacity":1,
          "type":"tilelayer",
          "visible":true,
-         "width":15,
+         "width":20,
          "x":0,
          "y":0
         }],
@@ -173,8 +176,7 @@
                          "type":"string",
                          "value":"SOLID"
                         }]
-                },
-            
+                }, 
                 {
                  "id":20,
                  "properties":[
@@ -219,7 +221,8 @@
                          "type":"string",
                          "value":"SOLID"
                         }]
-                }, 
+                },
+            
                 {
                  "id":27,
                  "properties":[
@@ -309,8 +312,7 @@
                          "type":"string",
                          "value":"SOLID"
                         }]
-                },
-            
+                }, 
                 {
                  "id":41,
                  "properties":[
@@ -400,7 +402,8 @@
                          "type":"string",
                          "value":"SOLID"
                         }]
-                }, 
+                },
+            
                 {
                  "id":53,
                  "properties":[
@@ -445,594 +448,7 @@
                          "type":"string",
                          "value":"SOLID"
                         }]
-                },
-            
-                {
-                 "id":60,
-                 "properties":[
-                        {
-                         "name":"type",
-                         "type":"string",
-                         "value":"SOLID"
-                        }]
                 }, 
-                {
-                 "id":61,
-                 "properties":[
-                        {
-                         "name":"type",
-                         "type":"string",
-                         "value":"SOLID"
-                        }]
-                }, 
-                {
-                 "id":62,
-                 "properties":[
-                        {
-                         "name":"type",
-                         "type":"string",
-                         "value":"SOLID"
-                        }]
-                }, 
-                {
-                 "id":66,
-                 "properties":[
-                        {
-                         "name":"type",
-                         "type":"string",
-                         "value":"LADDER"
-                        }]
-                }, 
-                {
-                 "id":74,
-                 "properties":[
-                        {
-                         "name":"type",
-                         "type":"string",
-                         "value":"LADDER"
-                        }]
-                }, 
-                {
-                 "id":75,
-                 "properties":[
-                        {
-                         "name":"type",
-                         "type":"string",
-                         "value":"DOOR"
-                        }]
-                }, 
-                {
-                 "id":76,
-                 "properties":[
-                        {
-                         "name":"type",
-                         "type":"string",
-                         "value":"PORTAL"
-                        }]
-                }, 
-                {
-                 "id":84,
-                 "properties":[
-                        {
-                         "name":"type",
-                         "type":"string",
-                         "value":"ONE_WAY_PLATFORM"
-                        }]
-                }, 
-                {
-                 "id":85,
-                 "properties":[
-                        {
-                         "name":"type",
-                         "type":"string",
-                         "value":"ONE_WAY_PLATFORM"
-                        }]
-                }, 
-                {
-                 "id":86,
-                 "properties":[
-                        {
-                         "name":"type",
-                         "type":"string",
-                         "value":"ONE_WAY_PLATFORM"
-                        }]
-                }, 
-                {
-                 "id":90,
-                 "properties":[
-                        {
-                         "name":"type",
-                         "type":"string",
-                         "value":"ONE_WAY_PLATFORM"
-                        }]
-                }, 
-                {
-                 "id":91,
-                 "properties":[
-                        {
-                         "name":"type",
-                         "type":"string",
-                         "value":"ONE_WAY_PLATFORM"
-                        }]
-                }, 
-                {
-                 "id":106,
-                 "properties":[
-                        {
-                         "name":"type",
-                         "type":"string",
-                         "value":"ONE_WAY_PLATFORM"
-                        }]
-                }, 
-                {
-                 "id":108,
-                 "properties":[
-                        {
-                         "name":"type",
-                         "type":"string",
-                         "value":"KEY"
-                        }]
-                }, 
-                {
-                 "id":109,
-                 "properties":[
-                        {
-                         "name":"type",
-                         "type":"string",
-                         "value":"SWORD"
-                        }]
-                },
-            
-                {
-                 "id":110,
-                 "properties":[
-                        {
-                         "name":"type",
-                         "type":"string",
-                         "value":"HEAL"
-                        }]
-                }, 
-                {
-                 "id":111,
-                 "properties":[
-                        {
-                         "name":"type",
-                         "type":"string",
-                         "value":"SHIELD"
-                        }]
-                }, 
-                {
-                 "id":112,
-                 "properties":[
-                        {
-                         "name":"type",
-                         "type":"string",
-                         "value":"WEIGHT"
-                        }]
-                }],
-         "tilewidth":32,
-         "transparentcolor":"#ffffff"
-        }, 
-        {
-         "columns":8,
-         "firstgid":137,
-         "image":"..\/images\/tiles.png",
-         "imageheight":544,
-         "imagewidth":256,
-         "margin":0,
-         "name":"tiles",
-         "spacing":0,
-         "tilecount":136,
-         "tileheight":32,
-         "tiles":[
-                {
-                 "id":1,
-                 "properties":[
-                        {
-                         "name":"type",
-                         "type":"string",
-                         "value":"SOLID"
-                        }]
-                }, 
-                {
-                 "id":2,
-                 "properties":[
-                        {
-                         "name":"type",
-                         "type":"string",
-                         "value":"SOLID"
-                        }]
-                }, 
-                {
-                 "id":3,
-                 "properties":[
-                        {
-                         "name":"type",
-                         "type":"string",
-                         "value":"SOLID"
-                        }]
-                }, 
-                {
-                 "id":4,
-                 "properties":[
-                        {
-                         "name":"type",
-                         "type":"string",
-                         "value":"SOLID"
-                        }]
-                }, 
-                {
-                 "id":5,
-                 "properties":[
-                        {
-                         "name":"type",
-                         "type":"string",
-                         "value":"SOLID"
-                        }]
-                }, 
-                {
-                 "id":6,
-                 "properties":[
-                        {
-                         "name":"type",
-                         "type":"string",
-                         "value":"SOLID"
-                        }]
-                }, 
-                {
-                 "id":9,
-                 "properties":[
-                        {
-                         "name":"type",
-                         "type":"string",
-                         "value":"SOLID"
-                        }]
-                }, 
-                {
-                 "id":10,
-                 "properties":[
-                        {
-                         "name":"type",
-                         "type":"string",
-                         "value":"SOLID"
-                        }]
-                }, 
-                {
-                 "id":11,
-                 "properties":[
-                        {
-                         "name":"type",
-                         "type":"string",
-                         "value":"SOLID"
-                        }]
-                }, 
-                {
-                 "id":12,
-                 "properties":[
-                        {
-                         "name":"type",
-                         "type":"string",
-                         "value":"SOLID"
-                        }]
-                }, 
-                {
-                 "id":13,
-                 "properties":[
-                        {
-                         "name":"type",
-                         "type":"string",
-                         "value":"SOLID"
-                        }]
-                }, 
-                {
-                 "id":14,
-                 "properties":[
-                        {
-                         "name":"type",
-                         "type":"string",
-                         "value":"SOLID"
-                        }]
-                }, 
-                {
-                 "id":17,
-                 "properties":[
-                        {
-                         "name":"type",
-                         "type":"string",
-                         "value":"SOLID"
-                        }]
-                }, 
-                {
-                 "id":18,
-                 "properties":[
-                        {
-                         "name":"type",
-                         "type":"string",
-                         "value":"SOLID"
-                        }]
-                }, 
-                {
-                 "id":19,
-                 "properties":[
-                        {
-                         "name":"type",
-                         "type":"string",
-                         "value":"SOLID"
-                        }]
-                },
-            
-                {
-                 "id":20,
-                 "properties":[
-                        {
-                         "name":"type",
-                         "type":"string",
-                         "value":"SOLID"
-                        }]
-                }, 
-                {
-                 "id":21,
-                 "properties":[
-                        {
-                         "name":"type",
-                         "type":"string",
-                         "value":"SOLID"
-                        }]
-                }, 
-                {
-                 "id":22,
-                 "properties":[
-                        {
-                         "name":"type",
-                         "type":"string",
-                         "value":"SOLID"
-                        }]
-                }, 
-                {
-                 "id":25,
-                 "properties":[
-                        {
-                         "name":"type",
-                         "type":"string",
-                         "value":"SOLID"
-                        }]
-                }, 
-                {
-                 "id":26,
-                 "properties":[
-                        {
-                         "name":"type",
-                         "type":"string",
-                         "value":"SOLID"
-                        }]
-                }, 
-                {
-                 "id":27,
-                 "properties":[
-                        {
-                         "name":"type",
-                         "type":"string",
-                         "value":"SOLID"
-                        }]
-                }, 
-                {
-                 "id":28,
-                 "properties":[
-                        {
-                         "name":"type",
-                         "type":"string",
-                         "value":"SOLID"
-                        }]
-                }, 
-                {
-                 "id":29,
-                 "properties":[
-                        {
-                         "name":"type",
-                         "type":"string",
-                         "value":"SOLID"
-                        }]
-                }, 
-                {
-                 "id":30,
-                 "properties":[
-                        {
-                         "name":"type",
-                         "type":"string",
-                         "value":"SOLID"
-                        }]
-                }, 
-                {
-                 "id":33,
-                 "properties":[
-                        {
-                         "name":"type",
-                         "type":"string",
-                         "value":"SOLID"
-                        }]
-                }, 
-                {
-                 "id":34,
-                 "properties":[
-                        {
-                         "name":"type",
-                         "type":"string",
-                         "value":"SOLID"
-                        }]
-                }, 
-                {
-                 "id":35,
-                 "properties":[
-                        {
-                         "name":"type",
-                         "type":"string",
-                         "value":"SOLID"
-                        }]
-                }, 
-                {
-                 "id":36,
-                 "properties":[
-                        {
-                         "name":"type",
-                         "type":"string",
-                         "value":"SOLID"
-                        }]
-                }, 
-                {
-                 "id":37,
-                 "properties":[
-                        {
-                         "name":"type",
-                         "type":"string",
-                         "value":"SOLID"
-                        }]
-                }, 
-                {
-                 "id":38,
-                 "properties":[
-                        {
-                         "name":"type",
-                         "type":"string",
-                         "value":"SOLID"
-                        }]
-                },
-            
-                {
-                 "id":41,
-                 "properties":[
-                        {
-                         "name":"type",
-                         "type":"string",
-                         "value":"SOLID"
-                        }]
-                }, 
-                {
-                 "id":42,
-                 "properties":[
-                        {
-                         "name":"type",
-                         "type":"string",
-                         "value":"SOLID"
-                        }]
-                }, 
-                {
-                 "id":43,
-                 "properties":[
-                        {
-                         "name":"type",
-                         "type":"string",
-                         "value":"SOLID"
-                        }]
-                }, 
-                {
-                 "id":44,
-                 "properties":[
-                        {
-                         "name":"type",
-                         "type":"string",
-                         "value":"SOLID"
-                        }]
-                }, 
-                {
-                 "id":45,
-                 "properties":[
-                        {
-                         "name":"type",
-                         "type":"string",
-                         "value":"SOLID"
-                        }]
-                }, 
-                {
-                 "id":46,
-                 "properties":[
-                        {
-                         "name":"type",
-                         "type":"string",
-                         "value":"SOLID"
-                        }]
-                }, 
-                {
-                 "id":49,
-                 "properties":[
-                        {
-                         "name":"type",
-                         "type":"string",
-                         "value":"SOLID"
-                        }]
-                }, 
-                {
-                 "id":50,
-                 "properties":[
-                        {
-                         "name":"type",
-                         "type":"string",
-                         "value":"SOLID"
-                        }]
-                }, 
-                {
-                 "id":51,
-                 "properties":[
-                        {
-                         "name":"type",
-                         "type":"string",
-                         "value":"SOLID"
-                        }]
-                }, 
-                {
-                 "id":52,
-                 "properties":[
-                        {
-                         "name":"type",
-                         "type":"string",
-                         "value":"SOLID"
-                        }]
-                }, 
-                {
-                 "id":53,
-                 "properties":[
-                        {
-                         "name":"type",
-                         "type":"string",
-                         "value":"SOLID"
-                        }]
-                }, 
-                {
-                 "id":54,
-                 "properties":[
-                        {
-                         "name":"type",
-                         "type":"string",
-                         "value":"SOLID"
-                        }]
-                }, 
-                {
-                 "id":57,
-                 "properties":[
-                        {
-                         "name":"type",
-                         "type":"string",
-                         "value":"SOLID"
-                        }]
-                }, 
-                {
-                 "id":58,
-                 "properties":[
-                        {
-                         "name":"type",
-                         "type":"string",
-                         "value":"SOLID"
-                        }]
-                }, 
-                {
-                 "id":59,
-                 "properties":[
-                        {
-                         "name":"type",
-                         "type":"string",
-                         "value":"SOLID"
-                        }]
-                },
-            
                 {
                  "id":60,
                  "properties":[
@@ -1208,8 +624,8 @@
          "tilewidth":32,
          "transparentcolor":"#ffffff"
         }],
- "tilewidth":31,
+ "tilewidth":32,
  "type":"map",
  "version":"1.10",
- "width":15
+ "width":20
 }

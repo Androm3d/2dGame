@@ -39,6 +39,7 @@ private:
 public:
 	// Tile maps can only be created inside an OpenGL context
 	static TileMap *createTileMap(const string &levelFile, const glm::vec2 &minCoords, ShaderProgram &program);
+	static int countKeysInLevelFile(const std::string &levelFile);
 
 	~TileMap();
 
@@ -47,6 +48,7 @@ public:
 	
 	int getTileSize() const { return tileSize; }
 	glm::ivec2 getMapSize() const { return mapSize; }
+	glm::ivec2 getRoomSize() const { return roomSize; }
 
 	bool checkCollision(const glm::ivec2 &pos, const glm::ivec2 &size, CollisionDir dir, int *correctedPos = nullptr, bool dropThrough = false) const;
 	bool isOnLadder(const glm::ivec2 &pos, const glm::ivec2 &size) const;
@@ -74,7 +76,7 @@ private:
 	GLuint vbo;
 	GLint posLocation, texCoordLocation;
 	int nTiles;
-	glm::ivec2 position, mapSize, tilesheetSize;
+	glm::ivec2 position, mapSize, tilesheetSize, roomSize;
 	int tileSize, blockSize;
 	Texture tilesheet;
 	glm::vec2 tileTexSize;

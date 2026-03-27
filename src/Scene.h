@@ -2,6 +2,7 @@
 #define _SCENE_INCLUDE
 
 
+#include <string>
 #include <glm/glm.hpp>
 #include "ShaderProgram.h"
 #include "TileMap.h"
@@ -37,14 +38,23 @@ public:
 private:
 	void initShaders();
 	void clearLevelEntities();
+	void updateCamera();
+	void scheduleTransitionToMap(const std::string &targetMap, bool enterSideRoom, int targetDoorIndex = -1);
+	void scheduleTransitionToWorld(int targetRoomX, int targetRoomY);
 
 private:
+	static constexpr int TRANSITION_DELAY_MS = 1000;
+
 	TileMap *map;
 	Player *player;
 	Enemy *enemy;
 	ShaderProgram texProgram;
 	float currentTime;
 	glm::mat4 projection;
+	float cameraX = 0.f;
+	float cameraY = 0.f;
+	float viewWidth = 960.f;
+	float viewHeight = 480.f;
 
 	Texture texKey, texHeal, texShield, texWeight, texSword;
 	std::vector<Sprite*> keys;
@@ -59,6 +69,16 @@ private:
 
 	ShaderProgram bgProgram;
 	GLuint bgVao, bgVbo;
+
+	bool transitionPending = false;
+	int transitionDelayMs = 0;
+	bool transitionToSideRoom = false;
+	bool transitionToWorldRoom = false;
+	std::string pendingTargetMap;
+	int pendingTargetDoorIndex = -1;
+	int pendingRoomX = 0;
+	int pendingRoomY = 0;
+	bool upWasDown = false;
 
 	bool attackHitThisSwing;
 
