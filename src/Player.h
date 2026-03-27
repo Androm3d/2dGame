@@ -23,10 +23,9 @@ public:
 	void update(int deltaTime);
 	void render();
 	glm::vec2 getPosition() const { return posPlayer; }
-	
+
 	void setTileMap(TileMap *tileMap);
 	void setPosition(const glm::vec2 &pos);
-	glm::ivec2 getPosition() const { return posPlayer; }
 	
 private:
 	bool bJumping;
