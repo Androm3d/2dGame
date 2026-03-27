@@ -20,10 +20,18 @@
 #define ENEMY_JUMP_ANGLE_STEP     4
 #define ENEMY_JUMP_HEIGHT        112
 
-#define ROW_RUN_TOP_PX   0
-#define ROW_JUMP_TOP_PX 48
+#define ROW_RUN_TOP_PX    0
+#define ROW_JUMP_TOP_PX  48
+#define ROW_HURT_TOP_PX  96
+#define ROW_DEATH_TOP_PX 144
+
+#define ENEMY_HURT_FRAMES  3
+#define ENEMY_DEATH_FRAMES 5
 
 #define PATH_RECALC_FRAMES 30
+#define HIT_INVINCIBILITY_FRAMES 50
+#define KNOCKBACK_FRAMES 8
+#define KNOCKBACK_SPEED  5
 
 // Shot animation constants (Enemy1_Shot.png: 768x232, 96x116 per frame, 13 total: 8 row0 + 5 row1)
 #define SHOT_FRAME_WIDTH    96
@@ -40,7 +48,7 @@
 
 enum EnemyAnims
 {
-	RUN, JUMP_UP, JUMP_FALL
+	RUN, JUMP_UP, JUMP_FALL, HURT, DEATH
 };
 
 
@@ -114,15 +122,19 @@ void Enemy::init(const glm::ivec2 &tileMapPos, ShaderProgram &shaderProgram)
 	onGround = false;
 	bShooting = false;
 	alive = true;
+	bDying = false;
 	health = 2;
 	jumpAngle = 0;
 	startY = 0;
 	pathRecalcTimer = 0;
 	pathIndex = 0;
 	shotCooldown = 0;
+	hitTimer = 0;
+	knockbackFrames = 0;
+	knockbackDir = 0;
 
 	// --- Run/Jump sprite (existing) ---
-	spritesheet.loadFromFile("images/Enemy1_Run_Jump.png", TEXTURE_PIXEL_FORMAT_RGBA);
+	spritesheet.loadFromFile("images/Enemy1_Run_Jump_Hurt_Death.png", TEXTURE_PIXEL_FORMAT_RGBA);
 	spritesheet.setWrapS(GL_CLAMP_TO_EDGE);
 	spritesheet.setWrapT(GL_CLAMP_TO_EDGE);
 	spritesheet.setMinFilter(GL_NEAREST);
@@ -136,14 +148,13 @@ void Enemy::init(const glm::ivec2 &tileMapPos, ShaderProgram &shaderProgram)
 	);
 
 	sprite = Sprite::createSprite(glm::ivec2(ENEMY_FRAME_WIDTH, ENEMY_FRAME_HEIGHT), frameSizeInTexture, &spritesheet, &shaderProgram);
-	sprite->setNumberAnimations(3);
+	sprite->setNumberAnimations(5);
 
-	sprite->setAnimationSpeed(RUN, 10);
-	sprite->setAnimationLoop(RUN, true);
-	sprite->setAnimationSpeed(JUMP_UP, 10);
-	sprite->setAnimationLoop(JUMP_UP, false);
-	sprite->setAnimationSpeed(JUMP_FALL, 10);
-	sprite->setAnimationLoop(JUMP_FALL, false);
+	sprite->setAnimationSpeed(RUN, 10);       sprite->setAnimationLoop(RUN, true);
+	sprite->setAnimationSpeed(JUMP_UP, 10);   sprite->setAnimationLoop(JUMP_UP, false);
+	sprite->setAnimationSpeed(JUMP_FALL, 10); sprite->setAnimationLoop(JUMP_FALL, false);
+	sprite->setAnimationSpeed(HURT, 10);      sprite->setAnimationLoop(HURT, false);
+	sprite->setAnimationSpeed(DEATH, 8);      sprite->setAnimationLoop(DEATH, false);
 
 	// Row 0: Run (8 frames)
 	for (int f = 0; f < ENEMY_RUN_FRAMES; ++f)
@@ -154,6 +165,12 @@ void Enemy::init(const glm::ivec2 &tileMapPos, ShaderProgram &shaderProgram)
 	// Row 1: Jump fall (frames 4-7)
 	for (int f = 0; f < ENEMY_JUMP_FALL_FRAMES; ++f)
 		sprite->addKeyframe(JUMP_FALL, glm::vec2((f + ENEMY_JUMP_FALL_START) * frameSizeInTexture.x, float(ROW_JUMP_TOP_PX) / texH));
+	// Row 2: Hurt (3 frames)
+	for (int f = 0; f < ENEMY_HURT_FRAMES; ++f)
+		sprite->addKeyframe(HURT, glm::vec2(f * frameSizeInTexture.x, float(ROW_HURT_TOP_PX) / texH));
+	// Row 3: Death (5 frames)
+	for (int f = 0; f < ENEMY_DEATH_FRAMES; ++f)
+		sprite->addKeyframe(DEATH, glm::vec2(f * frameSizeInTexture.x, float(ROW_DEATH_TOP_PX) / texH));
 
 	sprite->changeAnimation(RUN);
 	sprite->setFlipHorizontal(false);
@@ -362,7 +379,52 @@ void Enemy::computePath(const glm::vec2 &playerPos)
 
 void Enemy::update(int deltaTime, const glm::vec2 &playerPos)
 {
-	if (!alive) return;
+	if (!alive && !bDying) return;
+
+	float renderOffsetX = 0.5f * float(ENEMY_FRAME_WIDTH - ENEMY_HITBOX_WIDTH);
+	float renderOffsetY = float(ENEMY_FRAME_HEIGHT - ENEMY_HITBOX_HEIGHT);
+
+	// Death animation — play out then fully remove
+	if (bDying)
+	{
+		sprite->update(deltaTime);
+		posEnemy.y += ENEMY_FALL_STEP;
+		onGround = map->checkCollision(posEnemy, glm::ivec2(ENEMY_HITBOX_WIDTH, ENEMY_HITBOX_HEIGHT), CollisionDir::DOWN, &posEnemy.y);
+		sprite->setPosition(glm::vec2(float(tileMapDispl.x + posEnemy.x) - renderOffsetX, float(tileMapDispl.y + posEnemy.y) - renderOffsetY));
+		if (sprite->animationFinished())
+			bDying = false;
+		return;
+	}
+
+	if (hitTimer > 0) hitTimer--;
+
+	// Knockback — move enemy back while hurt animation plays
+	if (knockbackFrames > 0)
+	{
+		knockbackFrames--;
+		sprite->update(deltaTime);
+		posEnemy.x += knockbackDir * KNOCKBACK_SPEED;
+		if (knockbackDir < 0)
+			map->checkCollision(posEnemy, glm::ivec2(ENEMY_HITBOX_WIDTH, ENEMY_HITBOX_HEIGHT), CollisionDir::LEFT, &posEnemy.x);
+		else
+			map->checkCollision(posEnemy, glm::ivec2(ENEMY_HITBOX_WIDTH, ENEMY_HITBOX_HEIGHT), CollisionDir::RIGHT, &posEnemy.x);
+		posEnemy.y += ENEMY_FALL_STEP;
+		onGround = map->checkCollision(posEnemy, glm::ivec2(ENEMY_HITBOX_WIDTH, ENEMY_HITBOX_HEIGHT), CollisionDir::DOWN, &posEnemy.y);
+		sprite->setPosition(glm::vec2(float(tileMapDispl.x + posEnemy.x) - renderOffsetX, float(tileMapDispl.y + posEnemy.y) - renderOffsetY));
+		return;
+	}
+
+	// Hurt animation finishing — freeze until it completes
+	if (sprite->animation() == HURT)
+	{
+		sprite->update(deltaTime);
+		posEnemy.y += ENEMY_FALL_STEP;
+		onGround = map->checkCollision(posEnemy, glm::ivec2(ENEMY_HITBOX_WIDTH, ENEMY_HITBOX_HEIGHT), CollisionDir::DOWN, &posEnemy.y);
+		sprite->setPosition(glm::vec2(float(tileMapDispl.x + posEnemy.x) - renderOffsetX, float(tileMapDispl.y + posEnemy.y) - renderOffsetY));
+		if (sprite->animationFinished())
+			sprite->changeAnimation(RUN);
+		return;
+	}
 
 	// Decrease shot cooldown
 	if (shotCooldown > 0) shotCooldown--;
@@ -443,8 +505,6 @@ void Enemy::update(int deltaTime, const glm::vec2 &playerPos)
 		shotSprite->setPosition(glm::vec2(float(tileMapDispl.x + posEnemy.x) - shotRenderOffsetX, float(tileMapDispl.y + posEnemy.y) - shotRenderOffsetY));
 
 		// Also update run/jump sprite position for when we switch back
-		float renderOffsetX = 0.5f * float(ENEMY_FRAME_WIDTH - ENEMY_HITBOX_WIDTH);
-		float renderOffsetY = float(ENEMY_FRAME_HEIGHT - ENEMY_HITBOX_HEIGHT);
 		sprite->setPosition(glm::vec2(float(tileMapDispl.x + posEnemy.x) - renderOffsetX, float(tileMapDispl.y + posEnemy.y) - renderOffsetY));
 		return;
 	}
@@ -576,14 +636,19 @@ void Enemy::update(int deltaTime, const glm::vec2 &playerPos)
 	}
 
 	// --- Sprite position ---
-	float renderOffsetX = 0.5f * float(ENEMY_FRAME_WIDTH - ENEMY_HITBOX_WIDTH);
-	float renderOffsetY = float(ENEMY_FRAME_HEIGHT - ENEMY_HITBOX_HEIGHT);
 	sprite->setPosition(glm::vec2(float(tileMapDispl.x + posEnemy.x) - renderOffsetX, float(tileMapDispl.y + posEnemy.y) - renderOffsetY));
 }
 
 void Enemy::render()
 {
-	if (!alive) return;
+	if (!alive && !bDying) return;
+
+	// Death animation — no arrows, no blink
+	if (bDying)
+	{
+		sprite->render();
+		return;
+	}
 
 	// Render arrows
 	for (const Arrow &a : arrows)
@@ -593,11 +658,14 @@ void Enemy::render()
 		arrowSprite->render();
 	}
 
-	// Render enemy (shot sprite or run/jump sprite)
-	if (bShooting)
-		shotSprite->render();
-	else
-		sprite->render();
+	// Render enemy (shot sprite or run/jump sprite) — blink when hit
+	if (hitTimer == 0 || (hitTimer / 4) % 2 == 0)
+	{
+		if (bShooting)
+			shotSprite->render();
+		else
+			sprite->render();
+	}
 }
 
 void Enemy::setTileMap(TileMap *tileMap)
@@ -613,12 +681,25 @@ void Enemy::setPosition(const glm::vec2 &pos)
 	sprite->setPosition(glm::vec2(float(tileMapDispl.x + posEnemy.x) - renderOffsetX, float(tileMapDispl.y + posEnemy.y) - renderOffsetY));
 }
 
-void Enemy::takeDamage()
+void Enemy::takeDamage(int knockDir)
 {
 	if (!alive) return;
 	health--;
+	bShooting = false;
 	if (health <= 0)
+	{
 		alive = false;
+		bDying = true;
+		knockbackFrames = 0;
+		sprite->changeAnimation(DEATH);
+	}
+	else
+	{
+		hitTimer = HIT_INVINCIBILITY_FRAMES;
+		knockbackFrames = KNOCKBACK_FRAMES;
+		knockbackDir = knockDir;
+		sprite->changeAnimation(HURT);
+	}
 }
 
 glm::vec4 Enemy::getHitbox() const

@@ -10,7 +10,10 @@
       "Bash(identify images/Enemy1_Shot.png images/Arrow.png)",
       "Bash(make)",
       "Bash(rm /Users/jergasus/UNI/VJ/2dGame/build/CMakeFiles/BugsBunnyCrazyCastle.dir/src/Enemy.cpp.o)",
-      "Bash(make -j4)"
+      "Bash(make -j4)",
+      "Bash(python3 -c \":*)",
+      "Bash(sips -g pixelWidth -g pixelHeight -g hasAlpha /Users/jergasus/UNI/VJ/2dGame/images/Enemy1_Run_Jump.png)",
+      "Bash(sips -g pixelWidth -g pixelHeight /Users/jergasus/UNI/VJ/2dGame/images/Enemy1_run_jump_hurt_death.png)"
     ]
   }
 }

@@ -29,8 +29,10 @@ public:
 	void setPosition(const glm::vec2 &pos);
 	glm::ivec2 getPosition() const { return posEnemy; }
 
-	void takeDamage();
+	void takeDamage(int knockDir);  // knockDir: -1 left, +1 right
 	bool isAlive() const { return alive; }
+	bool isDying() const { return bDying; }
+	bool isInvincible() const { return hitTimer > 0; }
 	glm::vec4 getHitbox() const;
 
 private:
@@ -41,10 +43,14 @@ private:
 	bool onGround;
 	bool bShooting;
 	bool alive;
+	bool bDying;
 	int health;
 	int jumpAngle, startY;
 	int pathRecalcTimer;
 	int shotCooldown;
+	int hitTimer;       // invincibility + blink countdown
+	int knockbackFrames;
+	int knockbackDir;
 	glm::ivec2 tileMapDispl, posEnemy;
 	Texture spritesheet;
 	Texture shotSpritesheet;

@@ -287,7 +287,7 @@ void Scene::update(int deltaTime)
 {
 	currentTime += deltaTime;
     player->update(deltaTime);
-	if (enemy->isAlive())
+	if (enemy->isAlive() || enemy->isDying())
 		enemy->update(deltaTime, player->getPosition());
 
 	// --- Player attack vs Enemy ---
@@ -300,7 +300,8 @@ void Scene::update(int deltaTime)
 			atkBox.y < enemyBox.y + enemyBox.w &&
 			atkBox.y + atkBox.w > enemyBox.y)
 		{
-			enemy->takeDamage();
+			int knockDir = (enemy->getPosition().x >= player->getPosition().x) ? 1 : -1;
+			enemy->takeDamage(knockDir);
 			attackHitThisSwing = true;
 		}
 	}
@@ -489,7 +490,7 @@ void Scene::render()
 	for (Sprite* door : doors) { door->render(); }
 	for (Sprite* portal : portals) { portal->render(); }
 
-	if (enemy->isAlive())
+	if (enemy->isAlive() || enemy->isDying())
 		enemy->render();
 	player->render();
 
