@@ -14,6 +14,7 @@ Scene::Scene()
 {
 	map = NULL;
 	player = NULL;
+	enemy = NULL;
 	sword = nullptr;
 	bgVao = 0;
 	bgVbo = 0;
@@ -55,6 +56,10 @@ void Scene::clearLevelEntities()
 		delete player;
 		player = nullptr;
 	}
+	if (enemy != NULL) {
+		delete enemy;
+		enemy = NULL;
+	}
 }
 
 
@@ -94,6 +99,10 @@ void Scene::init()
 	
 	player->setPosition(playerInitPos);
 	player->setTileMap(map);
+	enemy = new Enemy();
+	enemy->init(glm::ivec2(SCREEN_X, SCREEN_Y), texProgram);
+	enemy->setPosition(glm::vec2(15 * map->getTileSize(), 0));
+	enemy->setTileMap(map);
 	projection = glm::ortho(0.f, mapPixelWidth, mapPixelHeight, 0.f);
 	currentTime = 0.0f;
 
@@ -277,6 +286,7 @@ void Scene::update(int deltaTime)
 {
 	currentTime += deltaTime;
     player->update(deltaTime);
+	enemy->update(deltaTime, player->getPosition());
 
     glm::vec2 pPos = player->getPosition();
     glm::ivec2 pSize = glm::ivec2(Player::HITBOX_WIDTH, Player::HITBOX_HEIGHT);
@@ -460,6 +470,7 @@ void Scene::render()
 	for (Sprite* door : doors) { door->render(); }
 	for (Sprite* portal : portals) { portal->render(); }
 
+	enemy->render();
 	player->render();
 
 }
