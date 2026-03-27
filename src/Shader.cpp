@@ -75,16 +75,8 @@ bool Shader::loadShaderSource(const string &filename, string &shaderSource)
 	ifstream fin;
 
 	fin.open(filename.c_str());
-	if(!fin.is_open()) {
-		if (filename.compare(0, 3, "../") == 0) {
-			string fallback = filename.substr(3);
-			fin.clear();
-			fin.open(fallback.c_str());
-			if(!fin.is_open()) return false;
-		} else {
-			return false;
-		}
-	}
+	if(!fin.is_open())
+		return false;
 	shaderSource.assign(istreambuf_iterator<char>(fin), istreambuf_iterator<char>());
 
 	return true;

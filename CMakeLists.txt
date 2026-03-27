@@ -51,7 +51,7 @@ include_directories(
 )
 
 # 5. Source Files
-file(GLOB SOURCES "src/*.cpp")
+file(GLOB SOURCES CONFIGURE_DEPENDS "src/*.cpp")
 
 # 6. Build Executable
 add_executable(${PROJECT_NAME} ${SOURCES} ${SOIL_SOURCES})

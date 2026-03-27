@@ -8,6 +8,7 @@
 #include "TileMap.h"
 #include "Player.h"
 #include "Enemy.h"
+#include "Text.h"
 
 
 // Scene contains all the entities of our game.
@@ -82,6 +83,8 @@ private:
 	bool upWasDown = false;
 
 	bool attackHitThisSwing;
+	Text hudText;
+	bool hudReady = false;
 
 };
 

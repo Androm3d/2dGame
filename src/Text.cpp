@@ -19,6 +19,7 @@ FT_Library Text::library;
 Text::Text()
 {
 	quad = NULL;
+	face = NULL;
 }
 
 Text::~Text()
@@ -69,7 +70,11 @@ bool Text::init(const char *filename)
 
 void Text::destroy()
 {
-	FT_Done_Face(face);
+	if(face != NULL)
+	{
+		FT_Done_Face(face);
+		face = NULL;
+	}
 }
 
 ShaderProgram &Text::getProgram()

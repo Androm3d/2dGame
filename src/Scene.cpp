@@ -1,6 +1,8 @@
 #include <iostream>
 #include <cmath>
 #include <cstdio>
+#include <fstream>
+#include <sstream>
 #include <glm/gtc/matrix_transform.hpp>
 #include <iostream>
 #include "Scene.h"
@@ -14,6 +16,20 @@ namespace {
 bool parseWorldMapCoords(const std::string &mapName, int &x, int &y)
 {
 	return std::sscanf(mapName.c_str(), "../levels/map_%d_%d.json", &x, &y) == 2;
+}
+
+bool fileExists(const char *path)
+{
+	std::ifstream f(path);
+	return f.good();
+}
+
+const char *pickHudFontPath()
+{
+	const char *fontPath = "../fonts/samurai.ttf";
+	if(fileExists(fontPath))
+	return fontPath;
+	return nullptr;
 }
 }
 
@@ -280,6 +296,15 @@ void Scene::init()
 		portal->changeAnimation(0); 
 		portal->setPosition(glm::vec2(pos.x, pos.y - map->getTileSize()));
 		portals.push_back(portal);
+	}
+
+	if(!hudReady)
+	{
+		const char *fontPath = pickHudFontPath();
+		if(fontPath != nullptr)
+			hudReady = hudText.init(fontPath);
+		if(!hudReady)
+			std::cerr << "Warning: HUD font failed to initialize. Status text will be hidden." << std::endl;
 	}
 
 
@@ -661,6 +686,21 @@ void Scene::render()
 		enemy->render();
 	player->render();
 	Sprite::setGlobalRenderOffset(glm::vec2(0.f, 0.f));
+
+	if(hudReady)
+	{
+		const Game &game = Game::instance();
+		std::ostringstream line1;
+		std::ostringstream line2;
+
+		line1 << "Lives: " << game.lives
+		      << "  Keys: " << game.keysCollected << "/" << game.totalKeysInLevel;
+		line2 << "Shield: " << (game.hasShield ? "ON" : "OFF")
+		      << "  Sword: " << (game.hasSword ? "ON" : "OFF");
+
+		hudText.render(line1.str(), glm::vec2(16.f, 28.f), 24, glm::vec4(1.f, 1.f, 0.85f, 1.f));
+		hudText.render(line2.str(), glm::vec2(16.f, 56.f), 22, glm::vec4(0.8f, 1.f, 0.9f, 1.f));
+	}
 
 }
 

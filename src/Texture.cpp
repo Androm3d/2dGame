@@ -30,27 +30,14 @@ bool Texture::loadFromFile(const string &filename, PixelFormat format)
 	int loadedWidth = 0;
 	int loadedHeight = 0;
 
-	// Try common runtime working directories (project root and build/).
-	vector<string> candidates;
-	candidates.push_back(filename);
-	if(filename.compare(0, 3, "../") != 0)
-		candidates.push_back("../" + filename);
-	else
-		candidates.push_back(filename.substr(3));
-	
-	for(const string &candidate : candidates)
+	switch(format)
 	{
-		switch(format)
-		{
-		case TEXTURE_PIXEL_FORMAT_RGB:
-			image = SOIL_load_image(candidate.c_str(), &loadedWidth, &loadedHeight, 0, SOIL_LOAD_RGB);
-			break;
-		case TEXTURE_PIXEL_FORMAT_RGBA:
-			image = SOIL_load_image(candidate.c_str(), &loadedWidth, &loadedHeight, 0, SOIL_LOAD_RGBA);
-			break;
-		}
-		if(image != NULL)
-			break;
+	case TEXTURE_PIXEL_FORMAT_RGB:
+		image = SOIL_load_image(filename.c_str(), &loadedWidth, &loadedHeight, 0, SOIL_LOAD_RGB);
+		break;
+	case TEXTURE_PIXEL_FORMAT_RGBA:
+		image = SOIL_load_image(filename.c_str(), &loadedWidth, &loadedHeight, 0, SOIL_LOAD_RGBA);
+		break;
 	}
 
 	if(image == NULL)
