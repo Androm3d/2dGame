@@ -95,7 +95,7 @@ void Scene::init()
 	float mapPixelWidth = mapTiles.x * map->getTileSize();
 	float mapPixelHeight = mapTiles.y * map->getTileSize();
 
-	glm::vec2 playerInitPos(0, 0);
+	playerInitPos = glm::vec2(0, 0);
 
 	player->init(glm::ivec2(SCREEN_X, SCREEN_Y), texProgram);
 	if (map->getSpawnLocations().empty()) {
@@ -451,6 +451,15 @@ void Scene::update(int deltaTime)
     glm::vec2 pPos = player->getPosition();
     pSize = glm::ivec2(Player::HITBOX_WIDTH, Player::HITBOX_HEIGHT);
 
+	// Fall out of bounds death check
+	if (pPos.y > map->getMapSize().y * map->getTileSize() + pSize.y) {
+		Game::instance().lives--;
+		std::cout << "Player fell! Lives remaining: " << Game::instance().lives << std::endl;
+		player->setPosition(playerInitPos);
+		updateCamera();
+		pPos = player->getPosition();
+	}
+
     // un bucle por tipo de item, como solo hay 5 no pasa nada pero si añadimos más habría que crear una clase Item o algo así para no repetir código
     for (int i = keys.size() - 1; i >= 0; i--) {
         if (checkAABB(pPos, pSize, keys[i]->getPosition(), glm::ivec2(map->getTileSize(), map->getTileSize()))) {
@@ -496,18 +505,33 @@ void Scene::update(int deltaTime)
 
 		if (checkAABB(pPos, pSize, wPos, weightSize)) {
 			int newX = static_cast<int>(wPos.x);
-			if (Game::instance().getKey(GLFW_KEY_LEFT))
-				newX -= pushStep;
-			else if (Game::instance().getKey(GLFW_KEY_RIGHT))
-				newX += pushStep;
+			bool pushed = false;
+			CollisionDir pushDir = CollisionDir::RIGHT;
 
-			if (newX != static_cast<int>(wPos.x)) {
+			if (Game::instance().getKey(GLFW_KEY_LEFT)) {
+				newX -= pushStep;
+				pushed = true;
+				pushDir = CollisionDir::LEFT;
+			}
+			else if (Game::instance().getKey(GLFW_KEY_RIGHT)) {
+				newX += pushStep;
+				pushed = true;
+				pushDir = CollisionDir::RIGHT;
+			}
+
+			if (pushed) {
 				glm::ivec2 weightPos(newX, static_cast<int>(wPos.y));
-				CollisionDir dir = (newX < static_cast<int>(wPos.x)) ? CollisionDir::LEFT : CollisionDir::RIGHT;
-				if (!map->checkCollision(weightPos, weightSize, dir)) {
+				if (!map->checkCollision(weightPos, weightSize, pushDir)) {
 					weights[i]->setPosition(glm::vec2(float(newX), wPos.y));
 					wPos.x = float(newX);
 				}
+				// Sync the player horizontal speed to avoid clipping into the weight block visually
+				if (pushDir == CollisionDir::LEFT) {
+					pPos.x = wPos.x + weightSize.x;
+				} else {
+					pPos.x = wPos.x - pSize.x;
+				}
+				player->setPosition(pPos);
 			}
 		}
 

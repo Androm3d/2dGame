@@ -35,6 +35,8 @@ bool Texture::loadFromFile(const string &filename, PixelFormat format)
 	candidates.push_back(filename);
 	if(filename.compare(0, 3, "../") != 0)
 		candidates.push_back("../" + filename);
+	else
+		candidates.push_back(filename.substr(3));
 	
 	for(const string &candidate : candidates)
 	{

@@ -47,6 +47,7 @@ private:
 
 	TileMap *map;
 	Player *player;
+	glm::vec2 playerInitPos;
 	Enemy *enemy;
 	ShaderProgram texProgram;
 	float currentTime;

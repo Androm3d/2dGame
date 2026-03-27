@@ -460,8 +460,29 @@ bool TileMap::checkCollision(const glm::ivec2 &pos, const glm::ivec2 &size, Coll
 	y0 = pos.y / tileSize;
 	y1 = (pos.y + size.y - 1) / tileSize;
 
+	// C++ integer division truncates towards zero!
+	if (pos.x < 0) x0 = (pos.x - tileSize + 1) / tileSize;
+	if (pos.y < 0) y0 = (pos.y - tileSize + 1) / tileSize;
+
 	// Treat going out of map bounds as hitting a solid wall
-	if (x0 < 0 || x1 >= mapSize.x || y0 < 0 || y1 >= mapSize.y) return true;
+	if (y0 >= mapSize.y) return false; // Let fall completely out of bottom bounds
+	if (y1 >= mapSize.y && dir == CollisionDir::DOWN) return false; // Let fall out of bottom bounds
+
+	if (x0 < 0) {
+		if (dir == CollisionDir::LEFT) { if (correctedPos) *correctedPos = 0; return true; }
+		x0 = 0;
+	}
+	if (x1 >= mapSize.x) {
+		if (dir == CollisionDir::RIGHT) { if (correctedPos) *correctedPos = (mapSize.x * tileSize) - size.x; return true; }
+		x1 = mapSize.x - 1;
+	}
+	if (y0 < 0) {
+		if (dir == CollisionDir::UP) { if (correctedPos) *correctedPos = 0; return true; }
+		y0 = 0;
+	}
+	if (y1 >= mapSize.y) {
+		y1 = mapSize.y - 1;
+	}
 
 	switch (dir) {
 		case CollisionDir::LEFT:
