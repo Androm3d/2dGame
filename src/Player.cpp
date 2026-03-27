@@ -56,7 +56,7 @@ void Player::init(const glm::ivec2 &tileMapPos, ShaderProgram &shaderProgram)
 	bClimbing = false;
 	bAttacking = false;
 	facingLeft = false;
-	spritesheet.loadFromFile("images/Samurai_Animation.png", TEXTURE_PIXEL_FORMAT_RGBA);
+	spritesheet.loadFromFile("../images/Samurai_Animation.png", TEXTURE_PIXEL_FORMAT_RGBA);
 	spritesheet.setWrapS(GL_CLAMP_TO_EDGE);
 	spritesheet.setWrapT(GL_CLAMP_TO_EDGE);
 	spritesheet.setMinFilter(GL_NEAREST);
@@ -155,6 +155,7 @@ void Player::update(int deltaTime)
 	sprite->update(deltaTime);
 	bool onLadder = map->isOnLadder(posPlayer, glm::ivec2(Player::HITBOX_WIDTH, Player::HITBOX_HEIGHT));
 	bool upPressed = Game::instance().getKey(GLFW_KEY_UP);
+	bool upAllowsJump = upPressed && !Game::instance().isJumpInputBlocked();
 	bool downPressed = Game::instance().getKey(GLFW_KEY_DOWN);
 	bool leftPressed = Game::instance().getKey(GLFW_KEY_LEFT);
 	bool rightPressed = Game::instance().getKey(GLFW_KEY_RIGHT);
@@ -179,10 +180,11 @@ void Player::update(int deltaTime)
 	// - Stay attached to ladder while overlapping it
 	// - Move only with UP/DOWN
 	// - Hold position when no vertical input
-	if(!skipMovement && onLadder && !bAttacking && !bJumping)
+	bool tryGrabLadder = bClimbing || ((upPressed || downPressed) && !leftPressed && !rightPressed);
+	if(!skipMovement && onLadder && !bAttacking && (!bJumping || tryGrabLadder))
 	{
-		bool ladderJumpLeft = upPressed && leftPressed && !rightPressed;
-		bool ladderJumpRight = upPressed && rightPressed && !leftPressed;
+		bool ladderJumpLeft = upAllowsJump && leftPressed && !rightPressed;
+		bool ladderJumpRight = upAllowsJump && rightPressed && !leftPressed;
 		bool detachLeftOrRight = (leftPressed || rightPressed) && !upPressed;
 
 		if(ladderJumpLeft || ladderJumpRight)
@@ -201,6 +203,9 @@ void Player::update(int deltaTime)
 		}
 		else
 		{
+		if(bJumping) 
+			bJumping = false; // Successfully grabbed ladder mid-air
+
 		if(!bClimbing)
 		{
 			bClimbing = true;
@@ -338,7 +343,7 @@ void Player::update(int deltaTime)
 			bool dropThrough = downPressed && !onLadder;
 			if(map->checkCollision(posPlayer, glm::ivec2(Player::HITBOX_WIDTH, Player::HITBOX_HEIGHT), CollisionDir::DOWN, &posPlayer.y, dropThrough))
 			{
-				if(upPressed && !onLadder && !bAttacking)
+				if(upAllowsJump && !onLadder && !bAttacking)
 				{
 					bJumping = true;
 					jumpAngle = 0;
