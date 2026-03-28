@@ -1,7 +1,6 @@
 #include <iostream>
 #include <cmath>
 #include <GL/glew.h>
-#include <GL/gl.h>
 #include <glm/gtc/matrix_transform.hpp>
 #include "Text.h"
 
