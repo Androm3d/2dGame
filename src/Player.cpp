@@ -56,6 +56,8 @@ void Player::init(const glm::ivec2 &tileMapPos, ShaderProgram &shaderProgram)
 	bClimbing = false;
 	bAttacking = false;
 	facingLeft = false;
+	alive = true;
+	hitTimer = 0;
 	spritesheet.loadFromFile("../images/Samurai_Animation.png", TEXTURE_PIXEL_FORMAT_RGBA);
 	spritesheet.setWrapS(GL_CLAMP_TO_EDGE);
 	spritesheet.setWrapT(GL_CLAMP_TO_EDGE);
@@ -152,6 +154,8 @@ void Player::init(const glm::ivec2 &tileMapPos, ShaderProgram &shaderProgram)
 
 void Player::update(int deltaTime)
 {
+	if (!alive) return;
+	if (hitTimer > 0) hitTimer--;
 	sprite->update(deltaTime);
 	bool onLadder = map->isOnLadder(posPlayer, glm::ivec2(Player::HITBOX_WIDTH, Player::HITBOX_HEIGHT));
 	bool upPressed = Game::instance().getKey(GLFW_KEY_UP);
@@ -370,10 +374,28 @@ void Player::update(int deltaTime)
 
 void Player::render()
 {
+	if (!alive) return;
+	// Blink during invincibility (skip every other 4-frame window)
+	if (hitTimer > 0 && (hitTimer / 4) % 2 != 0) return;
+
 	if(bAttacking)
 		attackSprite->render();
 	else
 		sprite->render();
+}
+
+void Player::takeDamage()
+{
+	if (!alive || hitTimer > 0) return;   // already invincible
+	Game::instance().lives--;
+	if (Game::instance().lives <= 0)
+	{
+		alive = false;
+	}
+	else
+	{
+		hitTimer = 90;   // ~1.5s invincibility
+	}
 }
 
 void Player::setTileMap(TileMap *tileMap)

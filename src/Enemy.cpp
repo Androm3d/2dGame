@@ -29,7 +29,8 @@
 #define ENEMY_DEATH_FRAMES 5
 
 #define PATH_RECALC_FRAMES 30
-#define HIT_INVINCIBILITY_FRAMES 50
+#define HIT_INVINCIBILITY_FRAMES 150
+#define HIT_BLINK_FRAMES         50
 #define KNOCKBACK_FRAMES 8
 #define KNOCKBACK_SPEED  5
 
@@ -44,6 +45,8 @@
 #define SHOT_COOLDOWN_FRAMES 90
 #define ARROW_SPEED        4
 #define ARROW_SIZE         64
+#define ARROW_HITBOX_W     32
+#define ARROW_HITBOX_H     12
 
 
 enum EnemyAnims
@@ -659,7 +662,7 @@ void Enemy::render()
 	}
 
 	// Render enemy (shot sprite or run/jump sprite) — blink when hit
-	if (hitTimer == 0 || (hitTimer / 4) % 2 == 0)
+	if (hitTimer == 0 || hitTimer <= (HIT_INVINCIBILITY_FRAMES - HIT_BLINK_FRAMES) || (hitTimer / 4) % 2 == 0)
 	{
 		if (bShooting)
 			shotSprite->render();
@@ -700,6 +703,26 @@ void Enemy::takeDamage(int knockDir)
 		knockbackDir = knockDir;
 		sprite->changeAnimation(HURT);
 	}
+}
+
+bool Enemy::checkArrowHit(const glm::vec2 &pPos, const glm::ivec2 &pSize)
+{
+	for (int i = (int)arrows.size() - 1; i >= 0; --i)
+	{
+		const Arrow &a = arrows[i];
+		// Arrow hitbox centered on sprite
+		float hbX = a.pos.x + (ARROW_SIZE - ARROW_HITBOX_W) / 2.f;
+		float hbY = a.pos.y + (ARROW_SIZE - ARROW_HITBOX_H) / 2.f;
+		if (hbX < pPos.x + pSize.x &&
+			hbX + ARROW_HITBOX_W > pPos.x &&
+			hbY < pPos.y + pSize.y &&
+			hbY + ARROW_HITBOX_H > pPos.y)
+		{
+			arrows.erase(arrows.begin() + i);
+			return true;
+		}
+	}
+	return false;
 }
 
 glm::vec4 Enemy::getHitbox() const

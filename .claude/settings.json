@@ -13,7 +13,8 @@
       "Bash(make -j4)",
       "Bash(python3 -c \":*)",
       "Bash(sips -g pixelWidth -g pixelHeight -g hasAlpha /Users/jergasus/UNI/VJ/2dGame/images/Enemy1_Run_Jump.png)",
-      "Bash(sips -g pixelWidth -g pixelHeight /Users/jergasus/UNI/VJ/2dGame/images/Enemy1_run_jump_hurt_death.png)"
+      "Bash(sips -g pixelWidth -g pixelHeight /Users/jergasus/UNI/VJ/2dGame/images/Enemy1_run_jump_hurt_death.png)",
+      "Bash(identify /Users/jergasus/UNI/VJ/2dGame/images/Enemy3.png /Users/jergasus/UNI/VJ/2dGame/images/Enemy3_Fire.png)"
     ]
   }
 }

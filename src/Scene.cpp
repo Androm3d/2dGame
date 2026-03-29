@@ -39,10 +39,16 @@ Scene::Scene()
 	map = NULL;
 	player = NULL;
 	enemy = NULL;
+	enemy2 = NULL;
+	enemy3 = NULL;
 	sword = nullptr;
 	bgVao = 0;
 	bgVbo = 0;
 	attackHitThisSwing = false;
+	attackHitEnemy2ThisSwing = false;
+	attackHitEnemy3ThisSwing = false;
+	enemy2HitPlayerThisSwing = false;
+	enemy3HitPlayerThisSwing = false;
 }
 
 Scene::~Scene()
@@ -84,6 +90,14 @@ void Scene::clearLevelEntities()
 	if (enemy != NULL) {
 		delete enemy;
 		enemy = NULL;
+	}
+	if (enemy2 != NULL) {
+		delete enemy2;
+		enemy2 = NULL;
+	}
+	if (enemy3 != NULL) {
+		delete enemy3;
+		enemy3 = NULL;
 	}
 }
 
@@ -139,6 +153,14 @@ void Scene::init()
 	enemy->init(glm::ivec2(SCREEN_X, SCREEN_Y), texProgram);
 	enemy->setPosition(glm::vec2(15 * map->getTileSize(), 0));
 	enemy->setTileMap(map);
+	enemy2 = new Enemy2();
+	enemy2->init(glm::ivec2(SCREEN_X, SCREEN_Y), texProgram);
+	enemy2->setPosition(glm::vec2(20 * map->getTileSize(), 0));
+	enemy2->setTileMap(map);
+	enemy3 = new Enemy3();
+	enemy3->init(glm::ivec2(SCREEN_X, SCREEN_Y), texProgram);
+	enemy3->setPosition(glm::vec2(25 * map->getTileSize(), 0));
+	enemy3->setTileMap(map);
 	viewWidth = float(map->getRoomSize().x * map->getTileSize());
 	viewHeight = float(map->getRoomSize().y * map->getTileSize());
 	if (viewWidth > mapPixelWidth) viewWidth = mapPixelWidth;
@@ -450,7 +472,8 @@ void Scene::update(int deltaTime)
 		}
 	}
 
-    player->update(deltaTime);
+	if (player->isAlive())
+		player->update(deltaTime);
 	if (enemy->isAlive() || enemy->isDying())
 		enemy->update(deltaTime, player->getPosition());
 
@@ -471,6 +494,94 @@ void Scene::update(int deltaTime)
 	}
 	if (!player->isAttacking())
 		attackHitThisSwing = false;
+
+	// --- Enemy1 arrows hit player ---
+	if (player->isAlive() && !player->isInvincible() && enemy->isAlive())
+		if (enemy->checkArrowHit(player->getPosition(), glm::ivec2(Player::HITBOX_WIDTH, Player::HITBOX_HEIGHT)))
+			player->takeDamage();
+
+	// --- Enemy2 update ---
+	if (enemy2->isAlive() || enemy2->isDying())
+		enemy2->update(deltaTime, player->getPosition());
+
+	// --- Player attack vs Enemy2 ---
+	if (player->isAttacking() && enemy2->isAlive() && !attackHitEnemy2ThisSwing)
+	{
+		glm::vec4 atkBox = player->getAttackHitbox();
+		glm::vec4 e2Box  = enemy2->getHitbox();
+		if (atkBox.x < e2Box.x + e2Box.z &&
+			atkBox.x + atkBox.z > e2Box.x &&
+			atkBox.y < e2Box.y + e2Box.w  &&
+			atkBox.y + atkBox.w > e2Box.y)
+		{
+			int knockDir = (enemy2->getPosition().x >= player->getPosition().x) ? 1 : -1;
+			enemy2->takeDamage(knockDir);
+			attackHitEnemy2ThisSwing = true;
+		}
+	}
+	if (!player->isAttacking())
+		attackHitEnemy2ThisSwing = false;
+
+	// --- Enemy2 melee hits player ---
+	if (enemy2->isMeleeAttacking() && !enemy2HitPlayerThisSwing)
+	{
+		if (player->isAlive() && !player->isInvincible())
+		{
+			glm::vec4 m = enemy2->getMeleeHitbox();
+			glm::vec2 pPos = player->getPosition();
+			if (m.x < pPos.x + Player::HITBOX_WIDTH  && m.x + m.z > pPos.x &&
+				m.y < pPos.y + Player::HITBOX_HEIGHT && m.y + m.w > pPos.y)
+			{
+				player->takeDamage();
+				enemy2HitPlayerThisSwing = true;
+			}
+		}
+	}
+	if (!enemy2->isMeleeAttacking()) enemy2HitPlayerThisSwing = false;
+
+	// --- Enemy3 update ---
+	if (enemy3->isAlive() || enemy3->isDying())
+		enemy3->update(deltaTime, player->getPosition());
+
+	// --- Player attack vs Enemy3 ---
+	if (player->isAttacking() && enemy3->isAlive() && !attackHitEnemy3ThisSwing)
+	{
+		glm::vec4 atkBox = player->getAttackHitbox();
+		glm::vec4 e3Box  = enemy3->getHitbox();
+		if (atkBox.x < e3Box.x + e3Box.z &&
+			atkBox.x + atkBox.z > e3Box.x &&
+			atkBox.y < e3Box.y + e3Box.w  &&
+			atkBox.y + atkBox.w > e3Box.y)
+		{
+			int knockDir = (enemy3->getPosition().x >= player->getPosition().x) ? 1 : -1;
+			enemy3->takeDamage(knockDir);
+			attackHitEnemy3ThisSwing = true;
+		}
+	}
+	if (!player->isAttacking())
+		attackHitEnemy3ThisSwing = false;
+
+	// --- Enemy3 fireballs hit player ---
+	if (player->isAlive() && !player->isInvincible() && enemy3->isAlive())
+		if (enemy3->checkFireballHit(player->getPosition(), glm::ivec2(Player::HITBOX_WIDTH, Player::HITBOX_HEIGHT)))
+			player->takeDamage();
+
+	// --- Enemy3 melee (Attack2) hits player ---
+	if (enemy3->isMeleeAttacking() && !enemy3HitPlayerThisSwing)
+	{
+		if (player->isAlive() && !player->isInvincible())
+		{
+			glm::vec4 m = enemy3->getMeleeHitbox();
+			glm::vec2 pPos = player->getPosition();
+			if (m.x < pPos.x + Player::HITBOX_WIDTH  && m.x + m.z > pPos.x &&
+				m.y < pPos.y + Player::HITBOX_HEIGHT && m.y + m.w > pPos.y)
+			{
+				player->takeDamage();
+				enemy3HitPlayerThisSwing = true;
+			}
+		}
+	}
+	if (!enemy3->isMeleeAttacking()) enemy3HitPlayerThisSwing = false;
 	updateCamera();
 
     glm::vec2 pPos = player->getPosition();
@@ -684,6 +795,10 @@ void Scene::render()
 
 	if (enemy->isAlive() || enemy->isDying())
 		enemy->render();
+	if (enemy2->isAlive() || enemy2->isDying())
+		enemy2->render();
+	if (enemy3->isAlive() || enemy3->isDying())
+		enemy3->render();
 	player->render();
 	Sprite::setGlobalRenderOffset(glm::vec2(0.f, 0.f));
 

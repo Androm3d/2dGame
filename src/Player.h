@@ -28,12 +28,17 @@ public:
 	void setPosition(const glm::vec2 &pos);
 	bool isAttacking() const { return bAttacking; }
 	glm::vec4 getAttackHitbox() const;
+	void takeDamage();
+	bool isInvincible() const { return hitTimer > 0; }
+	bool isAlive() const { return alive; }
 
 private:
 	bool bJumping;
 	bool bClimbing;
 	bool bAttacking;
 	bool facingLeft;
+	bool alive;
+	int hitTimer;
 	glm::ivec2 tileMapDispl, posPlayer;
 	int jumpAngle, startY;
 	Texture spritesheet;

@@ -8,6 +8,8 @@
 #include "TileMap.h"
 #include "Player.h"
 #include "Enemy.h"
+#include "Enemy2.h"
+#include "Enemy3.h"
 #include "Text.h"
 
 
@@ -50,6 +52,8 @@ private:
 	Player *player;
 	glm::vec2 playerInitPos;
 	Enemy *enemy;
+	Enemy2 *enemy2;
+	Enemy3 *enemy3;
 	ShaderProgram texProgram;
 	float currentTime;
 	glm::mat4 projection;
@@ -83,6 +87,10 @@ private:
 	bool upWasDown = false;
 
 	bool attackHitThisSwing;
+	bool attackHitEnemy2ThisSwing;
+	bool attackHitEnemy3ThisSwing;
+	bool enemy2HitPlayerThisSwing;
+	bool enemy3HitPlayerThisSwing;
 	Text hudText;
 	bool hudReady = false;
 
