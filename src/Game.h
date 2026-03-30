@@ -66,6 +66,18 @@ public:
 	void registerRoomKeyTotal(const std::string &mapName, int totalKeys);
 	int getCollectedKeysForRoom(const std::string &mapName) const;
 	void collectKeyInCurrentRoom();
+	void registerRoomHealSpawns(const std::string &mapName, int totalHeals);
+	int getCollectedHealsForRoom(const std::string &mapName) const;
+	void collectHealInCurrentRoom();
+	void registerRoomShieldSpawns(const std::string &mapName, int totalShields);
+	int getCollectedShieldsForRoom(const std::string &mapName) const;
+	void collectShieldInCurrentRoom();
+	void registerRoomSwordSpawn(const std::string &mapName);
+	bool hasSwordBeenCollectedInRoom(const std::string &mapName) const;
+	void collectSwordInCurrentRoom();
+	void preloadConnectedRoomKeys();
+	int getTotalKeysInCurrentWorld();
+	int getCollectedKeysInCurrentWorld() const;
 	bool canUsePortalsFromCurrentWorld();
 
 	void setJumpInputBlocked(bool blocked) { jumpInputBlocked = blocked; }
@@ -108,6 +120,9 @@ private:
 	int nextSpawnDoorIndex = -1;
 	std::unordered_map<std::string, int> roomTotalKeys;
 	std::unordered_map<std::string, int> roomCollectedKeys;
+	std::unordered_map<std::string, int> roomCollectedHeals;
+	std::unordered_map<std::string, int> roomCollectedShields;
+	std::unordered_map<std::string, bool> roomCollectedSword;
 	DoorGraph doorGraph;
 	Scene scene;
 

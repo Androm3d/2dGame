@@ -120,6 +120,12 @@ void Scene::init()
     std::string mapFile = Game::instance().getCurrentMapName();
     map = TileMap::createTileMap(mapFile, glm::vec2(0, 0), texProgram);	player = new Player();
 	Game::instance().registerRoomKeyTotal(mapFile, int(map->getKeySpawns().size()));
+	Game::instance().preloadConnectedRoomKeys();
+	Game::instance().totalKeysInLevel = Game::instance().getTotalKeysInCurrentWorld();
+	Game::instance().registerRoomHealSpawns(mapFile, int(map->getHealSpawns().size()));
+	Game::instance().registerRoomShieldSpawns(mapFile, int(map->getShieldSpawns().size()));
+	if (!map->getSwordSpawns().empty())
+		Game::instance().registerRoomSwordSpawn(mapFile);
 
 	glm::ivec2 mapTiles = map->getMapSize();
 	float mapPixelWidth = mapTiles.x * map->getTileSize();
@@ -231,20 +237,26 @@ void Scene::init()
         keys.push_back(newKey); // Add it to your vector
     }
 
-	if (!map->getSwordSpawns().empty()) {
+	if (!map->getSwordSpawns().empty() && !Game::instance().hasSwordBeenCollectedInRoom(mapFile)) {
 		glm::ivec2 pos = map->getSwordSpawns()[0]; 
 		Sprite* newSword = Sprite::createSprite(glm::vec2(map->getTileSize(), map->getTileSize()), glm::vec2(1.0, 1.0), &texSword, &texProgram);
 		newSword->setPosition(pos);
 		sword = newSword; // Store it in the sword member variable
 	}
 
-	for (glm::ivec2 pos : map->getHealSpawns()) {
+	int alreadyCollectedHeals = Game::instance().getCollectedHealsForRoom(mapFile);
+	const std::vector<glm::ivec2> &allHealSpawns = map->getHealSpawns();
+	for (int healIndex = alreadyCollectedHeals; healIndex < int(allHealSpawns.size()); ++healIndex) {
+		glm::ivec2 pos = allHealSpawns[healIndex];
 		Sprite* newHeal = Sprite::createSprite(glm::vec2(map->getTileSize(), map->getTileSize()), glm::vec2(1.0, 1.0), &texHeal, &texProgram);
 		newHeal->setPosition(pos);
 		heals.push_back(newHeal);
 	}
 
-	for (glm::ivec2 pos : map->getShieldSpawns()) {
+	int alreadyCollectedShields = Game::instance().getCollectedShieldsForRoom(mapFile);
+	const std::vector<glm::ivec2> &allShieldSpawns = map->getShieldSpawns();
+	for (int shieldIndex = alreadyCollectedShields; shieldIndex < int(allShieldSpawns.size()); ++shieldIndex) {
+		glm::ivec2 pos = allShieldSpawns[shieldIndex];
 		Sprite* newShield = Sprite::createSprite(glm::vec2(map->getTileSize(), map->getTileSize()), glm::vec2(1.0, 1.0), &texShield, &texProgram);
 		newShield->setPosition(pos);
 		shields.push_back(newShield);
@@ -610,6 +622,7 @@ void Scene::update(int deltaTime)
 	if (sword != nullptr && checkAABB(pPos, pSize, sword->getPosition(), glm::ivec2(map->getTileSize(), map->getTileSize()))) {
 		
 		Game::instance().hasSword = true; 
+		Game::instance().collectSwordInCurrentRoom();
 		delete sword;
 		sword = nullptr;
 		std::cout << "GOT THE SWORD" << std::endl;
@@ -618,6 +631,7 @@ void Scene::update(int deltaTime)
 	for (int i = heals.size() - 1; i >= 0; i--) {
 		if (checkAABB(pPos, pSize, heals[i]->getPosition(), glm::ivec2(map->getTileSize(), map->getTileSize()))) {
 			Game::instance().lives++; 
+			Game::instance().collectHealInCurrentRoom();
 			delete heals[i];
 			heals.erase(heals.begin() + i);
 			std::cout << "HEAL PICKED UP" << std::endl;
@@ -627,6 +641,7 @@ void Scene::update(int deltaTime)
 	for (int i = shields.size() - 1; i >= 0; i--) {
 		if (checkAABB(pPos, pSize, shields[i]->getPosition(), glm::ivec2(map->getTileSize(), map->getTileSize()))) {
 			Game::instance().hasShield = true; 
+			Game::instance().collectShieldInCurrentRoom();
 			delete shields[i];
 			shields.erase(shields.begin() + i);
 			std::cout << "SHIELD PICKED UP" << std::endl;
@@ -804,12 +819,13 @@ void Scene::render()
 
 	if(hudReady)
 	{
-		const Game &game = Game::instance();
+		Game &game = Game::instance();
 		std::ostringstream line1;
 		std::ostringstream line2;
 
+		int collectedKeysInWorld = game.getCollectedKeysInCurrentWorld();
 		line1 << "Lives: " << game.lives
-		      << "  Keys: " << game.keysCollected << "/" << game.totalKeysInLevel;
+		      << "  Keys: " << collectedKeysInWorld << "/" << game.totalKeysInLevel;
 		line2 << "Shield: " << (game.hasShield ? "ON" : "OFF")
 		      << "  Sword: " << (game.hasSword ? "ON" : "OFF");
 

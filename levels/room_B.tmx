@@ -1,5 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <map version="1.10" tiledversion="1.12.1" orientation="orthogonal" renderorder="right-down" width="20" height="10" tilewidth="32" tileheight="32" infinite="0" nextlayerid="2" nextobjectid="1">
+ <editorsettings>
+  <export target="room_B.json" format="json"/>
+ </editorsettings>
  <tileset firstgid="1" name="tiles" tilewidth="32" tileheight="32" tilecount="136" columns="8">
   <image source="../images/tiles.png" trans="ffffff" width="256" height="544"/>
   <tile id="1">
@@ -331,10 +334,10 @@
 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-0,68,114,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-0,76,0,0,0,0,0,0,109,0,0,0,0,0,0,0,0,0,0,0,
-4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,5,
-12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,13
+0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,68,0,0,
+0,0,0,0,0,0,0,0,0,0,113,0,0,0,0,0,0,76,0,0,
+0,0,0,1,2,3,4,4,4,5,4,5,5,5,5,5,5,5,5,5,
+65,66,66,66,66,11,13,13,13,13,13,13,13,13,13,13,13,13,13,13
 </data>
  </layer>
 </map>

@@ -84,6 +84,158 @@ void Game::collectKeyInCurrentRoom()
 	int total = getRoomTotalKeys(mapName);
 	int &collected = roomCollectedKeys[mapName];
 	collected = std::min(collected + 1, total);
+	keysCollected++;  // Also update the HUD counter
+}
+
+void Game::registerRoomHealSpawns(const std::string &mapName, int totalHeals)
+{
+	if (roomCollectedHeals.find(mapName) == roomCollectedHeals.end())
+		roomCollectedHeals[mapName] = 0;
+}
+
+int Game::getCollectedHealsForRoom(const std::string &mapName) const
+{
+	auto it = roomCollectedHeals.find(mapName);
+	if (it == roomCollectedHeals.end())
+		return 0;
+	return it->second;
+}
+
+void Game::collectHealInCurrentRoom()
+{
+	const std::string mapName = getCurrentMapName();
+	roomCollectedHeals[mapName] = roomCollectedHeals[mapName] + 1;
+}
+
+void Game::registerRoomShieldSpawns(const std::string &mapName, int totalShields)
+{
+	if (roomCollectedShields.find(mapName) == roomCollectedShields.end())
+		roomCollectedShields[mapName] = 0;
+}
+
+int Game::getCollectedShieldsForRoom(const std::string &mapName) const
+{
+	auto it = roomCollectedShields.find(mapName);
+	if (it == roomCollectedShields.end())
+		return 0;
+	return it->second;
+}
+
+void Game::collectShieldInCurrentRoom()
+{
+	const std::string mapName = getCurrentMapName();
+	roomCollectedShields[mapName] = roomCollectedShields[mapName] + 1;
+}
+
+void Game::registerRoomSwordSpawn(const std::string &mapName)
+{
+	if (roomCollectedSword.find(mapName) == roomCollectedSword.end())
+		roomCollectedSword[mapName] = false;
+}
+
+bool Game::hasSwordBeenCollectedInRoom(const std::string &mapName) const
+{
+	auto it = roomCollectedSword.find(mapName);
+	if (it == roomCollectedSword.end())
+		return false;
+	return it->second;
+}
+
+void Game::collectSwordInCurrentRoom()
+{
+	const std::string mapName = getCurrentMapName();
+	roomCollectedSword[mapName] = true;
+}
+
+void Game::preloadConnectedRoomKeys()
+{
+	const std::string worldMap = getCurrentWorldMapName();
+	std::queue<std::string> q;
+	std::unordered_set<std::string> visited;
+
+	q.push(worldMap);
+	visited.insert(worldMap);
+
+	while (!q.empty()) {
+		const std::string room = q.front();
+		q.pop();
+
+		// Ensure this room's key count is registered
+		getRoomTotalKeys(room);
+
+		auto it = doorGraph.find(room);
+		if (it == doorGraph.end())
+			continue;
+
+		for (const DoorLink &link : it->second) {
+			if (link.targetMap.empty())
+				continue;
+			if (visited.insert(link.targetMap).second)
+				q.push(link.targetMap);
+		}
+	}
+}
+
+int Game::getTotalKeysInCurrentWorld()
+{
+	const std::string worldMap = getCurrentWorldMapName();
+	std::queue<std::string> q;
+	std::unordered_set<std::string> visited;
+	int totalKeys = 0;
+
+	q.push(worldMap);
+	visited.insert(worldMap);
+
+	while (!q.empty()) {
+		const std::string room = q.front();
+		q.pop();
+
+		totalKeys += getRoomTotalKeys(room);
+
+		auto it = doorGraph.find(room);
+		if (it == doorGraph.end())
+			continue;
+
+		for (const DoorLink &link : it->second) {
+			if (link.targetMap.empty())
+				continue;
+			if (visited.insert(link.targetMap).second)
+				q.push(link.targetMap);
+		}
+	}
+
+	return totalKeys;
+}
+
+int Game::getCollectedKeysInCurrentWorld() const
+{
+	const std::string worldMap = getCurrentWorldMapName();
+	std::queue<std::string> q;
+	std::unordered_set<std::string> visited;
+	int collectedKeys = 0;
+
+	q.push(worldMap);
+	visited.insert(worldMap);
+
+	while (!q.empty()) {
+		const std::string room = q.front();
+		q.pop();
+
+		collectedKeys += getCollectedKeysForRoom(room);
+
+		auto it = doorGraph.find(room);
+		if (it == doorGraph.end())
+			continue;
+
+		for (const DoorLink &link : it->second) {
+			if (link.targetMap.empty())
+				continue;
+			if (visited.insert(link.targetMap).second)
+				q.push(link.targetMap);
+		}
+	}
+
+	return collectedKeys;
 }
 
 bool Game::canUsePortalsFromCurrentWorld()
