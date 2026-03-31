@@ -512,7 +512,7 @@ bool TileMap::checkCollision(const glm::ivec2 &pos, const glm::ivec2 &size, Coll
 		x1 = mapSize.x - 1;
 	}
 	if (y0 < 0) {
-		if (dir == CollisionDir::UP) { if (correctedPos) *correctedPos = 0; return true; }
+		if (dir == CollisionDir::UP) return false;
 		y0 = 0;
 	}
 	if (y1 >= mapSize.y) {

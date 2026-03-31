@@ -19,6 +19,7 @@ static const float PLAYER_JUMP_VELOCITY = std::sqrt(2.0f * PLAYER_GRAVITY * floa
 static const float SPRING_JUMP_VELOCITY = PLAYER_JUMP_VELOCITY * std::sqrt(float(SPRING_JUMP_MULTIPLIER));
 static const float PLAYER_WALK_SPEED   = 180.0f;           // px/s horizontal
 static const float PLAYER_CLIMB_SPEED  = 120.0f;           // px/s on ladders
+static const int PLAYER_SPRING_COOLDOWN_MS = 120;
 static const int   PLAYER_DROP_THROUGH_MS    = 180;        // ms the player passes through one-way platforms
 static const float PLAYER_DROP_THROUGH_NUDGE = 4.0f;       // px nudge downward to clear the platform tile
 
@@ -288,7 +289,10 @@ void Player::update(int deltaTime)
 		return;
 	}
 	if (hitTimer > 0) hitTimer--;
-	if (springCooldown > 0) springCooldown--;
+	if (springCooldown > 0) {
+		springCooldown -= deltaTime;
+		if (springCooldown < 0) springCooldown = 0;
+	}
 	if (dashCooldown > 0) dashCooldown--;
 	if (dropThroughTimerMs > 0) dropThroughTimerMs -= deltaTime;
 	springTriggered = false;
@@ -359,7 +363,7 @@ void Player::update(int deltaTime)
 		}
 	}
 	bool shiftHeld = Game::instance().getKey(GLFW_KEY_LEFT_SHIFT) || Game::instance().getKey(GLFW_KEY_RIGHT_SHIFT);
-	if(shiftHeld && !prevShift && !bAttacking && !bClimbing && parryCooldown == 0)
+	if(shiftHeld && !prevShift && !bAttacking && !bClimbing && parryCooldown == 0 && Game::instance().hasSword)
 	{
 		bProtecting = true;
 		parryTimer = PARRY_FRAMES;
@@ -373,7 +377,7 @@ void Player::update(int deltaTime)
 		verticalVelocity = -SPRING_JUMP_VELOCITY;
 		bJumping = true;
 		onGround = false;
-		springCooldown = 120;
+		springCooldown = PLAYER_SPRING_COOLDOWN_MS;
 		springTriggered = true;
 	}
 
@@ -603,6 +607,20 @@ void Player::update(int deltaTime)
 			{
 				sprite->changeAnimation(facingLeft ? STAND_LEFT : STAND_RIGHT);
 			}
+		}
+	}
+
+	// Re-check spring after movement so fast dash/fall entries do not miss the trigger.
+	if (!bClimbing && springCooldown == 0)
+	{
+		glm::ivec2 posAfterMove(int(posPlayerF.x), int(posPlayerF.y));
+		if (map->isOnSpring(posAfterMove, glm::ivec2(Player::HITBOX_WIDTH, Player::HITBOX_HEIGHT)))
+		{
+			verticalVelocity = -SPRING_JUMP_VELOCITY;
+			bJumping = true;
+			onGround = false;
+			springCooldown = PLAYER_SPRING_COOLDOWN_MS;
+			springTriggered = true;
 		}
 	}
 

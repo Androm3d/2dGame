@@ -75,6 +75,9 @@ private:
 	std::vector<float> weightVelocities;
 	std::vector<int> weightSpringCooldownMs;
 	std::vector<int> weightDashCooldownMs;
+	std::vector<float> weightDashVelocities;
+	std::vector<float> weightDashVelocityStarts;
+	std::vector<int> weightDashTimeLeftMs;
 	std::vector<Sprite*> springs;
 	std::vector<Sprite*> dashes;
 

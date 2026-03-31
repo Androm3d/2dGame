@@ -49,9 +49,12 @@ private:
 	int hitTimer;
 	int knockbackFrames;
 	int knockbackDir;
+	int dashTimeLeftMs;
 	glm::ivec2 tileMapDispl, posEnemy;
 	glm::vec2 posEnemyF;
 	float verticalVelocity;
+	float dashVelocity;
+	float dashVelocityStart;
 	Texture spritesheet;
 	Sprite *sprite;
 	TileMap *map;

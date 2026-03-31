@@ -15,9 +15,12 @@
 static const float WEIGHT_GRAVITY = 1800.0f;
 static const float WEIGHT_MAX_FALL_SPEED = 240.0f;
 static const float WEIGHT_SPRING_JUMP_VELOCITY = std::sqrt(2.0f * WEIGHT_GRAVITY * (96.0f * 3.0f));
-static const float WEIGHT_DASH_PUSH_DISTANCE = 90.0f;
+static const int WEIGHT_DASH_DURATION_MS = 1000;
+static const float WEIGHT_DASH_DISTANCE_BASE = 60.0f;
 static const int WEIGHT_SPRING_COOLDOWN_MS = 180;
 static const int WEIGHT_DASH_COOLDOWN_MS = 180;
+static const float WEIGHT_SPAWN_RAISE_PX = 12.0f;
+static const float PLAYER_SPAWN_CLIP_OFFSET = 12.0f;
 
 namespace {
 bool parseWorldMapCoords(const std::string &mapName, int &x, int &y)
@@ -80,6 +83,9 @@ void Scene::clearLevelEntities()
 	weightVelocities.clear();
 	weightSpringCooldownMs.clear();
 	weightDashCooldownMs.clear();
+	weightDashVelocities.clear();
+	weightDashVelocityStarts.clear();
+	weightDashTimeLeftMs.clear();
 	for (Sprite* spring : springs) delete spring;
 	springs.clear();
 	for (Sprite* dash : dashes) delete dash;
@@ -155,6 +161,8 @@ void Scene::init()
 	else {
 		std::cout << "Player spawn point: (" << map->getSpawnLocations()[0].x << ", " << map->getSpawnLocations()[0].y << ")" << std::endl;
 		playerInitPos =  glm::vec2(map->getSpawnLocations()[0]);
+		playerInitPos.y -= float(Player::HITBOX_HEIGHT - map->getTileSize());
+		playerInitPos.y -= PLAYER_SPAWN_CLIP_OFFSET;
 	}
 
 	int spawnDoorIndex = -1;
@@ -163,12 +171,21 @@ void Scene::init()
 		if (spawnDoorIndex >= 0 && spawnDoorIndex < int(doorSpawns.size())) {
 			playerInitPos = glm::vec2(doorSpawns[spawnDoorIndex]);
 			playerInitPos.y -= float(map->getTileSize());
-			if (playerInitPos.y < 0.f) playerInitPos.y = 0.f;
+			playerInitPos.y -= PLAYER_SPAWN_CLIP_OFFSET;
 		}
 	}
 	
 	player->setPosition(playerInitPos);
 	player->setTileMap(map);
+	{
+		glm::ivec2 spawnSnapPos(int(playerInitPos.x), int(playerInitPos.y));
+		int spawnGroundY = 0;
+		if (map->checkCollision(spawnSnapPos, glm::ivec2(Player::HITBOX_WIDTH, Player::HITBOX_HEIGHT), CollisionDir::DOWN, &spawnGroundY, false))
+		{
+			playerInitPos.y = float(spawnGroundY) - PLAYER_SPAWN_CLIP_OFFSET;
+			player->setPosition(playerInitPos);
+		}
+	}
 	enemy = new Enemy();
 	enemy->init(glm::ivec2(SCREEN_X, SCREEN_Y), texProgram);
 	if (!map->getEnemy1Spawns().empty())
@@ -231,6 +248,11 @@ void Scene::init()
 	for (Sprite* s : shields) delete s; shields.clear();
 	for (Sprite* w : weights) delete w; weights.clear();
 	weightVelocities.clear();
+	weightSpringCooldownMs.clear();
+	weightDashCooldownMs.clear();
+	weightDashVelocities.clear();
+	weightDashVelocityStarts.clear();
+	weightDashTimeLeftMs.clear();
 	for (Sprite* sp : springs) delete sp; springs.clear();
 	for (Sprite* d : dashes) delete d; dashes.clear();
 	if (sword != nullptr) {  delete sword;  sword = nullptr; }
@@ -304,11 +326,22 @@ void Scene::init()
 
 	for (glm::ivec2 pos : map->getWeightSpawns()) {
 		Sprite* newWeight = Sprite::createSprite(glm::vec2(map->getTileSize(), map->getTileSize()), glm::vec2(1.0, 1.0), &texWeight, &texProgram);
-		newWeight->setPosition(pos);
+		glm::vec2 spawnPos(float(pos.x), float(pos.y) - WEIGHT_SPAWN_RAISE_PX);
+		if (spawnPos.y < 0.0f) spawnPos.y = 0.0f;
+		// Resolve initial placement onto support tiles to avoid first-frame one-way clipping.
+		glm::ivec2 spawnCheckPos(int(spawnPos.x), int(spawnPos.y + 1.0f));
+		glm::ivec2 weightSize(map->getTileSize(), map->getTileSize());
+		int correctedY = 0;
+		if (map->checkCollision(spawnCheckPos, weightSize, CollisionDir::DOWN, &correctedY, false))
+			spawnPos.y = float(correctedY);
+		newWeight->setPosition(spawnPos);
 		weights.push_back(newWeight);
 		weightVelocities.push_back(0.0f);
 		weightSpringCooldownMs.push_back(0);
 		weightDashCooldownMs.push_back(0);
+		weightDashVelocities.push_back(0.0f);
+		weightDashVelocityStarts.push_back(0.0f);
+		weightDashTimeLeftMs.push_back(0);
 	}
 
 	glm::vec2 springFrameSize(
@@ -736,6 +769,8 @@ void Scene::update(int deltaTime)
 	if (pPos.y > map->getMapSize().y * map->getTileSize() + pSize.y) {
 		Game::instance().lives--;
 		std::cout << "Player fell! Lives remaining: " << Game::instance().lives << std::endl;
+		if (Game::instance().lives <= 0)
+			return;
 		player->setPosition(playerInitPos);
 		updateCamera();
 		pPos = player->getPosition();
@@ -791,6 +826,9 @@ void Scene::update(int deltaTime)
 		float &wVel = weightVelocities[i];
 		int &springCooldownMs = weightSpringCooldownMs[i];
 		int &dashCooldownMs = weightDashCooldownMs[i];
+		float &dashVel = weightDashVelocities[i];
+		float &dashVelStart = weightDashVelocityStarts[i];
+		int &dashTimeLeftMs = weightDashTimeLeftMs[i];
 		if (springCooldownMs > 0) springCooldownMs -= deltaTime;
 		if (dashCooldownMs > 0) dashCooldownMs -= deltaTime;
 
@@ -834,11 +872,42 @@ void Scene::update(int deltaTime)
 		bool dashLeft = false;
 		if (dashCooldownMs <= 0 && map->isOnDash(weightPosI, weightSize, &dashLeft)) {
 			int dir = dashLeft ? -1 : 1;
-			glm::ivec2 dashPos(static_cast<int>(wPos.x + float(dir) * WEIGHT_DASH_PUSH_DISTANCE), static_cast<int>(wPos.y));
-			map->checkCollision(dashPos, weightSize, dir < 0 ? CollisionDir::LEFT : CollisionDir::RIGHT, &dashPos.x);
-			wPos.x = float(dashPos.x);
-			weights[i]->setPosition(wPos);
+			dashTimeLeftMs = WEIGHT_DASH_DURATION_MS;
+			dashVelStart = dir * (WEIGHT_DASH_DISTANCE_BASE * 3.0f) / (0.5f * float(WEIGHT_DASH_DURATION_MS));
+			dashVel = dashVelStart;
 			dashCooldownMs = WEIGHT_DASH_COOLDOWN_MS;
+		}
+
+		if (dashTimeLeftMs > 0 && dashVel != 0.0f)
+		{
+			float ratio = float(dashTimeLeftMs) / float(WEIGHT_DASH_DURATION_MS);
+			dashVel = dashVelStart * ratio;
+			float dashDelta = dashVel * float(deltaTime);
+			int dashSteps = int(std::ceil(std::abs(dashDelta)));
+			int dashStepDir = (dashDelta < 0.0f) ? -1 : 1;
+			for (int step = 0; step < dashSteps; ++step)
+			{
+				wPos.x += float(dashStepDir);
+				glm::ivec2 dashPos(static_cast<int>(wPos.x), static_cast<int>(wPos.y));
+				if (map->checkCollision(dashPos, weightSize, dashStepDir < 0 ? CollisionDir::LEFT : CollisionDir::RIGHT, &dashPos.x))
+				{
+					wPos.x = float(dashPos.x);
+					dashTimeLeftMs = 0;
+					dashVel = 0.0f;
+					break;
+				}
+			}
+			weights[i]->setPosition(wPos);
+		}
+
+		if (dashTimeLeftMs > 0)
+		{
+			dashTimeLeftMs -= deltaTime;
+			if (dashTimeLeftMs <= 0)
+			{
+				dashTimeLeftMs = 0;
+				dashVel = 0.0f;
+			}
 		}
 
 		// Gravity: weights should fall when nothing supports them below
@@ -846,12 +915,36 @@ void Scene::update(int deltaTime)
 		if (wVel > WEIGHT_MAX_FALL_SPEED)
 			wVel = WEIGHT_MAX_FALL_SPEED;
 		glm::vec2 nextPos = wPos;
-		nextPos.y += wVel * dt;
-		glm::ivec2 fallCheckPos(static_cast<int>(nextPos.x), static_cast<int>(nextPos.y));
-		int correctedY = 0;
-		if (map->checkCollision(fallCheckPos, weightSize, CollisionDir::DOWN, &correctedY)) {
-			nextPos.y = float(correctedY);
-			wVel = 0.0f;
+		float yDelta = wVel * dt;
+		if (yDelta > 0.0f)
+		{
+			int ySteps = int(std::ceil(yDelta));
+			for (int step = 0; step < ySteps; ++step)
+			{
+				nextPos.y += 1.0f;
+				glm::ivec2 fallCheckPos(static_cast<int>(nextPos.x), static_cast<int>(nextPos.y));
+				int correctedY = 0;
+				if (map->checkCollision(fallCheckPos, weightSize, CollisionDir::DOWN, &correctedY, false)) {
+					nextPos.y = float(correctedY);
+					wVel = 0.0f;
+					break;
+				}
+			}
+		}
+		else if (yDelta < 0.0f)
+		{
+			int ySteps = int(std::ceil(-yDelta));
+			for (int step = 0; step < ySteps; ++step)
+			{
+				nextPos.y -= 1.0f;
+				glm::ivec2 riseCheckPos(static_cast<int>(nextPos.x), static_cast<int>(nextPos.y));
+				int correctedY = 0;
+				if (map->checkCollision(riseCheckPos, weightSize, CollisionDir::UP, &correctedY, false)) {
+					nextPos.y = float(correctedY);
+					wVel = 0.0f;
+					break;
+				}
+			}
 		}
 		weights[i]->setPosition(nextPos);
 		wPos = nextPos;
@@ -886,6 +979,9 @@ void Scene::update(int deltaTime)
 			weightVelocities.erase(weightVelocities.begin() + i);
 			weightSpringCooldownMs.erase(weightSpringCooldownMs.begin() + i);
 			weightDashCooldownMs.erase(weightDashCooldownMs.begin() + i);
+			weightDashVelocities.erase(weightDashVelocities.begin() + i);
+			weightDashVelocityStarts.erase(weightDashVelocityStarts.begin() + i);
+			weightDashTimeLeftMs.erase(weightDashTimeLeftMs.begin() + i);
 			continue;
 		}
 	}

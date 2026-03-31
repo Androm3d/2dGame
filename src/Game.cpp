@@ -365,7 +365,7 @@ bool Game::update(int deltaTime)
 	if (currentState == GameState::PLAY) {
 		scene.update(deltaTime);
 		
-		if (lives <= 0 && !scene.isPlayerAlive()) {
+		if (lives <= 0) {
 			transitionToState(GameState::MENU);
 		}
 	}

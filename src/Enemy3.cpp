@@ -65,9 +65,11 @@
 #define KNOCKBACK_SPEED            5  // px per tick during knockback
 #define ATTACK_COOLDOWN_FRAMES    90  // ticks between attacks (fire or melee)
 
-static const float E3_GRAVITY            = 1400.0f;          // px/s² downward acceleration
-static const float E3_JUMP_VELOCITY      = std::sqrt(2.0f * E3_GRAVITY * float(E3_JUMP_HEIGHT)); // v = sqrt(2gh)
-static const float E3_SPRING_JUMP_VELOCITY = E3_JUMP_VELOCITY * std::sqrt(3.0f); // spring gives sqrt(3)x extra height
+static const float E3_GRAVITY = 1400.0f;
+static const float E3_JUMP_VELOCITY = std::sqrt(2.0f * E3_GRAVITY * float(E3_JUMP_HEIGHT));
+static const float E3_SPRING_JUMP_VELOCITY = E3_JUMP_VELOCITY * std::sqrt(3.0f);
+static const int E3_DASH_DURATION_MS = 1000;
+static const float E3_DASH_DISTANCE_BASE = 60.0f;
 
 
 enum Enemy3Anims
@@ -151,6 +153,9 @@ void Enemy3::init(const glm::ivec2 &tileMapPos, ShaderProgram &shaderProgram)
 	hitTimer        = 0;
 	knockbackFrames = 0;
 	knockbackDir    = 0;
+	dashTimeLeftMs = 0;
+	dashVelocity = 0.0f;
+	dashVelocityStart = 0.0f;
 
 	// --- Main spritesheet ---
 	spritesheet.loadFromFile("../images/Enemy3.png", TEXTURE_PIXEL_FORMAT_RGBA);
@@ -392,11 +397,9 @@ void Enemy3::update(int deltaTime, const glm::vec2 &playerPos)
 		bool dashLeft = false;
 		if (dashCooldown == 0 && map->isOnDash(triggerPos, glm::ivec2(E3_HITBOX_WIDTH, E3_HITBOX_HEIGHT), &dashLeft)) {
 			int dir = dashLeft ? -1 : 1;
-			posEnemyF.x += float(dir * 90);
-			glm::ivec2 dashPos(int(posEnemyF.x), int(posEnemyF.y));
-			map->checkCollision(dashPos, glm::ivec2(E3_HITBOX_WIDTH, E3_HITBOX_HEIGHT), dir < 0 ? CollisionDir::LEFT : CollisionDir::RIGHT, &dashPos.x);
-			posEnemyF.x = float(dashPos.x);
-			posEnemy = dashPos;
+			dashTimeLeftMs = E3_DASH_DURATION_MS;
+			dashVelocityStart = dir * (E3_DASH_DISTANCE_BASE * 3.0f) / (0.5f * float(E3_DASH_DURATION_MS));
+			dashVelocity = dashVelocityStart;
 			dashCooldown = 120;
 		}
 	}
@@ -584,6 +587,27 @@ void Enemy3::update(int deltaTime, const glm::vec2 &playerPos)
 		posEnemy = movePos;
 	}
 
+	if (dashTimeLeftMs > 0 && dashVelocity != 0.0f)
+	{
+		float ratio = float(dashTimeLeftMs) / float(E3_DASH_DURATION_MS);
+		dashVelocity = dashVelocityStart * ratio;
+		float dashDelta = dashVelocity * float(deltaTime);
+		int dashSteps = int(std::ceil(std::abs(dashDelta)));
+		int dashStepDir = (dashDelta < 0.0f) ? -1 : 1;
+		for (int step = 0; step < dashSteps; ++step)
+		{
+			posEnemyF.x += float(dashStepDir);
+			glm::ivec2 dashPos(int(posEnemyF.x), int(posEnemyF.y));
+			if (map->checkCollision(dashPos, glm::ivec2(E3_HITBOX_WIDTH, E3_HITBOX_HEIGHT), dashStepDir < 0 ? CollisionDir::LEFT : CollisionDir::RIGHT, &dashPos.x))
+			{
+				posEnemyF.x = float(dashPos.x);
+				dashTimeLeftMs = 0;
+				dashVelocity = 0.0f;
+				break;
+			}
+		}
+	}
+
 	if ((wantJump || blocked) && !bJumping && onGround)
 	{
 		bJumping  = true;
@@ -636,6 +660,16 @@ void Enemy3::update(int deltaTime, const glm::vec2 &playerPos)
 		bJumping = true;
 	}
 	posEnemy = fallPos;
+
+	if (dashTimeLeftMs > 0)
+	{
+		dashTimeLeftMs -= deltaTime;
+		if (dashTimeLeftMs <= 0)
+		{
+			dashTimeLeftMs = 0;
+			dashVelocity = 0.0f;
+		}
+	}
 
 	sprite->setPosition(glm::vec2(float(tileMapDispl.x + posEnemy.x) - renderOffsetX, float(tileMapDispl.y + posEnemy.y) - renderOffsetY));
 }
