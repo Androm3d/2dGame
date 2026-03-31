@@ -26,6 +26,8 @@ static const float PLAYER_SPAWN_CLIP_OFFSET = 12.0f;
 static const int EXPLOSION_FLASH_MS = 180;
 static const int PARRY_FLASH_MS = 120;
 static const int TELEPORT_WARP_MS = 520;
+static const float ITEM_BOB_AMPLITUDE_PX = 3.0f;
+static const float ITEM_BOB_SPEED_RAD = 2.8f;
 
 namespace {
 bool parseWorldMapCoords(const std::string &mapName, int &x, int &y)
@@ -82,10 +84,13 @@ void Scene::clearLevelEntities()
 {
 	for (Sprite* key : keys) delete key;
 	keys.clear();
+	keyBasePositions.clear();
 	for (Sprite* heal : heals) delete heal;
 	heals.clear();
+	healBasePositions.clear();
 	for (Sprite* shield : shields) delete shield;
 	shields.clear();
+	shieldBasePositions.clear();
 	for (Sprite* weight : weights) delete weight;
 	weights.clear();
 	weightVelocities.clear();
@@ -112,6 +117,7 @@ void Scene::clearLevelEntities()
 		delete sword;
 		sword = nullptr;
 	}
+	swordHasBasePosition = false;
 	if (map != nullptr) {
 		delete map;
 		map = nullptr;
@@ -307,10 +313,13 @@ void Scene::init()
 	updateCamera();
 
 	for (Sprite* k : keys) delete k; keys.clear();
+	keyBasePositions.clear();
 	for (Sprite* d : doors) delete d; doors.clear();
 	for (Sprite* p : portals) delete p; portals.clear();
 	for (Sprite* h : heals) delete h; heals.clear();
+	healBasePositions.clear();
 	for (Sprite* s : shields) delete s; shields.clear();
+	shieldBasePositions.clear();
 	for (Sprite* w : weights) delete w; weights.clear();
 	weightVelocities.clear();
 	weightSpringCooldownMs.clear();
@@ -321,6 +330,7 @@ void Scene::init()
 	for (Sprite* sp : springs) delete sp; springs.clear();
 	for (Sprite* d : dashes) delete d; dashes.clear();
 	if (sword != nullptr) {  delete sword;  sword = nullptr; }
+	swordHasBasePosition = false;
 
 	// texturas
 	texKey.loadFromFile("../images/key.png", TEXTURE_PIXEL_FORMAT_RGBA);
@@ -362,6 +372,7 @@ void Scene::init()
         Sprite* newKey = Sprite::createSprite(glm::vec2(map->getTileSize(), map->getTileSize()), glm::vec2(1.0, 1.0), &texKey, &texProgram);
         newKey->setPosition(pos);
         keys.push_back(newKey); // Add it to your vector
+		keyBasePositions.push_back(glm::vec2(float(pos.x), float(pos.y)));
     }
 
 	if (!map->getSwordSpawns().empty() && !Game::instance().hasSwordBeenCollectedInRoom(mapFile)) {
@@ -369,6 +380,8 @@ void Scene::init()
 		Sprite* newSword = Sprite::createSprite(glm::vec2(map->getTileSize(), map->getTileSize()), glm::vec2(1.0, 1.0), &texSword, &texProgram);
 		newSword->setPosition(pos);
 		sword = newSword; // Store it in the sword member variable
+		swordBasePosition = glm::vec2(float(pos.x), float(pos.y));
+		swordHasBasePosition = true;
 	}
 
 	int alreadyCollectedHeals = Game::instance().getCollectedHealsForRoom(mapFile);
@@ -378,6 +391,7 @@ void Scene::init()
 		Sprite* newHeal = Sprite::createSprite(glm::vec2(map->getTileSize(), map->getTileSize()), glm::vec2(1.0, 1.0), &texHeal, &texProgram);
 		newHeal->setPosition(pos);
 		heals.push_back(newHeal);
+		healBasePositions.push_back(glm::vec2(float(pos.x), float(pos.y)));
 	}
 
 	int alreadyCollectedShields = Game::instance().getCollectedShieldsForRoom(mapFile);
@@ -387,6 +401,7 @@ void Scene::init()
 		Sprite* newShield = Sprite::createSprite(glm::vec2(map->getTileSize(), map->getTileSize()), glm::vec2(1.0, 1.0), &texShield, &texProgram);
 		newShield->setPosition(pos);
 		shields.push_back(newShield);
+		shieldBasePositions.push_back(glm::vec2(float(pos.x), float(pos.y)));
 	}
 
 	std::vector<glm::vec2> weightInitialPositions;
@@ -949,6 +964,27 @@ void Scene::update(int deltaTime)
 		dash->update(deltaTime);
 	}
 
+	const float bobTime = currentTime / 1000.0f;
+	for (int i = 0; i < int(keys.size()) && i < int(keyBasePositions.size()); ++i) {
+		float phase = float(i) * 0.55f;
+		float bobY = std::sin(bobTime * ITEM_BOB_SPEED_RAD + phase) * ITEM_BOB_AMPLITUDE_PX;
+		keys[i]->setPosition(glm::vec2(keyBasePositions[i].x, keyBasePositions[i].y + bobY));
+	}
+	if (sword != nullptr && swordHasBasePosition) {
+		float bobY = std::sin(bobTime * ITEM_BOB_SPEED_RAD + 1.2f) * ITEM_BOB_AMPLITUDE_PX;
+		sword->setPosition(glm::vec2(swordBasePosition.x, swordBasePosition.y + bobY));
+	}
+	for (int i = 0; i < int(heals.size()) && i < int(healBasePositions.size()); ++i) {
+		float phase = 0.8f + float(i) * 0.6f;
+		float bobY = std::sin(bobTime * ITEM_BOB_SPEED_RAD + phase) * ITEM_BOB_AMPLITUDE_PX;
+		heals[i]->setPosition(glm::vec2(healBasePositions[i].x, healBasePositions[i].y + bobY));
+	}
+	for (int i = 0; i < int(shields.size()) && i < int(shieldBasePositions.size()); ++i) {
+		float phase = 1.4f + float(i) * 0.7f;
+		float bobY = std::sin(bobTime * ITEM_BOB_SPEED_RAD + phase) * ITEM_BOB_AMPLITUDE_PX;
+		shields[i]->setPosition(glm::vec2(shieldBasePositions[i].x, shieldBasePositions[i].y + bobY));
+	}
+
 	// Fall out of bounds death check
 	if (pPos.y > map->getMapSize().y * map->getTileSize() + pSize.y) {
 		Game::instance().lives--;
@@ -978,6 +1014,8 @@ void Scene::update(int deltaTime)
 			Game::instance().collectKeyInCurrentRoom();     
             delete keys[i];                
             keys.erase(keys.begin() + i); 
+			if (i < int(keyBasePositions.size()))
+				keyBasePositions.erase(keyBasePositions.begin() + i);
             std::cout << "KEY PICKED UP" << std::endl;
         }
     }
@@ -988,6 +1026,7 @@ void Scene::update(int deltaTime)
 		Game::instance().collectSwordInCurrentRoom();
 		delete sword;
 		sword = nullptr;
+		swordHasBasePosition = false;
 		std::cout << "GOT THE SWORD" << std::endl;
 	}
 
@@ -999,6 +1038,8 @@ void Scene::update(int deltaTime)
 			Game::instance().collectHealInCurrentRoom();
 			delete heals[i];
 			heals.erase(heals.begin() + i);
+			if (i < int(healBasePositions.size()))
+				healBasePositions.erase(healBasePositions.begin() + i);
 			std::cout << "HEAL PICKED UP" << std::endl;
 		}
 	}
@@ -1009,6 +1050,8 @@ void Scene::update(int deltaTime)
 			Game::instance().collectShieldInCurrentRoom();
 			delete shields[i];
 			shields.erase(shields.begin() + i);
+			if (i < int(shieldBasePositions.size()))
+				shieldBasePositions.erase(shieldBasePositions.begin() + i);
 			std::cout << "SHIELD PICKED UP" << std::endl;
 		}
 	}

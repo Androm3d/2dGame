@@ -81,9 +81,14 @@ private:
 
 	Texture texKey, texHeal, texShield, texWeight, texSword, texSpring, texDash;
 	std::vector<Sprite*> keys;
+	std::vector<glm::vec2> keyBasePositions;
 	std::vector<Sprite*> heals;
+	std::vector<glm::vec2> healBasePositions;
 	Sprite* sword;
+	glm::vec2 swordBasePosition;
+	bool swordHasBasePosition = false;
 	std::vector<Sprite*> shields;
+	std::vector<glm::vec2> shieldBasePositions;
 	std::vector<Sprite*> weights;
 	std::vector<float> weightVelocities;
 	std::vector<int> weightSpringCooldownMs;
