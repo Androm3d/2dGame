@@ -6,70 +6,10 @@
 #include "Enemy3.h"
 
 
-// Enemy3.png: 960x576, 96x96 per frame, 10 cols x 6 rows
-// Row 0 (y=  0): Run      —  8 frames
-// Row 1 (y= 96): Jump     — 10 frames (0-4 up, 5-9 fall)
-// Row 2 (y=192): Hurt     —  2 frames
-// Row 3 (y=288): Dead     — 10 frames
-// Row 4 (y=384): Attack   — 10 frames  (fire cast)
-// Row 5 (y=480): Attack2  —  7 frames  (close melee)
-//
-// Enemy3_Fire.png: 352x48, 32x48 per frame, 11 frames (fire projectile)
+#include "GameConstants.h"
 
-// Sprite dimensions: texture frame is 96x96 (square), rendered at 64x64 (max height target)
-#define E3_FRAME_WIDTH     96   // UV sampling width
-#define E3_FRAME_HEIGHT    96   // UV sampling height
-#define E3_RENDER_WIDTH    64   // render quad width  (96 * 64/96 = 64, already a clean multiple)
-#define E3_RENDER_HEIGHT   64   // render quad height
-#define E3_HITBOX_WIDTH    32   // collision box, centered inside the render quad
-#define E3_HITBOX_HEIGHT   32
-#define E3_SPEED            1   // px per tick horizontal movement
-#define E3_FALL_STEP        4   // px per tick gravity fallback (integer physics)
-#define E3_JUMP_ANGLE_STEP  4   // degrees per tick in the jump arc simulation
-#define E3_JUMP_HEIGHT    112   // max jump height in px; used in v = sqrt(2gh)
-
-#define E3_RUN_FRAMES       8
-#define E3_JUMP_UP_FRAMES   5
-#define E3_JUMP_FALL_FRAMES 5
-#define E3_HURT_FRAMES      2
-#define E3_DEAD_FRAMES     10
-#define E3_ATTACK_FRAMES    7   // fire cast — row 5
-#define E3_ATTACK2_FRAMES  10   // melee — row 4
-
-#define ROW_RUN_PX      0
-#define ROW_JUMP_PX    96
-#define ROW_HURT_PX   192
-#define ROW_DEAD_PX   288
-#define ROW_ATTACK_PX 480   // cast (fire) — row 5
-#define ROW_ATK2_PX   384   // melee — row 4
-
-// Fire projectile (Enemy3_Fire.png: 352x48, 32x48, 11 frames)
-#define FIRE_FRAME_WIDTH   32
-#define FIRE_FRAME_HEIGHT  48
-#define FIRE_RENDER_WIDTH  32
-#define FIRE_RENDER_HEIGHT 48
-#define FIRE_FRAMES        11
-#define FIRE_ANIM_FPS       5       // fps — 11 frames @ 5fps = ~2.2s total
-#define FIRE_SPEED          3       // px per game frame
-#define FIRE_DETECT_RANGE 180       // px — medium range (mage keeps distance)
-#define FIRE_DETECT_VERT   48
-
-// Melee (Attack2) — very close range
-#define MELEE_DETECT_RANGE  40
-#define MELEE_DETECT_VERT   48
-
-#define PATH_RECALC_FRAMES       30   // ticks between BFS pathfinder recalculations
-#define HIT_INVINCIBILITY_FRAMES 150  // ticks of invincibility after taking damage
-#define HIT_BLINK_FRAMES          50  // ticks during which the sprite blinks
-#define KNOCKBACK_FRAMES           8  // ticks the enemy is pushed back after a hit
-#define KNOCKBACK_SPEED            5  // px per tick during knockback
-#define ATTACK_COOLDOWN_FRAMES    90  // ticks between attacks (fire or melee)
-
-static const float E3_GRAVITY = 1400.0f;
-static const float E3_JUMP_VELOCITY = std::sqrt(2.0f * E3_GRAVITY * float(E3_JUMP_HEIGHT));
+static const float E3_JUMP_VELOCITY = std::sqrt(2.0f * GRAVITY * float(E3_JUMP_HEIGHT));
 static const float E3_SPRING_JUMP_VELOCITY = E3_JUMP_VELOCITY * std::sqrt(3.0f);
-static const int E3_DASH_DURATION_MS = 1000;
-static const float E3_DASH_DISTANCE_BASE = 60.0f;
 
 
 enum Enemy3Anims
@@ -180,19 +120,19 @@ void Enemy3::init(const glm::ivec2 &tileMapPos, ShaderProgram &shaderProgram)
 	sprite->setAnimationSpeed(ATTACK2, 12); sprite->setAnimationLoop(ATTACK2, false);
 
 	for (int f = 0; f < E3_RUN_FRAMES; ++f)
-		sprite->addKeyframe(RUN,      glm::vec2(f * fs.x, float(ROW_RUN_PX)    / texH));
+		sprite->addKeyframe(RUN,      glm::vec2(f * fs.x, float(E3_ROW_RUN)    / texH));
 	for (int f = 0; f < E3_JUMP_UP_FRAMES; ++f)
-		sprite->addKeyframe(JUMP_UP,  glm::vec2(f * fs.x, float(ROW_JUMP_PX)   / texH));
+		sprite->addKeyframe(JUMP_UP,  glm::vec2(f * fs.x, float(E3_ROW_JUMP)   / texH));
 	for (int f = 0; f < E3_JUMP_FALL_FRAMES; ++f)
-		sprite->addKeyframe(JUMP_FALL,glm::vec2((f + E3_JUMP_UP_FRAMES) * fs.x, float(ROW_JUMP_PX) / texH));
+		sprite->addKeyframe(JUMP_FALL,glm::vec2((f + E3_JUMP_UP_FRAMES) * fs.x, float(E3_ROW_JUMP) / texH));
 	for (int f = 0; f < E3_HURT_FRAMES; ++f)
-		sprite->addKeyframe(HURT,     glm::vec2(f * fs.x, float(ROW_HURT_PX)   / texH));
+		sprite->addKeyframe(HURT,     glm::vec2(f * fs.x, float(E3_ROW_HURT)   / texH));
 	for (int f = 0; f < E3_DEAD_FRAMES; ++f)
-		sprite->addKeyframe(DEAD,     glm::vec2(f * fs.x, float(ROW_DEAD_PX)   / texH));
+		sprite->addKeyframe(DEAD,     glm::vec2(f * fs.x, float(E3_ROW_DEAD)   / texH));
 	for (int f = 0; f < E3_ATTACK_FRAMES; ++f)
-		sprite->addKeyframe(ATTACK,   glm::vec2(f * fs.x, float(ROW_ATTACK_PX) / texH));
+		sprite->addKeyframe(ATTACK,   glm::vec2(f * fs.x, float(E3_ROW_ATTACK) / texH));
 	for (int f = 0; f < E3_ATTACK2_FRAMES; ++f)
-		sprite->addKeyframe(ATTACK2,  glm::vec2(f * fs.x, float(ROW_ATK2_PX)   / texH));
+		sprite->addKeyframe(ATTACK2,  glm::vec2(f * fs.x, float(E3_ROW_ATK2)   / texH));
 
 	sprite->changeAnimation(RUN);
 	sprite->setFlipHorizontal(false);
@@ -282,7 +222,7 @@ void Enemy3::computePath(const glm::vec2 &playerPos)
 		{
 			float jpx = c.x * ts + ts / 2.f, jpy = (float)(c.y * ts), jStartY = jpy;
 			bool landed = false;
-			for (int ang = E3_JUMP_ANGLE_STEP; ang <= 180; ang += E3_JUMP_ANGLE_STEP)
+			for (int ang = JUMP_ANGLE_STEP; ang <= 180; ang += JUMP_ANGLE_STEP)
 			{
 				jpy = jStartY - E3_JUMP_HEIGHT * sin(3.14159f * ang / 180.f);
 				jpx += dir * E3_SPEED;
@@ -355,7 +295,7 @@ void Enemy3::update(int deltaTime, const glm::vec2 &playerPos)
 	if (bDying)
 	{
 		sprite->update(deltaTime);
-		verticalVelocity += E3_GRAVITY * dt;
+		verticalVelocity += GRAVITY * dt;
 		posEnemyF.y += verticalVelocity * dt;
 		glm::ivec2 fallPos(int(posEnemyF.x), int(posEnemyF.y));
 		onGround = map->checkCollision(fallPos, glm::ivec2(E3_HITBOX_WIDTH, E3_HITBOX_HEIGHT), CollisionDir::DOWN, &fallPos.y);
@@ -414,7 +354,7 @@ void Enemy3::update(int deltaTime, const glm::vec2 &playerPos)
 		map->checkCollision(kbPos, glm::ivec2(E3_HITBOX_WIDTH, E3_HITBOX_HEIGHT),
 			knockbackDir < 0 ? CollisionDir::LEFT : CollisionDir::RIGHT, &kbPos.x);
 		posEnemyF.x = float(kbPos.x);
-		verticalVelocity += E3_GRAVITY * dt;
+		verticalVelocity += GRAVITY * dt;
 		posEnemyF.y += verticalVelocity * dt;
 		kbPos = glm::ivec2(int(posEnemyF.x), int(posEnemyF.y));
 		onGround = map->checkCollision(kbPos, glm::ivec2(E3_HITBOX_WIDTH, E3_HITBOX_HEIGHT), CollisionDir::DOWN, &kbPos.y);
@@ -432,7 +372,7 @@ void Enemy3::update(int deltaTime, const glm::vec2 &playerPos)
 	if (sprite->animation() == HURT)
 	{
 		sprite->update(deltaTime);
-		verticalVelocity += E3_GRAVITY * dt;
+		verticalVelocity += GRAVITY * dt;
 		posEnemyF.y += verticalVelocity * dt;
 		glm::ivec2 fallPos(int(posEnemyF.x), int(posEnemyF.y));
 		onGround = map->checkCollision(fallPos, glm::ivec2(E3_HITBOX_WIDTH, E3_HITBOX_HEIGHT), CollisionDir::DOWN, &fallPos.y);
@@ -453,7 +393,7 @@ void Enemy3::update(int deltaTime, const glm::vec2 &playerPos)
 	if (bCasting)
 	{
 		sprite->update(deltaTime);
-		verticalVelocity += E3_GRAVITY * dt;
+		verticalVelocity += GRAVITY * dt;
 		posEnemyF.y += verticalVelocity * dt;
 		glm::ivec2 fallPos(int(posEnemyF.x), int(posEnemyF.y));
 		onGround = map->checkCollision(fallPos, glm::ivec2(E3_HITBOX_WIDTH, E3_HITBOX_HEIGHT), CollisionDir::DOWN, &fallPos.y);
@@ -478,7 +418,7 @@ void Enemy3::update(int deltaTime, const glm::vec2 &playerPos)
 			fireballs.push_back(fb);
 
 			bCasting       = false;
-			attackCooldown = ATTACK_COOLDOWN_FRAMES;
+			attackCooldown = E3_ATTACK_COOLDOWN;
 			sprite->changeAnimation(RUN);
 		}
 		return;
@@ -488,7 +428,7 @@ void Enemy3::update(int deltaTime, const glm::vec2 &playerPos)
 	if (bMelee)
 	{
 		sprite->update(deltaTime);
-		verticalVelocity += E3_GRAVITY * dt;
+		verticalVelocity += GRAVITY * dt;
 		posEnemyF.y += verticalVelocity * dt;
 		glm::ivec2 fallPos(int(posEnemyF.x), int(posEnemyF.y));
 		onGround = map->checkCollision(fallPos, glm::ivec2(E3_HITBOX_WIDTH, E3_HITBOX_HEIGHT), CollisionDir::DOWN, &fallPos.y);
@@ -502,7 +442,7 @@ void Enemy3::update(int deltaTime, const glm::vec2 &playerPos)
 		if (sprite->animationFinished())
 		{
 			bMelee         = false;
-			attackCooldown = ATTACK_COOLDOWN_FRAMES;
+			attackCooldown = E3_ATTACK_COOLDOWN;
 			sprite->changeAnimation(RUN);
 		}
 		return;
@@ -516,7 +456,7 @@ void Enemy3::update(int deltaTime, const glm::vec2 &playerPos)
 		bool inFront = (facingLeft && dx < 0) || (!facingLeft && dx > 0);
 
 		// Melee (Attack2) takes priority if player is very close
-		if (inFront && std::abs(dx) < MELEE_DETECT_RANGE && std::abs(dy) < MELEE_DETECT_VERT)
+		if (inFront && std::abs(dx) < E3_MELEE_DETECT_RANGE && std::abs(dy) < E3_MELEE_DETECT_VERT)
 		{
 			bMelee = true;
 			sprite->changeAnimation(ATTACK2);
@@ -638,7 +578,7 @@ void Enemy3::update(int deltaTime, const glm::vec2 &playerPos)
 		else if (verticalVelocity >= 0.0f && sprite->animation() != JUMP_FALL) sprite->changeAnimation(JUMP_FALL);
 	}
 
-	verticalVelocity += E3_GRAVITY * dt;
+	verticalVelocity += GRAVITY * dt;
 	posEnemyF.y += verticalVelocity * dt;
 	glm::ivec2 fallPos(int(posEnemyF.x), int(posEnemyF.y));
 	if (verticalVelocity > 0.0f)
@@ -796,7 +736,7 @@ bool Enemy3::checkReflectedFireballHit(const glm::vec4 &hitbox, int &outKnockDir
 glm::vec4 Enemy3::getMeleeHitbox() const
 {
 	if (facingLeft)
-		return glm::vec4(posEnemy.x - MELEE_DETECT_RANGE, posEnemy.y, MELEE_DETECT_RANGE, E3_HITBOX_HEIGHT);
+		return glm::vec4(posEnemy.x - E3_MELEE_DETECT_RANGE, posEnemy.y, E3_MELEE_DETECT_RANGE, E3_HITBOX_HEIGHT);
 	else
-		return glm::vec4(posEnemy.x + E3_HITBOX_WIDTH, posEnemy.y, MELEE_DETECT_RANGE, E3_HITBOX_HEIGHT);
+		return glm::vec4(posEnemy.x + E3_HITBOX_WIDTH, posEnemy.y, E3_MELEE_DETECT_RANGE, E3_HITBOX_HEIGHT);
 }
