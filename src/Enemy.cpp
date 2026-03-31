@@ -538,7 +538,7 @@ void Enemy::update(int deltaTime, const glm::vec2 &playerPos)
 		{
 			// Spawn an arrow at the enemy's position
 			Arrow newArrow;
-			float arrowY = posEnemy.y + ENEMY_HITBOX_HEIGHT / 2.f - ARROW_SIZE / 2.f;
+			float arrowY = posEnemy.y + ENEMY_HITBOX_HEIGHT / 4.f - ARROW_SIZE / 2.f;
 			if (facingLeft)
 				newArrow.pos = glm::vec2(posEnemy.x - ARROW_SIZE, arrowY);
 			else

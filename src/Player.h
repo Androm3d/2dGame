@@ -51,6 +51,7 @@ private:
 	int hitTimer;
 	int springCooldown;
 	int dashCooldown;
+	int attackCooldown;
 	int dropThroughTimerMs;
 	bool springTriggered;
 	int jumpHeight;

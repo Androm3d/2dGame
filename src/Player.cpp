@@ -29,8 +29,8 @@ static const float PLAYER_DROP_THROUGH_NUDGE = 4.0f;
 // Attack spritesheet (Samurai_Attack.png, 512x128, frame 88x106)
 #define PLAYER_ATTACK_FRAME_WIDTH   88   // texture frame size (UV)
 #define PLAYER_ATTACK_FRAME_HEIGHT 106
-#define PLAYER_ATTACK_RENDER_WIDTH  53   // render quad size (88*64/106)
-#define PLAYER_ATTACK_RENDER_HEIGHT 64
+#define PLAYER_ATTACK_RENDER_WIDTH  80   // render quad size
+#define PLAYER_ATTACK_RENDER_HEIGHT 96
 
 // Animation frame counts
 #define PLAYER_IDLE_FRAMES       6
@@ -43,6 +43,7 @@ static const float PLAYER_DROP_THROUGH_NUDGE = 4.0f;
 #define PLAYER_ATTACK_FRAMES     5
 #define PARRY_FRAMES    22
 #define PARRY_COOLDOWN  55
+#define ATTACK_COOLDOWN  55
 
 // Row Y positions in Samurai.png
 #define ROW_IDLE_PX     0
@@ -93,6 +94,7 @@ void Player::init(const glm::ivec2 &tileMapPos, ShaderProgram &shaderProgram)
 	hitTimer = 0;
 	springCooldown = 0;
 	dashCooldown = 0;
+	attackCooldown = 0;
 	dropThroughTimerMs = 0;
 	springTriggered = false;
 	jumpHeight = JUMP_HEIGHT;
@@ -215,7 +217,7 @@ void Player::init(const glm::ivec2 &tileMapPos, ShaderProgram &shaderProgram)
 
 	attackSprite = Sprite::createSprite(glm::ivec2(PLAYER_ATTACK_RENDER_WIDTH, PLAYER_ATTACK_RENDER_HEIGHT), atkFrameSize, &attackSpritesheet, &shaderProgram);
 	attackSprite->setNumberAnimations(1);
-	attackSprite->setAnimationSpeed(0, 18);
+	attackSprite->setAnimationSpeed(0, 15);
 	attackSprite->setAnimationLoop(0, false);
 	for (int f = 0; f < PLAYER_ATTACK_FRAMES; ++f)
 	{
@@ -323,7 +325,8 @@ void Player::update(int deltaTime)
 	}
 
 	// Attack with SPACE
-	if(Game::instance().getKey(GLFW_KEY_SPACE) && !bAttacking && !bClimbing && Game::instance().hasSword)
+	if(attackCooldown > 0) attackCooldown--;
+	if(Game::instance().getKey(GLFW_KEY_SPACE) && !bAttacking && !bClimbing && Game::instance().hasSword && attackCooldown == 0)
 	{
 		bAttacking = true;
 		bProtecting = false;
@@ -335,7 +338,10 @@ void Player::update(int deltaTime)
 	{
 		attackSprite->update(deltaTime);
 		if(attackSprite->animationFinished())
+		{
 			bAttacking = false;
+			attackCooldown = ATTACK_COOLDOWN;
+		}
 	}
 
 	// Parry with SHIFT (edge trigger — one press = one parry window)
