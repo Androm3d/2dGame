@@ -14,6 +14,10 @@
 
 static const float WEIGHT_GRAVITY = 1800.0f;
 static const float WEIGHT_MAX_FALL_SPEED = 240.0f;
+static const float WEIGHT_SPRING_JUMP_VELOCITY = std::sqrt(2.0f * WEIGHT_GRAVITY * (96.0f * 3.0f));
+static const float WEIGHT_DASH_PUSH_DISTANCE = 90.0f;
+static const int WEIGHT_SPRING_COOLDOWN_MS = 180;
+static const int WEIGHT_DASH_COOLDOWN_MS = 180;
 
 namespace {
 bool parseWorldMapCoords(const std::string &mapName, int &x, int &y)
@@ -74,6 +78,8 @@ void Scene::clearLevelEntities()
 	for (Sprite* weight : weights) delete weight;
 	weights.clear();
 	weightVelocities.clear();
+	weightSpringCooldownMs.clear();
+	weightDashCooldownMs.clear();
 	for (Sprite* spring : springs) delete spring;
 	springs.clear();
 	for (Sprite* dash : dashes) delete dash;
@@ -301,6 +307,8 @@ void Scene::init()
 		newWeight->setPosition(pos);
 		weights.push_back(newWeight);
 		weightVelocities.push_back(0.0f);
+		weightSpringCooldownMs.push_back(0);
+		weightDashCooldownMs.push_back(0);
 	}
 
 	glm::vec2 springFrameSize(
@@ -781,6 +789,10 @@ void Scene::update(int deltaTime)
 		glm::ivec2 weightSize(map->getTileSize(), map->getTileSize());
 		bool weightDestroyed = false;
 		float &wVel = weightVelocities[i];
+		int &springCooldownMs = weightSpringCooldownMs[i];
+		int &dashCooldownMs = weightDashCooldownMs[i];
+		if (springCooldownMs > 0) springCooldownMs -= deltaTime;
+		if (dashCooldownMs > 0) dashCooldownMs -= deltaTime;
 
 		if (checkAABB(pPos, pSize, wPos, weightSize)) {
 			int newX = static_cast<int>(wPos.x);
@@ -812,6 +824,21 @@ void Scene::update(int deltaTime)
 				}
 				player->setPosition(pPos);
 			}
+		}
+
+		glm::ivec2 weightPosI(static_cast<int>(wPos.x), static_cast<int>(wPos.y));
+		if (springCooldownMs <= 0 && map->isOnSpring(weightPosI, weightSize)) {
+			wVel = -WEIGHT_SPRING_JUMP_VELOCITY;
+			springCooldownMs = WEIGHT_SPRING_COOLDOWN_MS;
+		}
+		bool dashLeft = false;
+		if (dashCooldownMs <= 0 && map->isOnDash(weightPosI, weightSize, &dashLeft)) {
+			int dir = dashLeft ? -1 : 1;
+			glm::ivec2 dashPos(static_cast<int>(wPos.x + float(dir) * WEIGHT_DASH_PUSH_DISTANCE), static_cast<int>(wPos.y));
+			map->checkCollision(dashPos, weightSize, dir < 0 ? CollisionDir::LEFT : CollisionDir::RIGHT, &dashPos.x);
+			wPos.x = float(dashPos.x);
+			weights[i]->setPosition(wPos);
+			dashCooldownMs = WEIGHT_DASH_COOLDOWN_MS;
 		}
 
 		// Gravity: weights should fall when nothing supports them below
@@ -857,6 +884,8 @@ void Scene::update(int deltaTime)
 			delete weights[i];
 			weights.erase(weights.begin() + i);
 			weightVelocities.erase(weightVelocities.begin() + i);
+			weightSpringCooldownMs.erase(weightSpringCooldownMs.begin() + i);
+			weightDashCooldownMs.erase(weightDashCooldownMs.begin() + i);
 			continue;
 		}
 	}
@@ -1071,16 +1100,17 @@ void Scene::renderInstructionsScreen()
 		
 		hudText.render("INSTRUCTIONS", glm::vec2(340.f, 60.f), 32, titleColor);
 		
-		hudText.render("Arrow Keys - Move", glm::vec2(100.f, 140.f), 24, textColor);
-		hudText.render("SPACE - Jump", glm::vec2(100.f, 180.f), 24, textColor);
-		hudText.render("A - Attack (requires sword)", glm::vec2(100.f, 220.f), 24, textColor);
-		hudText.render("UP - Enter doors", glm::vec2(100.f, 260.f), 24, textColor);
-		hudText.render("ESC - Pause/Menu", glm::vec2(100.f, 300.f), 24, textColor);
+		hudText.render("LEFT / RIGHT - Move", glm::vec2(100.f, 140.f), 24, textColor);
+		hudText.render("UP - Jump / Climb / Enter doors", glm::vec2(100.f, 180.f), 24, textColor);
+		hudText.render("DOWN - Drop through one-way platforms", glm::vec2(100.f, 220.f), 24, textColor);
+		hudText.render("SPACE - Attack (requires sword)", glm::vec2(100.f, 260.f), 24, textColor);
+		hudText.render("SHIFT - Parry (requires sword)", glm::vec2(100.f, 300.f), 24, textColor);
+		hudText.render("ESC - Pause/Menu", glm::vec2(100.f, 340.f), 24, textColor);
 		
-		hudText.render("Debug shortcuts (PLAY mode):", glm::vec2(100.f, 350.f), 22, glm::vec4(0.7f, 0.7f, 1.0f, 1.0f));
-		hudText.render("G - God Mode, K - Get all keys, 1-9 - Jump to level", glm::vec2(120.f, 380.f), 20, textColor);
+		hudText.render("Debug shortcuts (PLAY mode):", glm::vec2(100.f, 390.f), 22, glm::vec4(0.7f, 0.7f, 1.0f, 1.0f));
+		hudText.render("G - God Mode, K - Get all keys, 1-9 - Jump to level", glm::vec2(120.f, 420.f), 20, textColor);
 		
-		hudText.render("Press ESC to return to menu", glm::vec2(260.f, 440.f), 20, glm::vec4(0.6f, 0.6f, 0.6f, 1.0f));
+		hudText.render("Press ESC to return to menu", glm::vec2(260.f, 455.f), 20, glm::vec4(0.6f, 0.6f, 0.6f, 1.0f));
 	}
 }
 

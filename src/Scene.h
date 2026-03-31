@@ -73,6 +73,8 @@ private:
 	std::vector<Sprite*> shields;
 	std::vector<Sprite*> weights;
 	std::vector<float> weightVelocities;
+	std::vector<int> weightSpringCooldownMs;
+	std::vector<int> weightDashCooldownMs;
 	std::vector<Sprite*> springs;
 	std::vector<Sprite*> dashes;
 
