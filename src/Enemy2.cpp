@@ -6,54 +6,10 @@
 #include "Enemy2.h"
 
 
-// Enemy2.png: 768x560, frame 96x112, one animation per row
-// Row 0 (y=  0): Run    — 8 frames
-// Row 1 (y=112): Jump   — 7 frames (0-3 up, 4-6 fall)
-// Row 2 (y=224): Attack — 4 frames
-// Row 3 (y=336): Hurt   — 2 frames
-// Row 4 (y=448): Death  — 6 frames
+#include "GameConstants.h"
 
-#define E2_FRAME_WIDTH     96   // source frame in texture
-#define E2_FRAME_HEIGHT   112
-#define E2_RENDER_WIDTH    55   // (96*64/112)
-#define E2_RENDER_HEIGHT   64
-#define E2_HITBOX_WIDTH    32
-#define E2_HITBOX_HEIGHT   32
-#define E2_SPEED            1
-#define E2_FALL_STEP        4
-#define E2_JUMP_ANGLE_STEP  4
-#define E2_JUMP_HEIGHT    112
-
-#define E2_RUN_FRAMES      8
-#define E2_JUMP_UP_FRAMES  4
-#define E2_JUMP_FALL_FRAMES 3
-#define E2_ATTACK_FRAMES   4
-#define E2_HURT_FRAMES     2
-#define E2_DEATH_FRAMES    6
-
-#define ROW_RUN_PX      0
-#define ROW_JUMP_PX   112
-#define ROW_ATTACK_PX 224
-#define ROW_HURT_PX   336
-#define ROW_DEATH_PX  448
-
-#define PATH_RECALC_FRAMES       30   // ticks between BFS pathfinder recalculations
-#define HIT_INVINCIBILITY_FRAMES 150  // ticks of invincibility after taking damage
-#define HIT_BLINK_FRAMES          50  // ticks during which the sprite blinks
-#define KNOCKBACK_FRAMES           8  // ticks the enemy is pushed back after a hit
-#define KNOCKBACK_SPEED            5  // px per tick during knockback
-
-static const float E2_GRAVITY = 1400.0f;
-static const float E2_JUMP_VELOCITY = std::sqrt(2.0f * E2_GRAVITY * float(E2_JUMP_HEIGHT));
+static const float E2_JUMP_VELOCITY = std::sqrt(2.0f * GRAVITY * float(E2_JUMP_HEIGHT));
 static const float E2_SPRING_JUMP_VELOCITY = E2_JUMP_VELOCITY * std::sqrt(3.0f);
-static const int E2_DASH_DURATION_MS = 1000;
-static const float E2_DASH_DISTANCE_BASE = 60.0f;
-
-// Melee detection thresholds (sword enemy attacks at contact range)
-#define MELEE_DETECT_RANGE    36   // px horizontal — roughly 1 tile, sword requires near contact
-#define MELEE_DETECT_VERTICAL 48   // px vertical tolerance for attack to trigger
-#define MELEE_HITBOX_REACH    48   // px the sword hitbox extends in front of the enemy
-#define ATTACK_COOLDOWN_FRAMES 90  // ticks between melee attacks
 
 
 enum Enemy2Anims
@@ -161,22 +117,22 @@ void Enemy2::init(const glm::ivec2 &tileMapPos, ShaderProgram &shaderProgram)
 
 	// Row 0: Run (8 frames)
 	for (int f = 0; f < E2_RUN_FRAMES; ++f)
-		sprite->addKeyframe(RUN, glm::vec2(f * fs.x, float(ROW_RUN_PX) / texH));
+		sprite->addKeyframe(RUN, glm::vec2(f * fs.x, float(E2_ROW_RUN) / texH));
 	// Row 1: Jump up (frames 0-3)
 	for (int f = 0; f < E2_JUMP_UP_FRAMES; ++f)
-		sprite->addKeyframe(JUMP_UP, glm::vec2(f * fs.x, float(ROW_JUMP_PX) / texH));
+		sprite->addKeyframe(JUMP_UP, glm::vec2(f * fs.x, float(E2_ROW_JUMP) / texH));
 	// Row 1: Jump fall (frames 4-6)
 	for (int f = 0; f < E2_JUMP_FALL_FRAMES; ++f)
-		sprite->addKeyframe(JUMP_FALL, glm::vec2((f + E2_JUMP_UP_FRAMES) * fs.x, float(ROW_JUMP_PX) / texH));
+		sprite->addKeyframe(JUMP_FALL, glm::vec2((f + E2_JUMP_UP_FRAMES) * fs.x, float(E2_ROW_JUMP) / texH));
 	// Row 2: Attack (4 frames)
 	for (int f = 0; f < E2_ATTACK_FRAMES; ++f)
-		sprite->addKeyframe(ATTACK, glm::vec2(f * fs.x, float(ROW_ATTACK_PX) / texH));
+		sprite->addKeyframe(ATTACK, glm::vec2(f * fs.x, float(E2_ROW_ATTACK) / texH));
 	// Row 3: Hurt (2 frames)
 	for (int f = 0; f < E2_HURT_FRAMES; ++f)
-		sprite->addKeyframe(HURT, glm::vec2(f * fs.x, float(ROW_HURT_PX) / texH));
+		sprite->addKeyframe(HURT, glm::vec2(f * fs.x, float(E2_ROW_HURT) / texH));
 	// Row 4: Death (6 frames)
 	for (int f = 0; f < E2_DEATH_FRAMES; ++f)
-		sprite->addKeyframe(DEATH, glm::vec2(f * fs.x, float(ROW_DEATH_PX) / texH));
+		sprite->addKeyframe(DEATH, glm::vec2(f * fs.x, float(E2_ROW_DEATH) / texH));
 
 	sprite->changeAnimation(RUN);
 	sprite->setFlipHorizontal(false);
@@ -263,7 +219,7 @@ void Enemy2::computePath(const glm::vec2 &playerPos)
 			float jStartY = jpy;
 			bool landed = false;
 
-			for (int ang = E2_JUMP_ANGLE_STEP; ang <= 180; ang += E2_JUMP_ANGLE_STEP)
+			for (int ang = JUMP_ANGLE_STEP; ang <= 180; ang += JUMP_ANGLE_STEP)
 			{
 				jpy = jStartY - E2_JUMP_HEIGHT * sin(3.14159f * ang / 180.f);
 				jpx += dir * E2_SPEED;
@@ -332,7 +288,7 @@ void Enemy2::update(int deltaTime, const glm::vec2 &playerPos)
 	if (bDying)
 	{
 		sprite->update(deltaTime);
-		verticalVelocity += E2_GRAVITY * dt;
+		verticalVelocity += GRAVITY * dt;
 		posEnemyF.y += verticalVelocity * dt;
 		glm::ivec2 fallPos(int(posEnemyF.x), int(posEnemyF.y));
 		onGround = map->checkCollision(fallPos, glm::ivec2(E2_HITBOX_WIDTH, E2_HITBOX_HEIGHT), CollisionDir::DOWN, &fallPos.y);
@@ -393,7 +349,7 @@ void Enemy2::update(int deltaTime, const glm::vec2 &playerPos)
 		else
 			map->checkCollision(kbPos, glm::ivec2(E2_HITBOX_WIDTH, E2_HITBOX_HEIGHT), CollisionDir::RIGHT, &kbPos.x);
 		posEnemyF.x = float(kbPos.x);
-		verticalVelocity += E2_GRAVITY * dt;
+		verticalVelocity += GRAVITY * dt;
 		posEnemyF.y += verticalVelocity * dt;
 		kbPos = glm::ivec2(int(posEnemyF.x), int(posEnemyF.y));
 		onGround = map->checkCollision(kbPos, glm::ivec2(E2_HITBOX_WIDTH, E2_HITBOX_HEIGHT), CollisionDir::DOWN, &kbPos.y);
@@ -411,7 +367,7 @@ void Enemy2::update(int deltaTime, const glm::vec2 &playerPos)
 	if (sprite->animation() == HURT)
 	{
 		sprite->update(deltaTime);
-		verticalVelocity += E2_GRAVITY * dt;
+		verticalVelocity += GRAVITY * dt;
 		posEnemyF.y += verticalVelocity * dt;
 		glm::ivec2 fallPos(int(posEnemyF.x), int(posEnemyF.y));
 		onGround = map->checkCollision(fallPos, glm::ivec2(E2_HITBOX_WIDTH, E2_HITBOX_HEIGHT), CollisionDir::DOWN, &fallPos.y);
@@ -434,7 +390,7 @@ void Enemy2::update(int deltaTime, const glm::vec2 &playerPos)
 	{
 		sprite->update(deltaTime);
 		// gravity still applies while attacking
-		verticalVelocity += E2_GRAVITY * dt;
+		verticalVelocity += GRAVITY * dt;
 		posEnemyF.y += verticalVelocity * dt;
 		glm::ivec2 fallPos(int(posEnemyF.x), int(posEnemyF.y));
 		onGround = map->checkCollision(fallPos, glm::ivec2(E2_HITBOX_WIDTH, E2_HITBOX_HEIGHT), CollisionDir::DOWN, &fallPos.y);
@@ -448,7 +404,7 @@ void Enemy2::update(int deltaTime, const glm::vec2 &playerPos)
 		if (sprite->animationFinished())
 		{
 			bAttacking = false;
-			attackCooldown = ATTACK_COOLDOWN_FRAMES;
+			attackCooldown = E2_ATTACK_COOLDOWN;
 			sprite->changeAnimation(RUN);
 		}
 		return;
@@ -461,7 +417,7 @@ void Enemy2::update(int deltaTime, const glm::vec2 &playerPos)
 		float dy = playerPos.y - posEnemy.y;
 		bool playerInFront = (facingLeft && dx < 0) || (!facingLeft && dx > 0);
 
-		if (playerInFront && std::abs(dx) < MELEE_DETECT_RANGE && std::abs(dy) < MELEE_DETECT_VERTICAL)
+		if (playerInFront && std::abs(dx) < E2_MELEE_DETECT_RANGE && std::abs(dy) < E2_MELEE_DETECT_VERT)
 		{
 			bAttacking = true;
 			sprite->changeAnimation(ATTACK);
@@ -581,7 +537,7 @@ void Enemy2::update(int deltaTime, const glm::vec2 &playerPos)
 	}
 
 	// Physics
-	verticalVelocity += E2_GRAVITY * dt;
+	verticalVelocity += GRAVITY * dt;
 	posEnemyF.y += verticalVelocity * dt;
 	glm::ivec2 fallPos(int(posEnemyF.x), int(posEnemyF.y));
 	if (verticalVelocity > 0.0f)
@@ -678,7 +634,7 @@ glm::vec4 Enemy2::getMeleeHitbox() const
 {
 	// Sword reach extends in front of the enemy
 	if (facingLeft)
-		return glm::vec4(posEnemy.x - MELEE_HITBOX_REACH, posEnemy.y, MELEE_HITBOX_REACH, E2_HITBOX_HEIGHT);
+		return glm::vec4(posEnemy.x - E2_MELEE_HITBOX_REACH, posEnemy.y, E2_MELEE_HITBOX_REACH, E2_HITBOX_HEIGHT);
 	else
-		return glm::vec4(posEnemy.x + E2_HITBOX_WIDTH, posEnemy.y, MELEE_HITBOX_REACH, E2_HITBOX_HEIGHT);
+		return glm::vec4(posEnemy.x + E2_HITBOX_WIDTH, posEnemy.y, E2_MELEE_HITBOX_REACH, E2_HITBOX_HEIGHT);
 }

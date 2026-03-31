@@ -7,62 +7,10 @@
 #include "Enemy.h"
 
 
-// Enemy1.png: 256x192, frame 64x48, 4 rows
-// Row 0 (y=  0): Run   — 8 frames
-// Row 1 (y= 48): Jump  — 8 frames (0-3 up, 4-7 fall)
-// Row 2 (y= 96): Hurt  — 3 frames
-// Row 3 (y=144): Death — 5 frames
+#include "GameConstants.h"
 
-// Render size: scaled to 64px height while keeping aspect ratio (64x48 * 64/48 ≈ 80x64)
-#define ENEMY_FRAME_WIDTH        77   // render quad width  (64 * 64/48, rounded to nearest multiple of 8 ≈ 80)
-#define ENEMY_FRAME_HEIGHT       64   // render quad height (target max height)
-#define ENEMY_TEX_FRAME_WIDTH    64   // UV sampling width  — actual pixel frame in the texture
-#define ENEMY_TEX_FRAME_HEIGHT   48   // UV sampling height — actual pixel frame in the texture
-#define ENEMY_HITBOX_WIDTH       32   // collision box, centered inside the render quad
-#define ENEMY_HITBOX_HEIGHT      32
-#define ENEMY_RUN_FRAMES          8
-#define ENEMY_JUMP_UP_FRAMES      4
-#define ENEMY_JUMP_FALL_FRAMES    4
-#define ENEMY_JUMP_FALL_START     4   // first fall frame index within the jump row
-#define ENEMY_SPEED               1   // px per tick horizontal movement
-#define ENEMY_FALL_STEP           4   // px per tick gravity fallback (integer physics)
-#define ENEMY_JUMP_ANGLE_STEP     4   // degrees per tick in the jump arc simulation
-#define ENEMY_JUMP_HEIGHT        112  // max jump height in px; used in v = sqrt(2gh)
-
-// Row Y offsets in Enemy1.png (px from top)
-#define ROW_RUN_TOP_PX    0
-#define ROW_JUMP_TOP_PX  48
-#define ROW_HURT_TOP_PX  96
-#define ROW_DEATH_TOP_PX 144
-
-#define ENEMY_HURT_FRAMES  3
-#define ENEMY_DEATH_FRAMES 5
-
-#define PATH_RECALC_FRAMES       30   // ticks between BFS pathfinder recalculations
-#define HIT_INVINCIBILITY_FRAMES 150  // ticks of invincibility after taking damage
-#define HIT_BLINK_FRAMES          50  // ticks during which the sprite blinks (subset of invincibility)
-#define KNOCKBACK_FRAMES           8  // ticks the enemy is pushed back after a hit
-#define KNOCKBACK_SPEED            5  // px per tick during knockback
-
-static const float ENEMY_GRAVITY = 1400.0f;
-static const float ENEMY_JUMP_VELOCITY = std::sqrt(2.0f * ENEMY_GRAVITY * float(ENEMY_JUMP_HEIGHT));
+static const float ENEMY_JUMP_VELOCITY = std::sqrt(2.0f * GRAVITY * float(ENEMY_JUMP_HEIGHT));
 static const float ENEMY_SPRING_JUMP_VELOCITY = ENEMY_JUMP_VELOCITY * std::sqrt(3.0f);
-static const int ENEMY_DASH_DURATION_MS = 1000;
-static const float ENEMY_DASH_DISTANCE_BASE = 60.0f;
-
-// Shot animation constants (Enemy1_Shot.png: 768x232, 96x116 per frame, 13 total: 8 row0 + 5 row1)
-#define SHOT_FRAME_WIDTH    96
-#define SHOT_FRAME_HEIGHT   116
-#define SHOT_RENDER_HEIGHT  64
-#define SHOT_FRAMES_ROW0     8
-#define SHOT_FRAMES_ROW1     5
-#define SHOT_DETECT_RANGE   200  // px horizontal distance at which the enemy starts shooting
-#define SHOT_DETECT_VERTICAL 48  // px vertical tolerance for detecting the player
-#define SHOT_COOLDOWN_FRAMES 90  // ticks between shots
-#define ARROW_SPEED           4  // px per tick
-#define ARROW_SIZE           64  // render size of the arrow sprite (square)
-#define ARROW_HITBOX_W       32  // narrower hitbox so the arrow feels fair
-#define ARROW_HITBOX_H       12  // thin vertically so only a direct hit registers
 
 
 enum EnemyAnims
@@ -184,19 +132,19 @@ void Enemy::init(const glm::ivec2 &tileMapPos, ShaderProgram &shaderProgram)
 
 	// Row 0: Run (8 frames)
 	for (int f = 0; f < ENEMY_RUN_FRAMES; ++f)
-		sprite->addKeyframe(RUN, glm::vec2(f * frameSizeInTexture.x, float(ROW_RUN_TOP_PX) / texH));
+		sprite->addKeyframe(RUN, glm::vec2(f * frameSizeInTexture.x, float(E1_ROW_RUN) / texH));
 	// Row 1: Jump up (frames 0-3)
 	for (int f = 0; f < ENEMY_JUMP_UP_FRAMES; ++f)
-		sprite->addKeyframe(JUMP_UP, glm::vec2(f * frameSizeInTexture.x, float(ROW_JUMP_TOP_PX) / texH));
+		sprite->addKeyframe(JUMP_UP, glm::vec2(f * frameSizeInTexture.x, float(E1_ROW_JUMP) / texH));
 	// Row 1: Jump fall (frames 4-7)
 	for (int f = 0; f < ENEMY_JUMP_FALL_FRAMES; ++f)
-		sprite->addKeyframe(JUMP_FALL, glm::vec2((f + ENEMY_JUMP_FALL_START) * frameSizeInTexture.x, float(ROW_JUMP_TOP_PX) / texH));
+		sprite->addKeyframe(JUMP_FALL, glm::vec2((f + ENEMY_JUMP_FALL_START) * frameSizeInTexture.x, float(E1_ROW_JUMP) / texH));
 	// Row 2: Hurt (3 frames)
 	for (int f = 0; f < ENEMY_HURT_FRAMES; ++f)
-		sprite->addKeyframe(HURT, glm::vec2(f * frameSizeInTexture.x, float(ROW_HURT_TOP_PX) / texH));
+		sprite->addKeyframe(HURT, glm::vec2(f * frameSizeInTexture.x, float(E1_ROW_HURT) / texH));
 	// Row 3: Death (5 frames)
 	for (int f = 0; f < ENEMY_DEATH_FRAMES; ++f)
-		sprite->addKeyframe(DEATH, glm::vec2(f * frameSizeInTexture.x, float(ROW_DEATH_TOP_PX) / texH));
+		sprite->addKeyframe(DEATH, glm::vec2(f * frameSizeInTexture.x, float(E1_ROW_DEATH) / texH));
 
 	sprite->changeAnimation(RUN);
 	sprite->setFlipHorizontal(false);
@@ -337,7 +285,7 @@ void Enemy::computePath(const glm::vec2 &playerPos)
 			float jStartY = jpy;
 			bool landed = false;
 
-			for (int ang = ENEMY_JUMP_ANGLE_STEP; ang <= 180; ang += ENEMY_JUMP_ANGLE_STEP)
+			for (int ang = JUMP_ANGLE_STEP; ang <= 180; ang += JUMP_ANGLE_STEP)
 			{
 				jpy = jStartY - ENEMY_JUMP_HEIGHT * sin(3.14159f * ang / 180.f);
 				jpx += dir * ENEMY_SPEED;
@@ -415,7 +363,7 @@ void Enemy::update(int deltaTime, const glm::vec2 &playerPos)
 	if (bDying)
 	{
 		sprite->update(deltaTime);
-		verticalVelocity += ENEMY_GRAVITY * dt;
+		verticalVelocity += GRAVITY * dt;
 		posEnemyF.y += verticalVelocity * dt;
 		glm::ivec2 fallPos(int(posEnemyF.x), int(posEnemyF.y));
 		onGround = map->checkCollision(fallPos, glm::ivec2(ENEMY_HITBOX_WIDTH, ENEMY_HITBOX_HEIGHT), CollisionDir::DOWN, &fallPos.y);
@@ -477,7 +425,7 @@ void Enemy::update(int deltaTime, const glm::vec2 &playerPos)
 		else
 			map->checkCollision(kbPos, glm::ivec2(ENEMY_HITBOX_WIDTH, ENEMY_HITBOX_HEIGHT), CollisionDir::RIGHT, &kbPos.x);
 		posEnemyF.x = float(kbPos.x);
-		verticalVelocity += ENEMY_GRAVITY * dt;
+		verticalVelocity += GRAVITY * dt;
 		posEnemyF.y += verticalVelocity * dt;
 		kbPos = glm::ivec2(int(posEnemyF.x), int(posEnemyF.y));
 		onGround = map->checkCollision(kbPos, glm::ivec2(ENEMY_HITBOX_WIDTH, ENEMY_HITBOX_HEIGHT), CollisionDir::DOWN, &kbPos.y);
@@ -495,7 +443,7 @@ void Enemy::update(int deltaTime, const glm::vec2 &playerPos)
 	if (sprite->animation() == HURT)
 	{
 		sprite->update(deltaTime);
-		verticalVelocity += ENEMY_GRAVITY * dt;
+		verticalVelocity += GRAVITY * dt;
 		posEnemyF.y += verticalVelocity * dt;
 		glm::ivec2 fallPos(int(posEnemyF.x), int(posEnemyF.y));
 		onGround = map->checkCollision(fallPos, glm::ivec2(ENEMY_HITBOX_WIDTH, ENEMY_HITBOX_HEIGHT), CollisionDir::DOWN, &fallPos.y);
@@ -564,7 +512,7 @@ void Enemy::update(int deltaTime, const glm::vec2 &playerPos)
 		}
 
 		// While shooting: still apply gravity but no horizontal movement
-		verticalVelocity += ENEMY_GRAVITY * dt;
+		verticalVelocity += GRAVITY * dt;
 		posEnemyF.y += verticalVelocity * dt;
 		glm::ivec2 fallPos(int(posEnemyF.x), int(posEnemyF.y));
 		onGround = map->checkCollision(fallPos, glm::ivec2(ENEMY_HITBOX_WIDTH, ENEMY_HITBOX_HEIGHT), CollisionDir::DOWN, &fallPos.y);
@@ -728,7 +676,7 @@ void Enemy::update(int deltaTime, const glm::vec2 &playerPos)
 	}
 
 	// --- Jump / gravity physics ---
-	verticalVelocity += ENEMY_GRAVITY * dt;
+	verticalVelocity += GRAVITY * dt;
 	posEnemyF.y += verticalVelocity * dt;
 	glm::ivec2 fallPos(int(posEnemyF.x), int(posEnemyF.y));
 	if (verticalVelocity > 0.0f)
