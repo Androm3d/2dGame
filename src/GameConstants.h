@@ -14,6 +14,7 @@
 #define HIT_BLINK_FRAMES           50     // ticks que el sprite parpadea (subconjunto de invencibilidad)
 #define KNOCKBACK_FRAMES            8     // ticks de retroceso tras un golpe
 #define KNOCKBACK_SPEED             5     // px por tick durante el retroceso
+#define ENEMY_ACTIVATION_RANGE    300     // px — distancia a la que el enemigo se activa al acercarse el jugador
 
 
 // =============================================================================
