@@ -32,6 +32,7 @@ public:
 	bool isInvincible() const { return hitTimer > 0; }
 	bool isAlive() const { return alive; }
 	bool consumeSpringTrigger();
+	bool consumeHardLanding(float *impactSpeed = nullptr);
 	bool isDying() const { return bDying; }
 	bool isProtecting() const { return bProtecting; }
 	bool isFacingLeft() const { return facingLeft; }
@@ -54,6 +55,8 @@ private:
 	int attackCooldown;
 	int dropThroughTimerMs;
 	bool springTriggered;
+	bool hardLandingTriggered;
+	float hardLandingSpeed;
 	int jumpHeight;
 	float dashVelocity;
 	float dashVelocityStart;

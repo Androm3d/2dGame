@@ -19,6 +19,13 @@
 
 class Scene
 {
+	struct VfxParticle {
+		glm::vec2 pos;
+		glm::vec2 vel;
+		glm::vec4 color;
+		float lifeMs;
+		float size;
+	};
 
 public:
 	Scene();
@@ -46,6 +53,10 @@ private:
 	void initShaders();
 	void clearLevelEntities();
 	void updateCamera();
+	void updateVfx(int deltaTime);
+	void spawnExplosionParticles(const glm::vec2 &center);
+	void spawnLandingDustParticles(const glm::vec2 &center, const glm::vec4 &baseColor, float impact);
+	glm::vec4 sampleGroundDustColor(const glm::vec2 &playerPos) const;
 	void scheduleTransitionToMap(const std::string &targetMap, bool enterSideRoom, int targetDoorIndex = -1);
 	void scheduleTransitionToWorld(int targetRoomX, int targetRoomY);
 
@@ -86,7 +97,9 @@ private:
 	std::vector<Sprite*> doors;
 
 	ShaderProgram bgProgram;
+	ShaderProgram particleProgram;
 	GLuint bgVao, bgVbo;
+	GLuint particleVao = 0, particleVbo = 0;
 
 	bool transitionPending = false;
 	int transitionDelayMs = 0;
@@ -105,6 +118,9 @@ private:
 	bool enemy3HitPlayerThisSwing;
 	Text hudText;
 	bool hudReady = false;
+	std::vector<VfxParticle> vfxParticles;
+	int explosionFlashMs = 0;
+	float grayscaleAmount = 0.0f;
 
 };
 

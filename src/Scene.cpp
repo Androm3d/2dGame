@@ -3,6 +3,7 @@
 #include <cstdio>
 #include <fstream>
 #include <sstream>
+#include <algorithm>
 #include <glm/gtc/matrix_transform.hpp>
 #include <iostream>
 #include "Scene.h"
@@ -21,6 +22,7 @@ static const int WEIGHT_SPRING_COOLDOWN_MS = 180;
 static const int WEIGHT_DASH_COOLDOWN_MS = 180;
 static const float WEIGHT_SPAWN_RAISE_PX = 12.0f;
 static const float PLAYER_SPAWN_CLIP_OFFSET = 12.0f;
+static const int EXPLOSION_FLASH_MS = 180;
 
 namespace {
 bool parseWorldMapCoords(const std::string &mapName, int &x, int &y)
@@ -66,8 +68,11 @@ Scene::~Scene()
 	clearLevelEntities();
 	if (bgVbo != 0) glDeleteBuffers(1, &bgVbo);
 	if (bgVao != 0) glDeleteVertexArrays(1, &bgVao);
+	if (particleVbo != 0) glDeleteBuffers(1, &particleVbo);
+	if (particleVao != 0) glDeleteVertexArrays(1, &particleVao);
 	texProgram.free();
 	bgProgram.free();
+	particleProgram.free();
 }
 
 void Scene::clearLevelEntities()
@@ -90,6 +95,9 @@ void Scene::clearLevelEntities()
 	springs.clear();
 	for (Sprite* dash : dashes) delete dash;
 	dashes.clear();
+	vfxParticles.clear();
+	explosionFlashMs = 0;
+	grayscaleAmount = 0.0f;
 	for (Sprite* door : doors) delete door;
 	doors.clear();
 	for (Sprite* portal : portals) delete portal;
@@ -603,6 +611,13 @@ void Scene::update(int deltaTime)
 		}
 	}
 
+	if (explosionFlashMs > 0)
+		explosionFlashMs = std::max(0, explosionFlashMs - deltaTime);
+	float grayTarget = (Game::instance().lives <= 0) ? 1.0f : 0.0f;
+	float grayBlend = std::min(1.0f, dt * 6.0f);
+	grayscaleAmount += (grayTarget - grayscaleAmount) * grayBlend;
+	updateVfx(deltaTime);
+
 	if (player->isAlive() || player->isDying())
 		player->update(deltaTime);
 	if (enemy->isAlive() || enemy->isDying())
@@ -746,6 +761,13 @@ void Scene::update(int deltaTime)
 
     glm::vec2 pPos = player->getPosition();
     pSize = glm::ivec2(Player::HITBOX_WIDTH, Player::HITBOX_HEIGHT);
+	{
+		float landingImpact = 0.0f;
+		if (player->consumeHardLanding(&landingImpact)) {
+			glm::vec2 dustCenter(pPos.x + float(Player::HITBOX_WIDTH) * 0.5f, pPos.y + float(Player::HITBOX_HEIGHT));
+			spawnLandingDustParticles(dustCenter, sampleGroundDustColor(dustCenter), landingImpact);
+		}
+	}
 
 	// Trigger spring animation on activation
 	if (player->consumeSpringTrigger()) {
@@ -974,6 +996,8 @@ void Scene::update(int deltaTime)
 			weightDestroyed = true;
 		}
 		if (weightDestroyed) {
+			spawnExplosionParticles(glm::vec2(wPos.x + float(weightSize.x) * 0.5f, wPos.y + float(weightSize.y) * 0.5f));
+			explosionFlashMs = std::max(explosionFlashMs, EXPLOSION_FLASH_MS);
 			delete weights[i];
 			weights.erase(weights.begin() + i);
 			weightVelocities.erase(weightVelocities.begin() + i);
@@ -1079,6 +1103,9 @@ void Scene::render()
 	texProgram.use();
 	texProgram.setUniformMatrix4f("projection", projection);
 	texProgram.setUniform4f("color", 1.0f, 1.0f, 1.0f, 1.0f);
+	texProgram.setUniform1f("grayscaleAmount", grayscaleAmount);
+	texProgram.setUniform1f("flashAmount", float(explosionFlashMs) / float(EXPLOSION_FLASH_MS));
+	texProgram.setUniform3f("flashColor", 1.0f, 0.55f, 0.1f);
 	modelview = glm::translate(glm::mat4(1.0f), glm::vec3(-cameraX, -cameraY, 0.f));
 	texProgram.setUniformMatrix4f("modelview", modelview);
 	texProgram.setUniform2f("texCoordDispl", 0.f, 0.f);
@@ -1102,6 +1129,29 @@ void Scene::render()
 	if (enemy3->isAlive() || enemy3->isDying())
 		enemy3->render();
 	player->render();
+
+	if (!vfxParticles.empty())
+	{
+		particleProgram.use();
+		particleProgram.setUniformMatrix4f("projection", projection);
+		particleProgram.setUniformMatrix4f("modelview", modelview);
+		std::vector<float> gpuData;
+		gpuData.reserve(vfxParticles.size() * 7);
+		for (const VfxParticle &p : vfxParticles)
+		{
+			gpuData.push_back(p.pos.x);
+			gpuData.push_back(p.pos.y);
+			gpuData.push_back(p.color.r);
+			gpuData.push_back(p.color.g);
+			gpuData.push_back(p.color.b);
+			gpuData.push_back(p.color.a);
+			gpuData.push_back(p.size);
+		}
+		glBindVertexArray(particleVao);
+		glBindBuffer(GL_ARRAY_BUFFER, particleVbo);
+		glBufferData(GL_ARRAY_BUFFER, GLsizeiptr(gpuData.size() * sizeof(float)), gpuData.data(), GL_DYNAMIC_DRAW);
+		glDrawArrays(GL_POINTS, 0, GLsizei(vfxParticles.size()));
+	}
 	Sprite::setGlobalRenderOffset(glm::vec2(0.f, 0.f));
 
 	if(hudReady)
@@ -1130,6 +1180,7 @@ void Scene::render()
 void Scene::initShaders()
 {
 	Shader vShader, fShader;
+	Shader pVShader, pFShader;
 
 	vShader.initFromFile(VERTEX_SHADER, "../shaders/texture.vert");
 	if(!vShader.isCompiled())
@@ -1155,6 +1206,106 @@ void Scene::initShaders()
 	texProgram.bindFragmentOutput("outColor");
 	vShader.free();
 	fShader.free();
+
+	pVShader.initFromFile(VERTEX_SHADER, "../shaders/particles.vert");
+	if(!pVShader.isCompiled())
+	{
+		cout << "Particle Vertex Shader Error" << endl;
+		cout << "" << pVShader.log() << endl << endl;
+	}
+	pFShader.initFromFile(FRAGMENT_SHADER, "../shaders/particles.frag");
+	if(!pFShader.isCompiled())
+	{
+		cout << "Particle Fragment Shader Error" << endl;
+		cout << "" << pFShader.log() << endl << endl;
+	}
+	particleProgram.init();
+	particleProgram.addShader(pVShader);
+	particleProgram.addShader(pFShader);
+	particleProgram.link();
+	if(!particleProgram.isLinked())
+	{
+		cout << "Particle Shader Linking Error" << endl;
+		cout << "" << particleProgram.log() << endl << endl;
+	}
+	particleProgram.bindFragmentOutput("outColor");
+	pVShader.free();
+	pFShader.free();
+
+	if (particleVao == 0)
+		glGenVertexArrays(1, &particleVao);
+	if (particleVbo == 0)
+		glGenBuffers(1, &particleVbo);
+	glEnable(GL_PROGRAM_POINT_SIZE);
+	glBindVertexArray(particleVao);
+	glBindBuffer(GL_ARRAY_BUFFER, particleVbo);
+	glBufferData(GL_ARRAY_BUFFER, 0, nullptr, GL_DYNAMIC_DRAW);
+	GLint pPosLoc = particleProgram.bindVertexAttribute("position", 2, 7 * sizeof(float), 0);
+	GLint pColorLoc = particleProgram.bindVertexAttribute("inColor", 4, 7 * sizeof(float), (void *)(2 * sizeof(float)));
+	GLint pSizeLoc = particleProgram.bindVertexAttribute("inSize", 1, 7 * sizeof(float), (void *)(6 * sizeof(float)));
+	glEnableVertexAttribArray(pPosLoc);
+	glEnableVertexAttribArray(pColorLoc);
+	glEnableVertexAttribArray(pSizeLoc);
+}
+
+void Scene::updateVfx(int deltaTime)
+{
+	const float dt = float(deltaTime) / 1000.0f;
+	for (VfxParticle &p : vfxParticles)
+	{
+		p.lifeMs -= float(deltaTime);
+		p.vel.y += 1400.0f * dt;
+		p.pos += p.vel * dt;
+		p.color.a = std::max(0.0f, p.lifeMs / 450.0f);
+	}
+	vfxParticles.erase(std::remove_if(vfxParticles.begin(), vfxParticles.end(), [](const VfxParticle &p) {
+		return p.lifeMs <= 0.0f;
+	}), vfxParticles.end());
+}
+
+void Scene::spawnExplosionParticles(const glm::vec2 &center)
+{
+	for (int i = 0; i < 22; ++i)
+	{
+		float t = float(i) / 22.0f;
+		float angle = t * 6.2831853f;
+		float speed = 120.0f + 220.0f * ((i % 5) / 4.0f);
+		VfxParticle p;
+		p.pos = center;
+		p.vel = glm::vec2(std::cos(angle) * speed, std::sin(angle) * speed - 60.0f);
+		p.color = glm::vec4(1.0f, 0.55f + 0.25f * (i % 2), 0.1f, 1.0f);
+		p.lifeMs = 420.0f + float((i % 4) * 40);
+		p.size = 8.0f + float(i % 3) * 2.0f;
+		vfxParticles.push_back(p);
+	}
+}
+
+void Scene::spawnLandingDustParticles(const glm::vec2 &center, const glm::vec4 &baseColor, float impact)
+{
+	int count = 8 + int(std::min(14.0f, impact / 90.0f));
+	for (int i = 0; i < count; ++i)
+	{
+		float sign = (i % 2 == 0) ? -1.0f : 1.0f;
+		float spread = 20.0f + 12.0f * float(i % 5);
+		VfxParticle p;
+		p.pos = glm::vec2(center.x + sign * float(i * 2), center.y - 2.0f);
+		p.vel = glm::vec2(sign * spread, -80.0f - 20.0f * float(i % 4));
+		p.color = glm::vec4(baseColor.r, baseColor.g, baseColor.b, 0.9f);
+		p.lifeMs = 260.0f + float((i % 5) * 30);
+		p.size = 5.0f + float(i % 3);
+		vfxParticles.push_back(p);
+	}
+}
+
+glm::vec4 Scene::sampleGroundDustColor(const glm::vec2 &playerPos) const
+{
+	glm::ivec2 samplePos(int(playerPos.x), int(playerPos.y + 3.0f));
+	TileType tile = map->getTileTypeAtPos(samplePos);
+	if (tile == TileType::ONE_WAY_PLATFORM)
+		return glm::vec4(0.72f, 0.72f, 0.72f, 1.0f);
+	if (tile == TileType::SOLID)
+		return glm::vec4(0.62f, 0.48f, 0.32f, 1.0f);
+	return glm::vec4(0.85f, 0.85f, 0.85f, 1.0f);
 }
 
 
@@ -1166,6 +1317,9 @@ void Scene::renderMenuScreen(int selection)
 	texProgram.setUniformMatrix4f("projection", projection);
 	texProgram.setUniformMatrix4f("modelview", modelview);
 	texProgram.setUniform4f("color", 1.0f, 1.0f, 1.0f, 1.0f);
+	texProgram.setUniform1f("grayscaleAmount", 0.0f);
+	texProgram.setUniform1f("flashAmount", 0.0f);
+	texProgram.setUniform3f("flashColor", 1.0f, 1.0f, 1.0f);
 	
 	if (hudReady) {
 		glm::vec4 titleColor(1.0f, 0.9f, 0.2f, 1.0f);
@@ -1189,6 +1343,9 @@ void Scene::renderInstructionsScreen()
 	texProgram.setUniformMatrix4f("projection", projection);
 	texProgram.setUniformMatrix4f("modelview", modelview);
 	texProgram.setUniform4f("color", 1.0f, 1.0f, 1.0f, 1.0f);
+	texProgram.setUniform1f("grayscaleAmount", 0.0f);
+	texProgram.setUniform1f("flashAmount", 0.0f);
+	texProgram.setUniform3f("flashColor", 1.0f, 1.0f, 1.0f);
 	
 	if (hudReady) {
 		glm::vec4 titleColor(1.0f, 0.9f, 0.2f, 1.0f);
@@ -1217,6 +1374,9 @@ void Scene::renderCreditsScreen()
 	texProgram.setUniformMatrix4f("projection", projection);
 	texProgram.setUniformMatrix4f("modelview", modelview);
 	texProgram.setUniform4f("color", 1.0f, 1.0f, 1.0f, 1.0f);
+	texProgram.setUniform1f("grayscaleAmount", 0.0f);
+	texProgram.setUniform1f("flashAmount", 0.0f);
+	texProgram.setUniform3f("flashColor", 1.0f, 1.0f, 1.0f);
 	
 	if (hudReady) {
 		glm::vec4 titleColor(1.0f, 0.9f, 0.2f, 1.0f);

@@ -20,6 +20,7 @@ static const float SPRING_JUMP_VELOCITY = PLAYER_JUMP_VELOCITY * std::sqrt(float
 static const float PLAYER_WALK_SPEED   = 180.0f;           // px/s horizontal
 static const float PLAYER_CLIMB_SPEED  = 120.0f;           // px/s on ladders
 static const int PLAYER_SPRING_COOLDOWN_MS = 120;
+static const float PLAYER_HARD_LANDING_SPEED = 700.0f;
 static const int   PLAYER_DROP_THROUGH_MS    = 180;        // ms the player passes through one-way platforms
 static const float PLAYER_DROP_THROUGH_NUDGE = 4.0f;       // px nudge downward to clear the platform tile
 
@@ -101,6 +102,8 @@ void Player::init(const glm::ivec2 &tileMapPos, ShaderProgram &shaderProgram)
 	attackCooldown = 0;
 	dropThroughTimerMs = 0;
 	springTriggered = false;
+	hardLandingTriggered = false;
+	hardLandingSpeed = 0.0f;
 	jumpHeight = JUMP_HEIGHT;
 	dashVelocity = 0.0f;
 	dashVelocityStart = 0.0f;
@@ -296,6 +299,8 @@ void Player::update(int deltaTime)
 	if (dashCooldown > 0) dashCooldown--;
 	if (dropThroughTimerMs > 0) dropThroughTimerMs -= deltaTime;
 	springTriggered = false;
+	hardLandingTriggered = false;
+	hardLandingSpeed = 0.0f;
 	float dt = float(deltaTime) / 1000.0f;
 
 
@@ -565,6 +570,11 @@ void Player::update(int deltaTime)
 			bool dropThrough = downPressed && !onLadder;
 			if (map->checkCollision(fallPos, glm::ivec2(Player::HITBOX_WIDTH, Player::HITBOX_HEIGHT), CollisionDir::DOWN, &fallPos.y, dropThrough))
 			{
+				if (verticalVelocity > PLAYER_HARD_LANDING_SPEED)
+				{
+					hardLandingTriggered = true;
+					hardLandingSpeed = verticalVelocity;
+				}
 				posPlayerF.y = float(fallPos.y);
 				verticalVelocity = 0.0f;
 				onGround = true;
@@ -577,6 +587,11 @@ void Player::update(int deltaTime)
 				int nearGroundY = 0;
 				if (map->checkCollision(nearGroundProbe, glm::ivec2(Player::HITBOX_WIDTH, Player::HITBOX_HEIGHT), CollisionDir::DOWN, &nearGroundY, dropThrough))
 				{
+					if (verticalVelocity > PLAYER_HARD_LANDING_SPEED)
+					{
+						hardLandingTriggered = true;
+						hardLandingSpeed = verticalVelocity;
+					}
 					posPlayerF.y = float(nearGroundY);
 					verticalVelocity = 0.0f;
 					onGround = true;
@@ -701,6 +716,17 @@ bool Player::consumeSpringTrigger()
 	if (!springTriggered)
 		return false;
 	springTriggered = false;
+	return true;
+}
+
+bool Player::consumeHardLanding(float *impactSpeed)
+{
+	if (!hardLandingTriggered)
+		return false;
+	if (impactSpeed != nullptr)
+		*impactSpeed = hardLandingSpeed;
+	hardLandingTriggered = false;
+	hardLandingSpeed = 0.0f;
 	return true;
 }
 
