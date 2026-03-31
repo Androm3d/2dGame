@@ -4,6 +4,7 @@
 
 #include <glm/glm.hpp>
 #include <unordered_map>
+#include <unordered_set>
 #include <vector>
 #include "Texture.h"
 #include "ShaderProgram.h"
@@ -27,7 +28,8 @@ enum class TileType {
 	WEIGHT,
 	SPAWN,
 	SPRING,
-	DASH,
+	DASH_LEFT,
+	DASH_RIGHT,
 	ENEMY_SPAWN_1,
 	ENEMY_SPAWN_2,
 	ENEMY_SPAWN_3
@@ -58,7 +60,7 @@ public:
 	bool checkCollision(const glm::ivec2 &pos, const glm::ivec2 &size, CollisionDir dir, int *correctedPos = nullptr, bool dropThrough = false) const;
 	bool isOnLadder(const glm::ivec2 &pos, const glm::ivec2 &size) const;
 	bool isOnSpring(const glm::ivec2 &pos, const glm::ivec2 &size) const;
-	bool isOnDash(const glm::ivec2 &pos, const glm::ivec2 &size) const;
+	bool isOnDash(const glm::ivec2 &pos, const glm::ivec2 &size, bool *facingLeft = nullptr) const;
 	TileType getTileType(const int tileId) const;
 	TileType getTileTypeAtPos(const glm::ivec2 &pos) const;
 
@@ -72,6 +74,12 @@ public:
 	const std::vector<glm::ivec2>& getPortals() const { return portalSpawnLocations; }
 	const std::vector<glm::ivec2>& getDoors() const { return doorSpawnLocations; }
 	const std::vector<glm::ivec2>& getSpawnLocations() const { return spawnLocations; }
+	const std::vector<glm::ivec2>& getSpringSpawns() const { return springSpawnLocations; }
+	const std::vector<glm::ivec2>& getDashSpawns() const { return dashSpawnLocations; }
+	const std::vector<bool>& getDashSpawnFacingLeft() const { return dashSpawnFacingLeft; }
+	const std::vector<glm::ivec2>& getEnemy1Spawns() const { return enemy1SpawnLocations; }
+	const std::vector<glm::ivec2>& getEnemy2Spawns() const { return enemy2SpawnLocations; }
+	const std::vector<glm::ivec2>& getEnemy3Spawns() const { return enemy3SpawnLocations; }
 
 private:
 	bool loadLevelJSON(const std::string &levelFile);
@@ -97,6 +105,12 @@ private:
 	std::vector<glm::ivec2> swordSpawnLocations;
 	std::vector<glm::ivec2> portalSpawnLocations;
 	std::vector<glm::ivec2> spawnLocations;
+	std::vector<glm::ivec2> springSpawnLocations;
+	std::vector<glm::ivec2> dashSpawnLocations;
+	std::vector<bool> dashSpawnFacingLeft;
+	std::vector<glm::ivec2> enemy1SpawnLocations;
+	std::vector<glm::ivec2> enemy2SpawnLocations;
+	std::vector<glm::ivec2> enemy3SpawnLocations;
 };
 
 

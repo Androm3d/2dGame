@@ -32,6 +32,7 @@ public:
 	void takeDamage(int knockDir);
 	bool checkArrowHit(const glm::vec2 &pPos, const glm::ivec2 &pSize);
 	void destroyArrowsInHitbox(const glm::vec4 &attackHitbox);
+	void setActive(bool value);
 	bool isAlive() const { return alive; }
 	bool isDying() const { return bDying; }
 	bool isInvincible() const { return hitTimer > 0; }
@@ -50,10 +51,14 @@ private:
 	int jumpAngle, startY;
 	int pathRecalcTimer;
 	int shotCooldown;
+	int springCooldown;
+	int dashCooldown;
 	int hitTimer;       // invincibility + blink countdown
 	int knockbackFrames;
 	int knockbackDir;
 	glm::ivec2 tileMapDispl, posEnemy;
+	glm::vec2 posEnemyF;
+	float verticalVelocity;
 	Texture spritesheet;
 	Texture shotSpritesheet;
 	Texture arrowTexture;

@@ -7,6 +7,17 @@
 
 #define JUMP_ANGLE_STEP 4
 #define JUMP_HEIGHT 96
+#define SPRING_JUMP_MULTIPLIER 3
+#define DASH_DURATION_MS 1000
+#define DASH_DISTANCE_BASE 60.0f
+
+static const float PLAYER_GRAVITY = 1400.0f;
+static const float PLAYER_JUMP_VELOCITY = std::sqrt(2.0f * PLAYER_GRAVITY * float(JUMP_HEIGHT));
+static const float SPRING_JUMP_VELOCITY = PLAYER_JUMP_VELOCITY * std::sqrt(float(SPRING_JUMP_MULTIPLIER));
+static const float PLAYER_WALK_SPEED = 180.0f;
+static const float PLAYER_CLIMB_SPEED = 120.0f;
+static const int PLAYER_DROP_THROUGH_MS = 180;
+static const float PLAYER_DROP_THROUGH_NUDGE = 4.0f;
 #define FALL_STEP 4
 #define PLAYER_FRAME_WIDTH 32
 #define PLAYER_FRAME_HEIGHT 64
@@ -60,6 +71,14 @@ void Player::init(const glm::ivec2 &tileMapPos, ShaderProgram &shaderProgram)
 	hitTimer = 0;
 	springCooldown = 0;
 	dashCooldown = 0;
+	dropThroughTimerMs = 0;
+	springTriggered = false;
+	jumpHeight = JUMP_HEIGHT;
+	dashVelocity = 0.0f;
+	dashVelocityStart = 0.0f;
+	dashTimeLeftMs = 0;
+	posPlayerF = glm::vec2(0.0f, 0.0f);
+	verticalVelocity = 0.0f;
 	spritesheet.loadFromFile("../images/Samurai_Animation.png", TEXTURE_PIXEL_FORMAT_RGBA);
 	spritesheet.setWrapS(GL_CLAMP_TO_EDGE);
 	spritesheet.setWrapT(GL_CLAMP_TO_EDGE);
@@ -160,17 +179,41 @@ void Player::update(int deltaTime)
 	if (hitTimer > 0) hitTimer--;
 	if (springCooldown > 0) springCooldown--;
 	if (dashCooldown > 0) dashCooldown--;
+	if (dropThroughTimerMs > 0) dropThroughTimerMs -= deltaTime;
+	springTriggered = false;
+	float dt = float(deltaTime) / 1000.0f;
 	
 	sprite->update(deltaTime);
-	bool onLadder = map->isOnLadder(posPlayer, glm::ivec2(Player::HITBOX_WIDTH, Player::HITBOX_HEIGHT));
-	bool onSpring = map->isOnSpring(posPlayer, glm::ivec2(Player::HITBOX_WIDTH, Player::HITBOX_HEIGHT));
-	bool onDash = map->isOnDash(posPlayer, glm::ivec2(Player::HITBOX_WIDTH, Player::HITBOX_HEIGHT));
+	glm::ivec2 posI(int(posPlayerF.x), int(posPlayerF.y));
+	bool onLadder = map->isOnLadder(posI, glm::ivec2(Player::HITBOX_WIDTH, Player::HITBOX_HEIGHT));
+	bool onSpring = map->isOnSpring(posI, glm::ivec2(Player::HITBOX_WIDTH, Player::HITBOX_HEIGHT));
+	bool dashFacingLeft = false;
+	bool onDash = map->isOnDash(posI, glm::ivec2(Player::HITBOX_WIDTH, Player::HITBOX_HEIGHT), &dashFacingLeft);
 	bool upPressed = Game::instance().getKey(GLFW_KEY_UP);
 	bool upAllowsJump = upPressed && !Game::instance().isJumpInputBlocked();
 	bool downPressed = Game::instance().getKey(GLFW_KEY_DOWN);
 	bool leftPressed = Game::instance().getKey(GLFW_KEY_LEFT);
 	bool rightPressed = Game::instance().getKey(GLFW_KEY_RIGHT);
 	bool skipMovement = false;
+	int groundedY = 0;
+	glm::ivec2 groundProbe = posI;
+	groundProbe.y += 1;
+	int groundedYSolid = 0;
+	bool onGroundSolid = map->checkCollision(groundProbe, glm::ivec2(Player::HITBOX_WIDTH, Player::HITBOX_HEIGHT), CollisionDir::DOWN, &groundedYSolid, false);
+	bool dropThrough = (downPressed || dropThroughTimerMs > 0) && !onLadder;
+	bool onGround = map->checkCollision(groundProbe, glm::ivec2(Player::HITBOX_WIDTH, Player::HITBOX_HEIGHT), CollisionDir::DOWN, &groundedY, dropThrough);
+	if (downPressed && onGroundSolid && !onLadder)
+	{
+		dropThroughTimerMs = PLAYER_DROP_THROUGH_MS;
+		posPlayerF.y += PLAYER_DROP_THROUGH_NUDGE;
+		verticalVelocity = std::max(verticalVelocity, 80.0f);
+		onGround = false;
+	}
+	if (onGround && verticalVelocity >= 0.0f) {
+		posPlayerF.y = float(groundedY);
+		verticalVelocity = 0.0f;
+		bJumping = false;
+	}
 
 	// Attack with SPACE
 	if(Game::instance().getKey(GLFW_KEY_SPACE) && !bAttacking && !bClimbing && Game::instance().hasSword)
@@ -187,20 +230,20 @@ void Player::update(int deltaTime)
 		// Only skip horizontal movement, but keep gravity/jump physics running
 	}
 	// Spring boost
-	if (onSpring && !bJumping && springCooldown == 0) {
+	if (onSpring && springCooldown == 0) {
+		verticalVelocity = -SPRING_JUMP_VELOCITY;
 		bJumping = true;
-		jumpAngle = 0;
-		startY = posPlayer.y;
+		onGround = false;
 		springCooldown = 120;
+		springTriggered = true;
 	}
 	
 	// Dash boost
 	if (onDash && dashCooldown == 0) {
-		if (leftPressed) {
-			posPlayer.x -= 60;
-		} else if (rightPressed) {
-			posPlayer.x += 60;
-		}
+		int dashDir = dashFacingLeft ? -1 : 1;
+		dashTimeLeftMs = DASH_DURATION_MS;
+		dashVelocityStart = dashDir * (DASH_DISTANCE_BASE * 3.0f) / (0.5f * float(DASH_DURATION_MS));
+		dashVelocity = dashVelocityStart;
 		dashCooldown = 120;
 	}
 
@@ -219,8 +262,8 @@ void Player::update(int deltaTime)
 		{
 			bClimbing = false;
 			bJumping = true;
-			jumpAngle = 0;
-			startY = posPlayer.y;
+			verticalVelocity = -PLAYER_JUMP_VELOCITY;
+			onGround = false;
 			facingLeft = ladderJumpLeft;
 			sprite->setFlipHorizontal(facingLeft);
 			sprite->changeAnimation(JUMP_UP);
@@ -239,21 +282,27 @@ void Player::update(int deltaTime)
 			bClimbing = true;
 			sprite->changeAnimation(CLIMB_STAIRS);
 		}
+		verticalVelocity = 0.0f;
+		bJumping = false;
 
 		// Keep the player centered on ladder column to avoid side-wall collisions.
 		int tileSize = map->getTileSize();
-		int ladderCol = (posPlayer.x + Player::HITBOX_WIDTH / 2) / tileSize;
-		posPlayer.x = ladderCol * tileSize + (tileSize - Player::HITBOX_WIDTH) / 2;
+		int ladderCol = (int(posPlayerF.x) + Player::HITBOX_WIDTH / 2) / tileSize;
+		posPlayerF.x = float(ladderCol * tileSize + (tileSize - Player::HITBOX_WIDTH) / 2);
 
 		if(upPressed)
 		{
-			posPlayer.y -= 2;
-			map->checkCollision(posPlayer, glm::ivec2(Player::HITBOX_WIDTH, Player::HITBOX_HEIGHT), CollisionDir::UP, &posPlayer.y);
+			posPlayerF.y -= PLAYER_CLIMB_SPEED * dt;
+			glm::ivec2 climbPos(int(posPlayerF.x), int(posPlayerF.y));
+			map->checkCollision(climbPos, glm::ivec2(Player::HITBOX_WIDTH, Player::HITBOX_HEIGHT), CollisionDir::UP, &climbPos.y);
+			posPlayerF.y = float(climbPos.y);
 		}
 		else if(downPressed)
 		{
-			posPlayer.y += 2;
-			map->checkCollision(posPlayer, glm::ivec2(Player::HITBOX_WIDTH, Player::HITBOX_HEIGHT), CollisionDir::DOWN, &posPlayer.y);
+			posPlayerF.y += PLAYER_CLIMB_SPEED * dt;
+			glm::ivec2 climbPos(int(posPlayerF.x), int(posPlayerF.y));
+			map->checkCollision(climbPos, glm::ivec2(Player::HITBOX_WIDTH, Player::HITBOX_HEIGHT), CollisionDir::DOWN, &climbPos.y);
+			posPlayerF.y = float(climbPos.y);
 		}
 
 		skipMovement = true;
@@ -268,7 +317,7 @@ void Player::update(int deltaTime)
 	// Horizontal movement (blocked during attack and climbing)
 	if(!skipMovement && !bAttacking)
 	{
-		const int walkSpeed = 3;
+		const float walkSpeed = PLAYER_WALK_SPEED * dt;
 		if(leftPressed && !rightPressed)
 		{
 			facingLeft = true;
@@ -276,11 +325,14 @@ void Player::update(int deltaTime)
 			if(!bJumping && sprite->animation() != MOVE_LEFT)
 				sprite->changeAnimation(MOVE_LEFT);
 			bool hitWall = false;
-			for(int step = 0; step < walkSpeed; ++step)
+			int steps = int(std::ceil(std::abs(walkSpeed)));
+			for(int step = 0; step < steps; ++step)
 			{
-				posPlayer.x -= 1;
-				if(map->checkCollision(posPlayer, glm::ivec2(Player::HITBOX_WIDTH, Player::HITBOX_HEIGHT), CollisionDir::LEFT, &posPlayer.x))
+				posPlayerF.x -= 1.0f;
+				glm::ivec2 movePos(int(posPlayerF.x), int(posPlayerF.y));
+				if(map->checkCollision(movePos, glm::ivec2(Player::HITBOX_WIDTH, Player::HITBOX_HEIGHT), CollisionDir::LEFT, &movePos.x))
 				{
+					posPlayerF.x = float(movePos.x);
 					hitWall = true;
 					break;
 				}
@@ -295,11 +347,14 @@ void Player::update(int deltaTime)
 			if(!bJumping && sprite->animation() != MOVE_RIGHT)
 				sprite->changeAnimation(MOVE_RIGHT);
 			bool hitWall = false;
-			for(int step = 0; step < walkSpeed; ++step)
+			int steps = int(std::ceil(std::abs(walkSpeed)));
+			for(int step = 0; step < steps; ++step)
 			{
-				posPlayer.x += 1;
-				if(map->checkCollision(posPlayer, glm::ivec2(Player::HITBOX_WIDTH, Player::HITBOX_HEIGHT), CollisionDir::RIGHT, &posPlayer.x))
+				posPlayerF.x += 1.0f;
+				glm::ivec2 movePos(int(posPlayerF.x), int(posPlayerF.y));
+				if(map->checkCollision(movePos, glm::ivec2(Player::HITBOX_WIDTH, Player::HITBOX_HEIGHT), CollisionDir::RIGHT, &movePos.x))
 				{
+					posPlayerF.x = float(movePos.x);
 					hitWall = true;
 					break;
 				}
@@ -329,59 +384,104 @@ void Player::update(int deltaTime)
 		}
 	}
 
-	// Jumping / gravity (always runs, even during attack)
-	if(!skipMovement)
+	if (!skipMovement && dashTimeLeftMs > 0 && dashVelocity != 0.0f)
 	{
-		if(bJumping)
+		float ratio = float(dashTimeLeftMs) / float(DASH_DURATION_MS);
+		dashVelocity = dashVelocityStart * ratio;
+		float dashDelta = dashVelocity * float(deltaTime);
+		int dashSteps = int(std::ceil(std::abs(dashDelta)));
+		int dashStepDir = (dashDelta < 0.0f) ? -1 : 1;
+		for (int step = 0; step < dashSteps; ++step)
 		{
-			if(!bAttacking)
+			posPlayerF.x += float(dashStepDir);
+			glm::ivec2 dashPos(int(posPlayerF.x), int(posPlayerF.y));
+			if (map->checkCollision(dashPos, glm::ivec2(Player::HITBOX_WIDTH, Player::HITBOX_HEIGHT), dashStepDir < 0 ? CollisionDir::LEFT : CollisionDir::RIGHT, &dashPos.x))
 			{
-				sprite->setFlipHorizontal(facingLeft);
-				if(jumpAngle < 90)
-				{
-					if(sprite->animation() != JUMP_UP)
-						sprite->changeAnimation(JUMP_UP);
-				}
-				else
-				{
-					if(sprite->animation() != JUMP_FALL)
-						sprite->changeAnimation(JUMP_FALL);
-				}
-			}
-			jumpAngle += JUMP_ANGLE_STEP;
-			if(jumpAngle < 90)
-			{
-				posPlayer.y = int(startY - JUMP_HEIGHT * sin(3.14159f * jumpAngle / 180.f));
-				if(map->checkCollision(posPlayer, glm::ivec2(Player::HITBOX_WIDTH, Player::HITBOX_HEIGHT), CollisionDir::UP, &posPlayer.y))
-				{
-					jumpAngle = 90;
-					if(!bAttacking)
-						sprite->changeAnimation(JUMP_FALL);
-				}
-			}
-			else
-			{
-				posPlayer.y += FALL_STEP;
-				bJumping = !map->checkCollision(posPlayer, glm::ivec2(Player::HITBOX_WIDTH, Player::HITBOX_HEIGHT), CollisionDir::DOWN, &posPlayer.y);
-			}
-		}
-		else
-		{
-			posPlayer.y += FALL_STEP;
-			bool dropThrough = downPressed && !onLadder;
-			if(map->checkCollision(posPlayer, glm::ivec2(Player::HITBOX_WIDTH, Player::HITBOX_HEIGHT), CollisionDir::DOWN, &posPlayer.y, dropThrough))
-			{
-				if(upAllowsJump && !onLadder && !bAttacking)
-				{
-					bJumping = true;
-					jumpAngle = 0;
-					startY = posPlayer.y;
-					sprite->setFlipHorizontal(facingLeft);
-					sprite->changeAnimation(JUMP_UP);
-				}
+				posPlayerF.x = float(dashPos.x);
+				dashTimeLeftMs = 0;
+				dashVelocity = 0.0f;
+				break;
 			}
 		}
 	}
+
+	// Jumping / gravity (time-based, always runs, even during attack)
+	if(!skipMovement && !bClimbing)
+	{
+		if(upAllowsJump && onGround && !onLadder && !bAttacking)
+		{
+			verticalVelocity = -PLAYER_JUMP_VELOCITY;
+			bJumping = true;
+			onGround = false;
+			sprite->setFlipHorizontal(facingLeft);
+			sprite->changeAnimation(JUMP_UP);
+		}
+
+		verticalVelocity += PLAYER_GRAVITY * dt;
+		posPlayerF.y += verticalVelocity * dt;
+
+		glm::ivec2 fallPos(int(posPlayerF.x), int(posPlayerF.y));
+		if (verticalVelocity > 0.0f)
+		{
+			bool dropThrough = downPressed && !onLadder;
+			if (map->checkCollision(fallPos, glm::ivec2(Player::HITBOX_WIDTH, Player::HITBOX_HEIGHT), CollisionDir::DOWN, &fallPos.y, dropThrough))
+			{
+				posPlayerF.y = float(fallPos.y);
+				verticalVelocity = 0.0f;
+				onGround = true;
+				bJumping = false;
+			}
+			else
+			{
+				glm::ivec2 nearGroundProbe = fallPos;
+				nearGroundProbe.y += 1;
+				int nearGroundY = 0;
+				if (map->checkCollision(nearGroundProbe, glm::ivec2(Player::HITBOX_WIDTH, Player::HITBOX_HEIGHT), CollisionDir::DOWN, &nearGroundY, dropThrough))
+				{
+					posPlayerF.y = float(nearGroundY);
+					verticalVelocity = 0.0f;
+					onGround = true;
+					bJumping = false;
+				}
+				else
+					onGround = false;
+			}
+		}
+		else if (verticalVelocity < 0.0f)
+		{
+			if (map->checkCollision(fallPos, glm::ivec2(Player::HITBOX_WIDTH, Player::HITBOX_HEIGHT), CollisionDir::UP, &fallPos.y))
+			{
+				posPlayerF.y = float(fallPos.y);
+				verticalVelocity = 0.0f;
+			}
+		}
+
+		if (!bAttacking)
+		{
+			if (!onGround)
+			{
+				bJumping = true;
+				sprite->setFlipHorizontal(facingLeft);
+				sprite->changeAnimation(verticalVelocity < 0.0f ? JUMP_UP : JUMP_FALL);
+			}
+			else if (sprite->animation() == JUMP_UP || sprite->animation() == JUMP_FALL)
+			{
+				sprite->changeAnimation(facingLeft ? STAND_LEFT : STAND_RIGHT);
+			}
+		}
+	}
+
+	if (dashTimeLeftMs > 0)
+	{
+		dashTimeLeftMs -= deltaTime;
+		if (dashTimeLeftMs <= 0)
+		{
+			dashTimeLeftMs = 0;
+			dashVelocity = 0.0f;
+		}
+	}
+
+	posPlayer = glm::ivec2(int(posPlayerF.x), int(posPlayerF.y));
 
 	float renderOffsetX = 0.5f * (float(PLAYER_FRAME_WIDTH) * PLAYER_VISUAL_SCALE_X - float(Player::HITBOX_WIDTH));
 	float renderOffsetY = float(PLAYER_FRAME_HEIGHT - Player::HITBOX_HEIGHT);
@@ -432,6 +532,14 @@ void Player::setTileMap(TileMap *tileMap)
 	map = tileMap;
 }
 
+bool Player::consumeSpringTrigger()
+{
+	if (!springTriggered)
+		return false;
+	springTriggered = false;
+	return true;
+}
+
 glm::vec4 Player::getAttackHitbox() const
 {
 	float attackRange = 24.f;
@@ -443,7 +551,8 @@ glm::vec4 Player::getAttackHitbox() const
 
 void Player::setPosition(const glm::vec2 &pos)
 {
-	posPlayer = pos;
+	posPlayerF = pos;
+	posPlayer = glm::ivec2(int(posPlayerF.x), int(posPlayerF.y));
 	float renderOffsetX = 0.5f * (float(PLAYER_FRAME_WIDTH) * PLAYER_VISUAL_SCALE_X - float(Player::HITBOX_WIDTH));
 	float renderOffsetY = float(PLAYER_FRAME_HEIGHT - Player::HITBOX_HEIGHT);
 	sprite->setPosition(glm::vec2(float(tileMapDispl.x + posPlayer.x) - renderOffsetX, float(tileMapDispl.y + posPlayer.y) - renderOffsetY));

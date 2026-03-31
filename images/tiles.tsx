@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<tileset version="1.10" tiledversion="1.12.0" name="tiles" tilewidth="32" tileheight="32" tilecount="136" columns="8">
+<tileset version="1.10" tiledversion="1.12.1" name="tiles" tilewidth="32" tileheight="32" tilecount="136" columns="8">
  <image source="tiles.png" trans="ffffff" width="256" height="544"/>
  <tile id="1">
   <properties>
@@ -319,6 +319,36 @@
  <tile id="113">
   <properties>
    <property name="type" value="SPAWN"/>
+  </properties>
+ </tile>
+ <tile id="114">
+  <properties>
+   <property name="type" value="SPAWN_ENEMY_1"/>
+  </properties>
+ </tile>
+ <tile id="115">
+  <properties>
+   <property name="type" value="SPAWN_ENEMY_2"/>
+  </properties>
+ </tile>
+ <tile id="116">
+  <properties>
+   <property name="type" value="SPAWN_ENEMY_3"/>
+  </properties>
+ </tile>
+ <tile id="117">
+  <properties>
+   <property name="type" value="SPRING"/>
+  </properties>
+ </tile>
+ <tile id="118">
+  <properties>
+   <property name="type" value="DASH_LEFT"/>
+  </properties>
+ </tile>
+ <tile id="119">
+  <properties>
+   <property name="type" value="DASH_RIGHT"/>
   </properties>
  </tile>
 </tileset>

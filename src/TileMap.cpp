@@ -2,7 +2,8 @@
 #include <fstream>
 #include <sstream>
 #include <vector>
-#include <unordered_set>
+#include <algorithm>
+#include <cctype>
 #include "TileMap.h"
 #include "../external/json/nlohmann/json.hpp"
 
@@ -239,41 +240,52 @@ bool TileMap::loadLevelJSON(const string &levelFile)
 	weightSpawnLocations.clear();
 	swordSpawnLocations.clear();
 	spawnLocations.clear();
+	springSpawnLocations.clear();
+	dashSpawnLocations.clear();
+	dashSpawnFacingLeft.clear();
+	enemy1SpawnLocations.clear();
+	enemy2SpawnLocations.clear();
+	enemy3SpawnLocations.clear();
 
     // 2. READ TILESET PROPERTIES FIRST (Build the Dictionary)
     // (Changed jsonDocument to j)
     for (const auto& tileset : j["tilesets"]) {
         int firstgid = tileset["firstgid"];
 
-        if (tileset.contains("tiles")) {
-            for (const auto& tile : tileset["tiles"]) {
-                int localId = tile["id"];
-                int globalId = localId + firstgid;
+			if (tileset.contains("tiles")) {
+				for (const auto& tile : tileset["tiles"]) {
+					int localId = tile["id"];
+					int globalId = localId + firstgid;
 
-                if (tile.contains("properties")) {
-                    for (const auto& prop : tile["properties"]) {
-                        if (prop["name"] == "type") {
-                            std::string typeVal = prop["value"];
-                            
-                            // Map strings to our enums
-                            if (typeVal == "SOLID") tileDictionary[globalId] = TileType::SOLID;
-                            else if (typeVal == "ONE_WAY_PLATFORM") tileDictionary[globalId] = TileType::ONE_WAY_PLATFORM;
-                            else if (typeVal == "LADDER") tileDictionary[globalId] = TileType::LADDER;
-                            else if (typeVal == "DOOR") tileDictionary[globalId] = TileType::DOOR;
-							else if (typeVal == "PORTAL") tileDictionary[globalId] = TileType::PORTAL;
-                            else if (typeVal == "KEY") tileDictionary[globalId] = TileType::KEY;
-							else if (typeVal == "SWORD") tileDictionary[globalId] = TileType::SWORD;
-							else if (typeVal == "HEAL") tileDictionary[globalId] = TileType::HEAL;
-							else if (typeVal == "SHIELD") tileDictionary[globalId] = TileType::SHIELD;
-							else if (typeVal == "WEIGHT") tileDictionary[globalId] = TileType::WEIGHT;
-							else if (typeVal == "SPAWN") tileDictionary[globalId] = TileType::SPAWN;
-							else if (typeVal == "SPRING") tileDictionary[globalId] = TileType::SPRING;
-							else if (typeVal == "DASH") tileDictionary[globalId] = TileType::DASH;
-                        }
-                    }
-                }
-            }
-        }
+					std::string typeVal;
+					if (tile.contains("properties")) {
+						for (const auto& prop : tile["properties"]) {
+							if (prop["name"] == "type")
+								typeVal = prop["value"];
+						}
+					}
+
+					if (!typeVal.empty()) {
+						if (typeVal == "SOLID") tileDictionary[globalId] = TileType::SOLID;
+						else if (typeVal == "ONE_WAY_PLATFORM") tileDictionary[globalId] = TileType::ONE_WAY_PLATFORM;
+						else if (typeVal == "LADDER") tileDictionary[globalId] = TileType::LADDER;
+						else if (typeVal == "DOOR") tileDictionary[globalId] = TileType::DOOR;
+						else if (typeVal == "PORTAL") tileDictionary[globalId] = TileType::PORTAL;
+						else if (typeVal == "KEY") tileDictionary[globalId] = TileType::KEY;
+						else if (typeVal == "SWORD") tileDictionary[globalId] = TileType::SWORD;
+						else if (typeVal == "HEAL") tileDictionary[globalId] = TileType::HEAL;
+						else if (typeVal == "SHIELD") tileDictionary[globalId] = TileType::SHIELD;
+						else if (typeVal == "WEIGHT") tileDictionary[globalId] = TileType::WEIGHT;
+						else if (typeVal == "SPAWN") tileDictionary[globalId] = TileType::SPAWN;
+						else if (typeVal == "SPRING") tileDictionary[globalId] = TileType::SPRING;
+						else if (typeVal == "DASH_LEFT") tileDictionary[globalId] = TileType::DASH_LEFT;
+						else if (typeVal == "DASH_RIGHT") tileDictionary[globalId] = TileType::DASH_RIGHT;
+						else if (typeVal == "SPAWN_ENEMY_1") tileDictionary[globalId] = TileType::ENEMY_SPAWN_1;
+						else if (typeVal == "SPAWN_ENEMY_2") tileDictionary[globalId] = TileType::ENEMY_SPAWN_2;
+						else if (typeVal == "SPAWN_ENEMY_3") tileDictionary[globalId] = TileType::ENEMY_SPAWN_3;
+					}
+				}
+			}
     }
 
     // 3. READ THE MAP DATA SECOND (Place tiles and spawn entities)
@@ -334,6 +346,27 @@ bool TileMap::loadLevelJSON(const string &levelFile)
 				spawnLocations.push_back(glm::ivec2(x, y));
 				tile_id = 0;
             }
+			else if (it->second == TileType::SPRING) {
+				springSpawnLocations.push_back(glm::ivec2(x, y));
+				tile_id = 0;
+			}
+			else if (it->second == TileType::DASH_LEFT || it->second == TileType::DASH_RIGHT) {
+				dashSpawnLocations.push_back(glm::ivec2(x, y));
+				dashSpawnFacingLeft.push_back(it->second == TileType::DASH_LEFT);
+				tile_id = 0;
+			}
+			else if (it->second == TileType::ENEMY_SPAWN_1) {
+				enemy1SpawnLocations.push_back(glm::ivec2(x, y));
+				tile_id = 0;
+			}
+			else if (it->second == TileType::ENEMY_SPAWN_2) {
+				enemy2SpawnLocations.push_back(glm::ivec2(x, y));
+				tile_id = 0;
+			}
+			else if (it->second == TileType::ENEMY_SPAWN_3) {
+				enemy3SpawnLocations.push_back(glm::ivec2(x, y));
+				tile_id = 0;
+			}
 
         }
 
@@ -565,34 +598,31 @@ bool TileMap::isOnLadder(const glm::ivec2 &pos, const glm::ivec2 &size) const
 
 bool TileMap::isOnSpring(const glm::ivec2 &pos, const glm::ivec2 &size) const
 {
-	int x0 = pos.x / tileSize;
-	int x1 = (pos.x + size.x - 1) / tileSize;
-	int yBottom = (pos.y + size.y) / tileSize;
-
-	if (x0 < 0 || x1 >= mapSize.x || yBottom < 0 || yBottom >= mapSize.y)
-		return false;
-
-	for (int x = x0; x <= x1; x++)
+	glm::ivec2 spriteSize(tileSize, tileSize);
+	for (const auto &spawn : springSpawnLocations)
 	{
-		if (getTileType(map[yBottom * mapSize.x + x]) == TileType::SPRING)
+		bool overlapX = pos.x < spawn.x + spriteSize.x && pos.x + size.x > spawn.x;
+		bool overlapY = pos.y < spawn.y + spriteSize.y && pos.y + size.y > spawn.y;
+		if (overlapX && overlapY)
 			return true;
 	}
 	return false;
 }
 
-bool TileMap::isOnDash(const glm::ivec2 &pos, const glm::ivec2 &size) const
+bool TileMap::isOnDash(const glm::ivec2 &pos, const glm::ivec2 &size, bool *facingLeft) const
 {
-	int x0 = pos.x / tileSize;
-	int x1 = (pos.x + size.x - 1) / tileSize;
-	int yBottom = (pos.y + size.y) / tileSize;
-
-	if (x0 < 0 || x1 >= mapSize.x || yBottom < 0 || yBottom >= mapSize.y)
-		return false;
-
-	for (int x = x0; x <= x1; x++)
+	glm::ivec2 spriteSize(tileSize, tileSize);
+	for (size_t i = 0; i < dashSpawnLocations.size(); ++i)
 	{
-		if (getTileType(map[yBottom * mapSize.x + x]) == TileType::DASH)
+		const auto &spawn = dashSpawnLocations[i];
+		bool overlapX = pos.x < spawn.x + spriteSize.x && pos.x + size.x > spawn.x;
+		bool overlapY = pos.y < spawn.y + spriteSize.y && pos.y + size.y > spawn.y;
+		if (overlapX && overlapY)
+		{
+			if (facingLeft && i < dashSpawnFacingLeft.size())
+				*facingLeft = dashSpawnFacingLeft[i];
 			return true;
+		}
 	}
 	return false;
 }

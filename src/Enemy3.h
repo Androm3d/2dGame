@@ -30,6 +30,7 @@ public:
 	glm::ivec2 getPosition() const { return posEnemy; }
 
 	void takeDamage(int knockDir);
+	void setActive(bool value);
 	bool isAlive() const { return alive; }
 	bool isDying() const { return bDying; }
 	bool isInvincible() const { return hitTimer > 0; }
@@ -52,10 +53,14 @@ private:
 	int jumpAngle, startY;
 	int pathRecalcTimer;
 	int attackCooldown;
+	int springCooldown;
+	int dashCooldown;
 	int hitTimer;
 	int knockbackFrames;
 	int knockbackDir;
 	glm::ivec2 tileMapDispl, posEnemy;
+	glm::vec2 posEnemyF;
+	float verticalVelocity;
 	Texture spritesheet;
 	Texture fireSpritesheet;
 	Sprite *sprite;

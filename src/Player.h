@@ -22,7 +22,7 @@ public:
 	void init(const glm::ivec2 &tileMapPos, ShaderProgram &shaderProgram);
 	void update(int deltaTime);
 	void render();
-	glm::vec2 getPosition() const { return posPlayer; }
+	glm::vec2 getPosition() const { return posPlayerF; }
 
 	void setTileMap(TileMap *tileMap);
 	void setPosition(const glm::vec2 &pos);
@@ -31,6 +31,7 @@ public:
 	void takeDamage();
 	bool isInvincible() const { return hitTimer > 0; }
 	bool isAlive() const { return alive; }
+	bool consumeSpringTrigger();
 
 private:
 	bool bJumping;
@@ -41,7 +42,15 @@ private:
 	int hitTimer;
 	int springCooldown;
 	int dashCooldown;
+	int dropThroughTimerMs;
+	bool springTriggered;
+	int jumpHeight;
+	float dashVelocity;
+	float dashVelocityStart;
+	int dashTimeLeftMs;
 	glm::ivec2 tileMapDispl, posPlayer;
+	glm::vec2 posPlayerF;
+	float verticalVelocity;
 	int jumpAngle, startY;
 	Texture spritesheet;
 	Sprite *sprite;

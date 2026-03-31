@@ -65,12 +65,15 @@ private:
 	float viewWidth = 960.f;
 	float viewHeight = 480.f;
 
-	Texture texKey, texHeal, texShield, texWeight, texSword;
+	Texture texKey, texHeal, texShield, texWeight, texSword, texSpring, texDash;
 	std::vector<Sprite*> keys;
 	std::vector<Sprite*> heals;
 	Sprite* sword;
 	std::vector<Sprite*> shields;
 	std::vector<Sprite*> weights;
+	std::vector<float> weightVelocities;
+	std::vector<Sprite*> springs;
+	std::vector<Sprite*> dashes;
 
 	Texture texDoor, texPortal;
 	std::vector<Sprite*> portals;

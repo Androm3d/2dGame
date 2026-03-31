@@ -12,6 +12,9 @@
 #define SCREEN_X 0
 #define SCREEN_Y 0
 
+static const float WEIGHT_GRAVITY = 1800.0f;
+static const float WEIGHT_MAX_FALL_SPEED = 240.0f;
+
 namespace {
 bool parseWorldMapCoords(const std::string &mapName, int &x, int &y)
 {
@@ -70,6 +73,11 @@ void Scene::clearLevelEntities()
 	shields.clear();
 	for (Sprite* weight : weights) delete weight;
 	weights.clear();
+	weightVelocities.clear();
+	for (Sprite* spring : springs) delete spring;
+	springs.clear();
+	for (Sprite* dash : dashes) delete dash;
+	dashes.clear();
 	for (Sprite* door : doors) delete door;
 	doors.clear();
 	for (Sprite* portal : portals) delete portal;
@@ -157,15 +165,30 @@ void Scene::init()
 	player->setTileMap(map);
 	enemy = new Enemy();
 	enemy->init(glm::ivec2(SCREEN_X, SCREEN_Y), texProgram);
-	enemy->setPosition(glm::vec2(15 * map->getTileSize(), 0));
+	if (!map->getEnemy1Spawns().empty())
+		enemy->setPosition(glm::vec2(map->getEnemy1Spawns()[0]));
+	else {
+		enemy->setActive(false);
+		std::cerr << "Warning: No SPAWN_ENEMY_1 tile found. Enemy1 disabled." << std::endl;
+	}
 	enemy->setTileMap(map);
 	enemy2 = new Enemy2();
 	enemy2->init(glm::ivec2(SCREEN_X, SCREEN_Y), texProgram);
-	enemy2->setPosition(glm::vec2(20 * map->getTileSize(), 0));
+	if (!map->getEnemy2Spawns().empty())
+		enemy2->setPosition(glm::vec2(map->getEnemy2Spawns()[0]));
+	else {
+		enemy2->setActive(false);
+		std::cerr << "Warning: No SPAWN_ENEMY_2 tile found. Enemy2 disabled." << std::endl;
+	}
 	enemy2->setTileMap(map);
 	enemy3 = new Enemy3();
 	enemy3->init(glm::ivec2(SCREEN_X, SCREEN_Y), texProgram);
-	enemy3->setPosition(glm::vec2(25 * map->getTileSize(), 0));
+	if (!map->getEnemy3Spawns().empty())
+		enemy3->setPosition(glm::vec2(map->getEnemy3Spawns()[0]));
+	else {
+		enemy3->setActive(false);
+		std::cerr << "Warning: No SPAWN_ENEMY_3 tile found. Enemy3 disabled." << std::endl;
+	}
 	enemy3->setTileMap(map);
 	viewWidth = float(map->getRoomSize().x * map->getTileSize());
 	viewHeight = float(map->getRoomSize().y * map->getTileSize());
@@ -201,6 +224,9 @@ void Scene::init()
 	for (Sprite* h : heals) delete h; heals.clear();
 	for (Sprite* s : shields) delete s; shields.clear();
 	for (Sprite* w : weights) delete w; weights.clear();
+	weightVelocities.clear();
+	for (Sprite* sp : springs) delete sp; springs.clear();
+	for (Sprite* d : dashes) delete d; dashes.clear();
 	if (sword != nullptr) {  delete sword;  sword = nullptr; }
 
 	// texturas
@@ -223,6 +249,14 @@ void Scene::init()
 	texWeight.loadFromFile("../images/weight.png", TEXTURE_PIXEL_FORMAT_RGBA);
 	texWeight.setMinFilter(GL_NEAREST);
 	texWeight.setMagFilter(GL_NEAREST);
+
+	texSpring.loadFromFile("../images/spring.png", TEXTURE_PIXEL_FORMAT_RGBA);
+	texSpring.setMinFilter(GL_NEAREST);
+	texSpring.setMagFilter(GL_NEAREST);
+
+	texDash.loadFromFile("../images/dash.png", TEXTURE_PIXEL_FORMAT_RGBA);
+	texDash.setMinFilter(GL_NEAREST);
+	texDash.setMagFilter(GL_NEAREST);
 
 
 	// Crear sprites para cada item en el mapa
@@ -266,6 +300,49 @@ void Scene::init()
 		Sprite* newWeight = Sprite::createSprite(glm::vec2(map->getTileSize(), map->getTileSize()), glm::vec2(1.0, 1.0), &texWeight, &texProgram);
 		newWeight->setPosition(pos);
 		weights.push_back(newWeight);
+		weightVelocities.push_back(0.0f);
+	}
+
+	glm::vec2 springFrameSize(
+		float(map->getTileSize()) / float(texSpring.width()),
+		float(map->getTileSize()) / float(texSpring.height())
+	);
+	for (glm::ivec2 pos : map->getSpringSpawns()) {
+		Sprite* spring = Sprite::createSprite(glm::vec2(map->getTileSize(), map->getTileSize()), springFrameSize, &texSpring, &texProgram);
+		spring->setNumberAnimations(2);
+		spring->setAnimationSpeed(0, 1);
+		spring->setAnimationLoop(0, true);
+		spring->addKeyframe(0, glm::vec2(0.0f, 0.0f));
+		spring->setAnimationSpeed(1, 12);
+		spring->setAnimationLoop(1, false);
+		for (int f = 1; f < 4; ++f) {
+			spring->addKeyframe(1, glm::vec2(f * springFrameSize.x, 0.0f));
+		}
+		spring->changeAnimation(0);
+		spring->setPosition(pos);
+		springs.push_back(spring);
+	}
+
+	glm::vec2 dashFrameSize(
+		44.0f / float(texDash.width()),
+		float(map->getTileSize()) / float(texDash.height())
+	);
+	const auto &dashSpawns = map->getDashSpawns();
+	const auto &dashFacingLeft = map->getDashSpawnFacingLeft();
+	for (size_t i = 0; i < dashSpawns.size(); ++i) {
+		glm::ivec2 pos = dashSpawns[i];
+		Sprite* dash = Sprite::createSprite(glm::vec2(map->getTileSize(), map->getTileSize()), dashFrameSize, &texDash, &texProgram);
+		dash->setNumberAnimations(1);
+		dash->setAnimationSpeed(0, 10);
+		dash->setAnimationLoop(0, true);
+		for (int f = 0; f < 4; ++f) {
+			dash->addKeyframe(0, glm::vec2(f * dashFrameSize.x, 0.0f));
+		}
+		dash->changeAnimation(0);
+		if (i < dashFacingLeft.size())
+			dash->setFlipHorizontal(!dashFacingLeft[i]);
+		dash->setPosition(pos);
+		dashes.push_back(dash);
 	}
 
 
@@ -441,6 +518,7 @@ bool Scene::checkAABB(const glm::vec2& pos1, const glm::ivec2& size1, const glm:
 void Scene::update(int deltaTime)
 {
 	currentTime += deltaTime;
+	float dt = float(deltaTime) / 1000.0f;
 	bool upIsDown = Game::instance().getKey(GLFW_KEY_UP);
 	bool upJustPressed = upIsDown && !upWasDown;
 	upWasDown = upIsDown;
@@ -602,6 +680,24 @@ void Scene::update(int deltaTime)
     glm::vec2 pPos = player->getPosition();
     pSize = glm::ivec2(Player::HITBOX_WIDTH, Player::HITBOX_HEIGHT);
 
+	// Trigger spring animation on activation
+	if (player->consumeSpringTrigger()) {
+		for (Sprite* spring : springs) {
+			if (checkAABB(pPos, pSize, spring->getPosition(), glm::ivec2(map->getTileSize(), map->getTileSize()))) {
+				spring->changeAnimation(1);
+				break;
+			}
+		}
+	}
+	for (Sprite* spring : springs) {
+		spring->update(deltaTime);
+		if (spring->animationFinished())
+			spring->changeAnimation(0);
+	}
+	for (Sprite* dash : dashes) {
+		dash->update(deltaTime);
+	}
+
 	// Fall out of bounds death check
 	if (pPos.y > map->getMapSize().y * map->getTileSize() + pSize.y) {
 		Game::instance().lives--;
@@ -656,8 +752,9 @@ void Scene::update(int deltaTime)
 	for (int i = weights.size() - 1; i >= 0; i--) {
 		glm::vec2 wPos = weights[i]->getPosition();
 		int pushStep = 2;
-		int fallStep = 2;
 		glm::ivec2 weightSize(map->getTileSize(), map->getTileSize());
+		bool weightDestroyed = false;
+		float &wVel = weightVelocities[i];
 
 		if (checkAABB(pPos, pSize, wPos, weightSize)) {
 			int newX = static_cast<int>(wPos.x);
@@ -691,17 +788,20 @@ void Scene::update(int deltaTime)
 			}
 		}
 
-		// Gravity: weights should fall when nothing supports them below e
-		glm::ivec2 fallCheckPos(static_cast<int>(wPos.x), static_cast<int>(wPos.y) + fallStep);
+		// Gravity: weights should fall when nothing supports them below
+		wVel += WEIGHT_GRAVITY * dt;
+		if (wVel > WEIGHT_MAX_FALL_SPEED)
+			wVel = WEIGHT_MAX_FALL_SPEED;
+		glm::vec2 nextPos = wPos;
+		nextPos.y += wVel * dt;
+		glm::ivec2 fallCheckPos(static_cast<int>(nextPos.x), static_cast<int>(nextPos.y));
 		int correctedY = 0;
-		// no cayendo 
 		if (map->checkCollision(fallCheckPos, weightSize, CollisionDir::DOWN, &correctedY)) {
-			weights[i]->setPosition(glm::vec2(wPos.x, float(correctedY)));
-		} 
-		// cayendo
-		else {
-			weights[i]->setPosition(glm::vec2(wPos.x, wPos.y + 2*float(fallStep)));
+			nextPos.y = float(correctedY);
+			wVel = 0.0f;
 		}
+		weights[i]->setPosition(nextPos);
+		wPos = nextPos;
 
 		weights[i]->update(deltaTime);
 			
@@ -711,18 +811,27 @@ void Scene::update(int deltaTime)
 			enemy->takeDamage(0);
 			enemy->takeDamage(0);
 			enemy->takeDamage(0);
+			weightDestroyed = true;
 		}
 		glm::vec4 enemy2Hitbox = enemy2->getHitbox();
 		if (enemy2->isAlive() && checkAABB(wPos, weightSize, glm::vec2(enemy2Hitbox.x, enemy2Hitbox.y), glm::ivec2(enemy2Hitbox.z, enemy2Hitbox.w))) {
 			enemy2->takeDamage(0);
 			enemy2->takeDamage(0);
 			enemy2->takeDamage(0);
+			weightDestroyed = true;
 		}
 		glm::vec4 enemy3Hitbox = enemy3->getHitbox();
 		if (enemy3->isAlive() && checkAABB(wPos, weightSize, glm::vec2(enemy3Hitbox.x, enemy3Hitbox.y), glm::ivec2(enemy3Hitbox.z, enemy3Hitbox.w))) {
 			enemy3->takeDamage(0);
 			enemy3->takeDamage(0);
 			enemy3->takeDamage(0);
+			weightDestroyed = true;
+		}
+		if (weightDestroyed) {
+			delete weights[i];
+			weights.erase(weights.begin() + i);
+			weightVelocities.erase(weightVelocities.begin() + i);
+			continue;
 		}
 	}
 
@@ -830,6 +939,8 @@ void Scene::render()
 	for (Sprite* heal : heals) { heal->render(); }
 	for (Sprite* shield : shields) { shield->render(); }
 	for (Sprite* weight : weights) { weight->render(); }
+	for (Sprite* spring : springs) { spring->render(); }
+	for (Sprite* dash : dashes) { dash->render(); }
 	for (Sprite* door : doors) { door->render(); }
 	for (Sprite* portal : portals) { portal->render(); }
 

@@ -34,6 +34,10 @@
 #define KNOCKBACK_FRAMES 8
 #define KNOCKBACK_SPEED  5
 
+static const float ENEMY_GRAVITY = 1400.0f;
+static const float ENEMY_JUMP_VELOCITY = std::sqrt(2.0f * ENEMY_GRAVITY * float(ENEMY_JUMP_HEIGHT));
+static const float ENEMY_SPRING_JUMP_VELOCITY = ENEMY_JUMP_VELOCITY * std::sqrt(3.0f);
+
 // Shot animation constants (Enemy1_Shot.png: 768x232, 96x116 per frame, 13 total: 8 row0 + 5 row1)
 #define SHOT_FRAME_WIDTH    96
 #define SHOT_FRAME_HEIGHT   116
@@ -132,9 +136,13 @@ void Enemy::init(const glm::ivec2 &tileMapPos, ShaderProgram &shaderProgram)
 	pathRecalcTimer = 0;
 	pathIndex = 0;
 	shotCooldown = 0;
+	springCooldown = 0;
+	dashCooldown = 0;
 	hitTimer = 0;
 	knockbackFrames = 0;
 	knockbackDir = 0;
+	posEnemyF = glm::vec2(0.0f, 0.0f);
+	verticalVelocity = 0.0f;
 
 	// --- Run/Jump sprite (existing) ---
 	spritesheet.loadFromFile("../images/Enemy1_Run_Jump_Hurt_Death.png", TEXTURE_PIXEL_FORMAT_RGBA);
@@ -383,6 +391,7 @@ void Enemy::computePath(const glm::vec2 &playerPos)
 void Enemy::update(int deltaTime, const glm::vec2 &playerPos)
 {
 	if (!alive && !bDying) return;
+	float dt = float(deltaTime) / 1000.0f;
 
 	float renderOffsetX = 0.5f * float(ENEMY_FRAME_WIDTH - ENEMY_HITBOX_WIDTH);
 	float renderOffsetY = float(ENEMY_FRAME_HEIGHT - ENEMY_HITBOX_HEIGHT);
@@ -391,8 +400,16 @@ void Enemy::update(int deltaTime, const glm::vec2 &playerPos)
 	if (bDying)
 	{
 		sprite->update(deltaTime);
-		posEnemy.y += ENEMY_FALL_STEP;
-		onGround = map->checkCollision(posEnemy, glm::ivec2(ENEMY_HITBOX_WIDTH, ENEMY_HITBOX_HEIGHT), CollisionDir::DOWN, &posEnemy.y);
+		verticalVelocity += ENEMY_GRAVITY * dt;
+		posEnemyF.y += verticalVelocity * dt;
+		glm::ivec2 fallPos(int(posEnemyF.x), int(posEnemyF.y));
+		onGround = map->checkCollision(fallPos, glm::ivec2(ENEMY_HITBOX_WIDTH, ENEMY_HITBOX_HEIGHT), CollisionDir::DOWN, &fallPos.y);
+		if (onGround) {
+			posEnemyF.y = float(fallPos.y);
+			verticalVelocity = 0.0f;
+			bJumping = false;
+		}
+		posEnemy = fallPos;
 		sprite->setPosition(glm::vec2(float(tileMapDispl.x + posEnemy.x) - renderOffsetX, float(tileMapDispl.y + posEnemy.y) - renderOffsetY));
 		if (sprite->animationFinished())
 			bDying = false;
@@ -400,19 +417,63 @@ void Enemy::update(int deltaTime, const glm::vec2 &playerPos)
 	}
 
 	if (hitTimer > 0) hitTimer--;
+	if (springCooldown > 0) springCooldown--;
+	if (dashCooldown > 0) dashCooldown--;
+
+	{
+		glm::ivec2 groundedProbe(int(posEnemyF.x), int(posEnemyF.y + 1.0f));
+		int groundedY = 0;
+		onGround = map->checkCollision(groundedProbe, glm::ivec2(ENEMY_HITBOX_WIDTH, ENEMY_HITBOX_HEIGHT), CollisionDir::DOWN, &groundedY);
+		if (onGround && verticalVelocity >= 0.0f) {
+			posEnemyF.y = float(groundedY);
+			verticalVelocity = 0.0f;
+			bJumping = false;
+			posEnemy.y = groundedY;
+		}
+	}
+
+	{
+		glm::ivec2 triggerPos(int(posEnemyF.x), int(posEnemyF.y));
+		if (springCooldown == 0 && map->isOnSpring(triggerPos, glm::ivec2(ENEMY_HITBOX_WIDTH, ENEMY_HITBOX_HEIGHT))) {
+			verticalVelocity = -ENEMY_SPRING_JUMP_VELOCITY;
+			onGround = false;
+			bJumping = true;
+			springCooldown = 120;
+		}
+		bool dashLeft = false;
+		if (dashCooldown == 0 && map->isOnDash(triggerPos, glm::ivec2(ENEMY_HITBOX_WIDTH, ENEMY_HITBOX_HEIGHT), &dashLeft)) {
+			int dir = dashLeft ? -1 : 1;
+			posEnemyF.x += float(dir * 90);
+			glm::ivec2 dashPos(int(posEnemyF.x), int(posEnemyF.y));
+			map->checkCollision(dashPos, glm::ivec2(ENEMY_HITBOX_WIDTH, ENEMY_HITBOX_HEIGHT), dir < 0 ? CollisionDir::LEFT : CollisionDir::RIGHT, &dashPos.x);
+			posEnemyF.x = float(dashPos.x);
+			posEnemy = dashPos;
+			dashCooldown = 120;
+		}
+	}
 
 	// Knockback — move enemy back while hurt animation plays
 	if (knockbackFrames > 0)
 	{
 		knockbackFrames--;
 		sprite->update(deltaTime);
-		posEnemy.x += knockbackDir * KNOCKBACK_SPEED;
+		posEnemyF.x += knockbackDir * KNOCKBACK_SPEED;
+		glm::ivec2 kbPos(int(posEnemyF.x), int(posEnemyF.y));
 		if (knockbackDir < 0)
-			map->checkCollision(posEnemy, glm::ivec2(ENEMY_HITBOX_WIDTH, ENEMY_HITBOX_HEIGHT), CollisionDir::LEFT, &posEnemy.x);
+			map->checkCollision(kbPos, glm::ivec2(ENEMY_HITBOX_WIDTH, ENEMY_HITBOX_HEIGHT), CollisionDir::LEFT, &kbPos.x);
 		else
-			map->checkCollision(posEnemy, glm::ivec2(ENEMY_HITBOX_WIDTH, ENEMY_HITBOX_HEIGHT), CollisionDir::RIGHT, &posEnemy.x);
-		posEnemy.y += ENEMY_FALL_STEP;
-		onGround = map->checkCollision(posEnemy, glm::ivec2(ENEMY_HITBOX_WIDTH, ENEMY_HITBOX_HEIGHT), CollisionDir::DOWN, &posEnemy.y);
+			map->checkCollision(kbPos, glm::ivec2(ENEMY_HITBOX_WIDTH, ENEMY_HITBOX_HEIGHT), CollisionDir::RIGHT, &kbPos.x);
+		posEnemyF.x = float(kbPos.x);
+		verticalVelocity += ENEMY_GRAVITY * dt;
+		posEnemyF.y += verticalVelocity * dt;
+		kbPos = glm::ivec2(int(posEnemyF.x), int(posEnemyF.y));
+		onGround = map->checkCollision(kbPos, glm::ivec2(ENEMY_HITBOX_WIDTH, ENEMY_HITBOX_HEIGHT), CollisionDir::DOWN, &kbPos.y);
+		if (onGround) {
+			posEnemyF.y = float(kbPos.y);
+			verticalVelocity = 0.0f;
+			bJumping = false;
+		}
+		posEnemy = kbPos;
 		sprite->setPosition(glm::vec2(float(tileMapDispl.x + posEnemy.x) - renderOffsetX, float(tileMapDispl.y + posEnemy.y) - renderOffsetY));
 		return;
 	}
@@ -421,8 +482,16 @@ void Enemy::update(int deltaTime, const glm::vec2 &playerPos)
 	if (sprite->animation() == HURT)
 	{
 		sprite->update(deltaTime);
-		posEnemy.y += ENEMY_FALL_STEP;
-		onGround = map->checkCollision(posEnemy, glm::ivec2(ENEMY_HITBOX_WIDTH, ENEMY_HITBOX_HEIGHT), CollisionDir::DOWN, &posEnemy.y);
+		verticalVelocity += ENEMY_GRAVITY * dt;
+		posEnemyF.y += verticalVelocity * dt;
+		glm::ivec2 fallPos(int(posEnemyF.x), int(posEnemyF.y));
+		onGround = map->checkCollision(fallPos, glm::ivec2(ENEMY_HITBOX_WIDTH, ENEMY_HITBOX_HEIGHT), CollisionDir::DOWN, &fallPos.y);
+		if (onGround) {
+			posEnemyF.y = float(fallPos.y);
+			verticalVelocity = 0.0f;
+			bJumping = false;
+		}
+		posEnemy = fallPos;
 		sprite->setPosition(glm::vec2(float(tileMapDispl.x + posEnemy.x) - renderOffsetX, float(tileMapDispl.y + posEnemy.y) - renderOffsetY));
 		if (sprite->animationFinished())
 			sprite->changeAnimation(RUN);
@@ -480,26 +549,18 @@ void Enemy::update(int deltaTime, const glm::vec2 &playerPos)
 		}
 
 		// While shooting: still apply gravity but no horizontal movement
-		if (bJumping)
-		{
-			jumpAngle += ENEMY_JUMP_ANGLE_STEP;
-			if (jumpAngle >= 180)
-			{
-				bJumping = false;
-				posEnemy.y = startY;
-			}
-			else
-			{
-				posEnemy.y = int(startY - ENEMY_JUMP_HEIGHT * sin(3.14159f * jumpAngle / 180.f));
-				if (jumpAngle > 90)
-					bJumping = !map->checkCollision(posEnemy, glm::ivec2(ENEMY_HITBOX_WIDTH, ENEMY_HITBOX_HEIGHT), CollisionDir::DOWN, &posEnemy.y);
-			}
+		verticalVelocity += ENEMY_GRAVITY * dt;
+		posEnemyF.y += verticalVelocity * dt;
+		glm::ivec2 fallPos(int(posEnemyF.x), int(posEnemyF.y));
+		onGround = map->checkCollision(fallPos, glm::ivec2(ENEMY_HITBOX_WIDTH, ENEMY_HITBOX_HEIGHT), CollisionDir::DOWN, &fallPos.y);
+		if (onGround) {
+			posEnemyF.y = float(fallPos.y);
+			verticalVelocity = 0.0f;
+			bJumping = false;
+		} else {
+			bJumping = true;
 		}
-		else
-		{
-			posEnemy.y += ENEMY_FALL_STEP;
-			onGround = map->checkCollision(posEnemy, glm::ivec2(ENEMY_HITBOX_WIDTH, ENEMY_HITBOX_HEIGHT), CollisionDir::DOWN, &posEnemy.y);
-		}
+		posEnemy = fallPos;
 
 		// Position shot sprite (feet aligned with hitbox bottom, centered on hitbox)
 		float shotRenderOffsetX = 0.5f * float(ENEMY_FRAME_WIDTH - ENEMY_HITBOX_WIDTH);
@@ -576,67 +637,83 @@ void Enemy::update(int deltaTime, const glm::vec2 &playerPos)
 	{
 		facingLeft = true;
 		sprite->setFlipHorizontal(true);
-		posEnemy.x -= ENEMY_SPEED;
-		if (map->checkCollision(posEnemy, glm::ivec2(ENEMY_HITBOX_WIDTH, ENEMY_HITBOX_HEIGHT), CollisionDir::LEFT, &posEnemy.x))
+		posEnemyF.x -= ENEMY_SPEED;
+		glm::ivec2 movePos(int(posEnemyF.x), int(posEnemyF.y));
+		if (map->checkCollision(movePos, glm::ivec2(ENEMY_HITBOX_WIDTH, ENEMY_HITBOX_HEIGHT), CollisionDir::LEFT, &movePos.x))
 			blocked = true;
+		posEnemyF.x = float(movePos.x);
+		posEnemy = movePos;
 	}
 	else if (wantRight)
 	{
 		facingLeft = false;
 		sprite->setFlipHorizontal(false);
-		posEnemy.x += ENEMY_SPEED;
-		if (map->checkCollision(posEnemy, glm::ivec2(ENEMY_HITBOX_WIDTH, ENEMY_HITBOX_HEIGHT), CollisionDir::RIGHT, &posEnemy.x))
+		posEnemyF.x += ENEMY_SPEED;
+		glm::ivec2 movePos(int(posEnemyF.x), int(posEnemyF.y));
+		if (map->checkCollision(movePos, glm::ivec2(ENEMY_HITBOX_WIDTH, ENEMY_HITBOX_HEIGHT), CollisionDir::RIGHT, &movePos.x))
 			blocked = true;
+		posEnemyF.x = float(movePos.x);
+		posEnemy = movePos;
 	}
 
 	// --- Jump trigger ---
 	if ((wantJump || blocked) && !bJumping && onGround)
 	{
 		bJumping = true;
-		jumpAngle = 0;
-		startY = posEnemy.y;
+		onGround = false;
+		verticalVelocity = -ENEMY_JUMP_VELOCITY;
+	}
+
+	{
+		glm::ivec2 groundProbe(int(posEnemyF.x), int(posEnemyF.y + 1.0f));
+		int groundedY = 0;
+		if (map->checkCollision(groundProbe, glm::ivec2(ENEMY_HITBOX_WIDTH, ENEMY_HITBOX_HEIGHT), CollisionDir::DOWN, &groundedY) && verticalVelocity >= 0.0f)
+		{
+			onGround = true;
+			posEnemyF.y = float(groundedY);
+			verticalVelocity = 0.0f;
+			bJumping = false;
+			posEnemy.y = groundedY;
+		}
 	}
 
 	// --- Animation ---
-	if (!bJumping)
+	if (onGround)
 	{
 		if (sprite->animation() != RUN)
 			sprite->changeAnimation(RUN);
 	}
 	else
 	{
-		if (jumpAngle < 90 && sprite->animation() != JUMP_UP)
+		if (verticalVelocity < 0.0f && sprite->animation() != JUMP_UP)
 			sprite->changeAnimation(JUMP_UP);
-		else if (jumpAngle >= 90 && sprite->animation() != JUMP_FALL)
+		else if (verticalVelocity >= 0.0f && sprite->animation() != JUMP_FALL)
 			sprite->changeAnimation(JUMP_FALL);
 	}
 
 	// --- Jump / gravity physics ---
-	if (bJumping)
+	verticalVelocity += ENEMY_GRAVITY * dt;
+	posEnemyF.y += verticalVelocity * dt;
+	glm::ivec2 fallPos(int(posEnemyF.x), int(posEnemyF.y));
+	if (verticalVelocity > 0.0f)
 	{
-		jumpAngle += ENEMY_JUMP_ANGLE_STEP;
-		if (jumpAngle >= 180)
-		{
+		onGround = map->checkCollision(fallPos, glm::ivec2(ENEMY_HITBOX_WIDTH, ENEMY_HITBOX_HEIGHT), CollisionDir::DOWN, &fallPos.y);
+		if (onGround) {
+			posEnemyF.y = float(fallPos.y);
+			verticalVelocity = 0.0f;
 			bJumping = false;
-			posEnemy.y = startY;
-		}
-		else
-		{
-			posEnemy.y = int(startY - ENEMY_JUMP_HEIGHT * sin(3.14159f * jumpAngle / 180.f));
-			if (jumpAngle < 90 && map->checkCollision(posEnemy, glm::ivec2(ENEMY_HITBOX_WIDTH, ENEMY_HITBOX_HEIGHT), CollisionDir::UP, &posEnemy.y))
-			{
-				jumpAngle = 90;
-				startY = posEnemy.y + ENEMY_JUMP_HEIGHT;
-			}
-			if (jumpAngle > 90)
-				bJumping = !map->checkCollision(posEnemy, glm::ivec2(ENEMY_HITBOX_WIDTH, ENEMY_HITBOX_HEIGHT), CollisionDir::DOWN, &posEnemy.y);
 		}
 	}
-	else
+	else if (verticalVelocity < 0.0f)
 	{
-		posEnemy.y += ENEMY_FALL_STEP;
-		onGround = map->checkCollision(posEnemy, glm::ivec2(ENEMY_HITBOX_WIDTH, ENEMY_HITBOX_HEIGHT), CollisionDir::DOWN, &posEnemy.y);
+		if (map->checkCollision(fallPos, glm::ivec2(ENEMY_HITBOX_WIDTH, ENEMY_HITBOX_HEIGHT), CollisionDir::UP, &fallPos.y))
+		{
+			posEnemyF.y = float(fallPos.y);
+			verticalVelocity = 0.0f;
+		}
+		bJumping = true;
 	}
+	posEnemy = fallPos;
 
 	// --- Sprite position ---
 	sprite->setPosition(glm::vec2(float(tileMapDispl.x + posEnemy.x) - renderOffsetX, float(tileMapDispl.y + posEnemy.y) - renderOffsetY));
@@ -678,10 +755,18 @@ void Enemy::setTileMap(TileMap *tileMap)
 
 void Enemy::setPosition(const glm::vec2 &pos)
 {
-	posEnemy = pos;
+	posEnemyF = pos;
+	posEnemy = glm::ivec2(int(posEnemyF.x), int(posEnemyF.y));
 	float renderOffsetX = 0.5f * float(ENEMY_FRAME_WIDTH - ENEMY_HITBOX_WIDTH);
 	float renderOffsetY = float(ENEMY_FRAME_HEIGHT - ENEMY_HITBOX_HEIGHT);
 	sprite->setPosition(glm::vec2(float(tileMapDispl.x + posEnemy.x) - renderOffsetX, float(tileMapDispl.y + posEnemy.y) - renderOffsetY));
+}
+
+void Enemy::setActive(bool value)
+{
+	alive = value;
+	if (!value)
+		bDying = false;
 }
 
 void Enemy::takeDamage(int knockDir)
