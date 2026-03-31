@@ -439,6 +439,10 @@ void Game::transitionToState(GameState newState)
 
 bool Game::update(int deltaTime)
 {
+	// Clamp frame spikes (e.g., app resumed from background) to avoid physics tunneling.
+	if (deltaTime < 0) deltaTime = 0;
+	if (deltaTime > 50) deltaTime = 50;
+
 	if (currentState == GameState::PLAY) {
 		scene.update(deltaTime);
 		

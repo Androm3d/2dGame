@@ -5,6 +5,7 @@
 #include <vector>
 #include "Sprite.h"
 #include "TileMap.h"
+#include "BaseEnemy.h"
 
 
 struct Arrow
@@ -15,7 +16,7 @@ struct Arrow
 };
 
 
-class Enemy
+class Enemy : public BaseEnemy
 {
 public:
 	Enemy();
@@ -26,55 +27,28 @@ public:
 	void update(int deltaTime, const glm::vec2 &playerPos);
 	void render();
 
-	void setTileMap(TileMap *tileMap);
 	void setPosition(const glm::vec2 &pos);
-	glm::ivec2 getPosition() const { return posEnemy; }
 
 	void takeDamage(int knockDir);
 	bool checkArrowHit(const glm::vec2 &pPos, const glm::ivec2 &pSize);
 	bool reflectArrowHit(const glm::vec2 &pPos, const glm::ivec2 &pSize, bool playerFacingLeft);
 	bool checkReflectedArrowHit(const glm::vec4 &hitbox, int &outKnockDir);
 	void destroyArrowsInHitbox(const glm::vec4 &attackHitbox);
-	void setActive(bool value);
-	bool isAlive() const { return alive; }
-	bool isDying() const { return bDying; }
-	bool isInvincible() const { return hitTimer > 0; }
 	glm::vec4 getHitbox() const;
 
 private:
-	void computePath(const glm::vec2 &playerPos);
+	void computePath(const glm::vec2 &playerPos) override;
 
-	bool facingLeft;
-	bool bJumping;
-	bool onGround;
 	bool bShooting;
-	bool alive;
-	bool bDying;
-	int health;
-	int jumpAngle, startY;
-	int pathRecalcTimer;
 	int shotCooldown;
-	int springCooldown;
-	int dashCooldown;
-	int hitTimer;       // invincibility + blink countdown
-	int knockbackFrames;
-	int knockbackDir;
-	int dashTimeLeftMs;
-	glm::ivec2 tileMapDispl, posEnemy;
-	glm::vec2 posEnemyF;
-	float verticalVelocity;
-	float dashVelocity;
-	float dashVelocityStart;
 	Texture spritesheet;
+	Texture stairsSpritesheet;
 	Texture shotSpritesheet;
 	Texture arrowTexture;
 	Sprite *sprite;
+	Sprite *stairsSprite;
 	Sprite *shotSprite;
 	Sprite *arrowSprite;
-	TileMap *map;
-
-	std::vector<glm::ivec2> path;  // BFS result: sequence of tile coords
-	int pathIndex;                  // current waypoint in path
 
 	std::vector<Arrow> arrows;
 };

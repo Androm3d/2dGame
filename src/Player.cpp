@@ -54,7 +54,7 @@ void Player::init(const glm::ivec2 &tileMapPos, ShaderProgram &shaderProgram)
 	attackCooldown = 0;
 	dropThroughTimerMs = 0;
 	springTriggered = false;
-	jumpHeight = JUMP_HEIGHT;
+	jumpHeight = PLAYER_JUMP_HEIGHT;
 	dashVelocity = 0.0f;
 	dashVelocityStart = 0.0f;
 	dashTimeLeftMs = 0;

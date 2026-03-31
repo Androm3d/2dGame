@@ -60,6 +60,7 @@
 #define PLAYER_DASH_DURATION_MS    1000   // duracion del dash (ms)
 #define PLAYER_DASH_DISTANCE_BASE 60.0f   // distancia base del dash (px)
 #define PLAYER_SPRING_COOLDOWN_MS  120    // ms de cooldown tras rebotar en un muelle
+#define PLAYER_HARD_LANDING_SPEED 650.0f  // px/s minimo para activar polvo/impacto al aterrizar
 
 // Combate (en game frames, ~16 ms cada uno a 60 fps)
 #define PLAYER_PARRY_FRAMES          22   // ventana activa del parry
@@ -76,10 +77,11 @@
 #define ENEMY_TEX_FRAME_HEIGHT       48   // alto UV en la textura
 #define ENEMY_FRAME_WIDTH            77   // ancho del quad en pantalla (escalado a 64px alto)
 #define ENEMY_FRAME_HEIGHT           64   // alto del quad en pantalla
+#define ENEMY_STAIRS_RENDER_WIDTH    32   // version mas estrecha para animacion de escalera
 #define ENEMY_HITBOX_WIDTH           32   // hitbox centrada en el quad
 #define ENEMY_HITBOX_HEIGHT          32
 #define ENEMY_SPEED                   1   // px por tick horizontal
-#define ENEMY_JUMP_HEIGHT           112   // altura maxima de salto (px)
+#define ENEMY_JUMP_HEIGHT           PLAYER_JUMP_HEIGHT   // misma altura de salto que el player
 #define ENEMY_RUN_FRAMES              8
 #define ENEMY_JUMP_UP_FRAMES          4
 #define ENEMY_JUMP_FALL_FRAMES        4
@@ -121,10 +123,11 @@
 #define E2_FRAME_HEIGHT             112
 #define E2_RENDER_WIDTH              55   // quad en pantalla (escalado a 64px alto)
 #define E2_RENDER_HEIGHT             64
+#define E2_STAIRS_RENDER_WIDTH       34   // version mas estrecha para animacion de escalera
 #define E2_HITBOX_WIDTH              32
 #define E2_HITBOX_HEIGHT             32
 #define E2_SPEED                      1   // px por tick horizontal
-#define E2_JUMP_HEIGHT              112   // altura maxima de salto (px)
+#define E2_JUMP_HEIGHT              PLAYER_JUMP_HEIGHT   // misma altura de salto que el player
 #define E2_RUN_FRAMES                 8
 #define E2_JUMP_UP_FRAMES             4
 #define E2_JUMP_FALL_FRAMES           3
@@ -157,10 +160,11 @@
 #define E3_FRAME_HEIGHT              96
 #define E3_RENDER_WIDTH              64   // quad en pantalla (96 * 64/96 = 64)
 #define E3_RENDER_HEIGHT             64
+#define E3_STAIRS_RENDER_WIDTH       36   // version mas estrecha para animacion de escalera
 #define E3_HITBOX_WIDTH              32
 #define E3_HITBOX_HEIGHT             32
 #define E3_SPEED                      1   // px por tick horizontal
-#define E3_JUMP_HEIGHT              112   // altura maxima de salto (px)
+#define E3_JUMP_HEIGHT              PLAYER_JUMP_HEIGHT   // misma altura de salto que el player
 #define E3_RUN_FRAMES                 8
 #define E3_JUMP_UP_FRAMES             5
 #define E3_JUMP_FALL_FRAMES           5
