@@ -103,6 +103,13 @@ private:
 	bool attackHitEnemy3ThisSwing;
 	bool enemy2HitPlayerThisSwing;
 	bool enemy3HitPlayerThisSwing;
+
+	bool enemyActivated = false;
+	bool enemy2Activated = false;
+	bool enemy3Activated = false;
+	glm::vec2 enemySpawnPos;
+	glm::vec2 enemy2SpawnPos;
+	glm::vec2 enemy3SpawnPos;
 	Text hudText;
 	bool hudReady = false;
 

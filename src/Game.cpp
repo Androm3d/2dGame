@@ -28,6 +28,8 @@ void Game::configureRoomGraph()
 	addDoorLinkBidirectional("../levels/map_0_2.json", 0, "../levels/room_A.json", 0);
 	addDoorLinkBidirectional("../levels/map_0_2.json", 1, "../levels/room_B.json", 0);
 	addDoorLinkBidirectional("../levels/map_1_2.json", 0, "../levels/room_C.json", 0);
+	addDoorLinkBidirectional("../levels/map_2_1.json", 0, "../levels/room_D.json", 0);
+	addDoorLinkBidirectional("../levels/map_2_1.json", 1, "../levels/room_E.json", 0);
 }
 
 bool Game::getDoorLink(const std::string &fromMap, int doorIndex, DoorLink &outLink) const

@@ -7,6 +7,7 @@
 #include <iostream>
 #include "Scene.h"
 #include "Game.h"
+#include "GameConstants.h"
 
 
 #define SCREEN_X 0
@@ -188,28 +189,43 @@ void Scene::init()
 	}
 	enemy = new Enemy();
 	enemy->init(glm::ivec2(SCREEN_X, SCREEN_Y), texProgram);
-	if (!map->getEnemy1Spawns().empty())
-		enemy->setPosition(glm::vec2(map->getEnemy1Spawns()[0]));
-	else {
+	if (!map->getEnemy1Spawns().empty()) {
+		enemySpawnPos = glm::vec2(map->getEnemy1Spawns()[0]);
+		enemy->setPosition(enemySpawnPos);
+		enemy->setActive(false);   // empieza dormido
+		enemyActivated = false;
+	} else {
 		enemy->setActive(false);
+		enemyActivated = false;
+		enemySpawnPos = glm::vec2(-9999.f);
 		std::cerr << "Warning: No SPAWN_ENEMY_1 tile found. Enemy1 disabled." << std::endl;
 	}
 	enemy->setTileMap(map);
 	enemy2 = new Enemy2();
 	enemy2->init(glm::ivec2(SCREEN_X, SCREEN_Y), texProgram);
-	if (!map->getEnemy2Spawns().empty())
-		enemy2->setPosition(glm::vec2(map->getEnemy2Spawns()[0]));
-	else {
+	if (!map->getEnemy2Spawns().empty()) {
+		enemy2SpawnPos = glm::vec2(map->getEnemy2Spawns()[0]);
+		enemy2->setPosition(enemy2SpawnPos);
 		enemy2->setActive(false);
+		enemy2Activated = false;
+	} else {
+		enemy2->setActive(false);
+		enemy2Activated = false;
+		enemy2SpawnPos = glm::vec2(-9999.f);
 		std::cerr << "Warning: No SPAWN_ENEMY_2 tile found. Enemy2 disabled." << std::endl;
 	}
 	enemy2->setTileMap(map);
 	enemy3 = new Enemy3();
 	enemy3->init(glm::ivec2(SCREEN_X, SCREEN_Y), texProgram);
-	if (!map->getEnemy3Spawns().empty())
-		enemy3->setPosition(glm::vec2(map->getEnemy3Spawns()[0]));
-	else {
+	if (!map->getEnemy3Spawns().empty()) {
+		enemy3SpawnPos = glm::vec2(map->getEnemy3Spawns()[0]);
+		enemy3->setPosition(enemy3SpawnPos);
 		enemy3->setActive(false);
+		enemy3Activated = false;
+	} else {
+		enemy3->setActive(false);
+		enemy3Activated = false;
+		enemy3SpawnPos = glm::vec2(-9999.f);
 		std::cerr << "Warning: No SPAWN_ENEMY_3 tile found. Enemy3 disabled." << std::endl;
 	}
 	enemy3->setTileMap(map);
@@ -600,6 +616,36 @@ void Scene::update(int deltaTime)
 
 			Game::instance().reloadScene();
 			return;
+		}
+	}
+
+	// --- Activacion por proximidad: los enemigos no se activan hasta que el jugador este cerca ---
+	{
+		glm::vec2 pp = player->getPosition();
+		float activationRange = float(ENEMY_ACTIVATION_RANGE);
+		if (!enemyActivated) {
+			float dx = pp.x - enemySpawnPos.x;
+			float dy = pp.y - enemySpawnPos.y;
+			if (dx * dx + dy * dy < activationRange * activationRange) {
+				enemyActivated = true;
+				enemy->setActive(true);
+			}
+		}
+		if (!enemy2Activated) {
+			float dx = pp.x - enemy2SpawnPos.x;
+			float dy = pp.y - enemy2SpawnPos.y;
+			if (dx * dx + dy * dy < activationRange * activationRange) {
+				enemy2Activated = true;
+				enemy2->setActive(true);
+			}
+		}
+		if (!enemy3Activated) {
+			float dx = pp.x - enemy3SpawnPos.x;
+			float dy = pp.y - enemy3SpawnPos.y;
+			if (dx * dx + dy * dy < activationRange * activationRange) {
+				enemy3Activated = true;
+				enemy3->setActive(true);
+			}
 		}
 	}
 
