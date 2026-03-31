@@ -27,6 +27,7 @@ public:
 	void init();
 	void update(int deltaTime);
 	void render();
+	bool isPlayerAlive() const { return player != nullptr && player->isAlive(); }
 	void renderMenuScreen(int selection);
 	void renderInstructionsScreen();
 	void renderCreditsScreen();

@@ -7,8 +7,10 @@
 #include "Enemy.h"
 
 
-#define ENEMY_FRAME_WIDTH        64
-#define ENEMY_FRAME_HEIGHT       48
+#define ENEMY_FRAME_WIDTH        96   // render quad size
+#define ENEMY_FRAME_HEIGHT       80
+#define ENEMY_TEX_FRAME_WIDTH    64   // actual frame size in the spritesheet
+#define ENEMY_TEX_FRAME_HEIGHT   48
 #define ENEMY_HITBOX_WIDTH       32
 #define ENEMY_HITBOX_HEIGHT      32
 #define ENEMY_RUN_FRAMES          8
@@ -154,8 +156,8 @@ void Enemy::init(const glm::ivec2 &tileMapPos, ShaderProgram &shaderProgram)
 	float texW = float(spritesheet.width());
 	float texH = float(spritesheet.height());
 	glm::vec2 frameSizeInTexture(
-		float(ENEMY_FRAME_WIDTH) / texW,
-		float(ENEMY_FRAME_HEIGHT) / texH
+		float(ENEMY_TEX_FRAME_WIDTH) / texW,
+		float(ENEMY_TEX_FRAME_HEIGHT) / texH
 	);
 
 	sprite = Sprite::createSprite(glm::ivec2(ENEMY_FRAME_WIDTH, ENEMY_FRAME_HEIGHT), frameSizeInTexture, &spritesheet, &shaderProgram);
@@ -525,6 +527,7 @@ void Enemy::update(int deltaTime, const glm::vec2 &playerPos)
 			arrows.erase(arrows.begin() + i);
 			continue;
 		}
+
 	}
 
 	// --- Shooting logic ---
@@ -541,6 +544,7 @@ void Enemy::update(int deltaTime, const glm::vec2 &playerPos)
 			else
 				newArrow.pos = glm::vec2(posEnemy.x + ENEMY_HITBOX_WIDTH, arrowY);
 			newArrow.goingLeft = facingLeft;
+			newArrow.reflected = false;
 			arrows.push_back(newArrow);
 
 			bShooting = false;
@@ -810,6 +814,42 @@ bool Enemy::checkArrowHit(const glm::vec2 &pPos, const glm::ivec2 &pSize)
 	return false;
 }
 
+
+void Enemy::reflectArrowHit(const glm::vec2 &pPos, const glm::ivec2 &pSize, bool playerFacingLeft)
+{
+	for (int i = (int)arrows.size() - 1; i >= 0; --i)
+	{
+		if (arrows[i].reflected) continue;
+		// Only reflect if player is facing the arrow (arrow comes from the side player is facing)
+		if (arrows[i].goingLeft == playerFacingLeft) continue;
+		float hbX = arrows[i].pos.x + (ARROW_SIZE - ARROW_HITBOX_W) / 2.f;
+		float hbY = arrows[i].pos.y + (ARROW_SIZE - ARROW_HITBOX_H) / 2.f;
+		if (hbX < pPos.x + pSize.x && hbX + ARROW_HITBOX_W > pPos.x &&
+			hbY < pPos.y + pSize.y && hbY + ARROW_HITBOX_H > pPos.y)
+		{
+			arrows[i].goingLeft = !arrows[i].goingLeft;
+			arrows[i].reflected = true;
+		}
+	}
+}
+
+bool Enemy::checkReflectedArrowHit(const glm::vec4 &hitbox, int &outKnockDir)
+{
+	for (int i = (int)arrows.size() - 1; i >= 0; --i)
+	{
+		if (!arrows[i].reflected) continue;
+		float hbX = arrows[i].pos.x + (ARROW_SIZE - ARROW_HITBOX_W) / 2.f;
+		float hbY = arrows[i].pos.y + (ARROW_SIZE - ARROW_HITBOX_H) / 2.f;
+		if (hbX < hitbox.x + hitbox.z && hbX + ARROW_HITBOX_W > hitbox.x &&
+			hbY < hitbox.y + hitbox.w && hbY + ARROW_HITBOX_H > hitbox.y)
+		{
+			outKnockDir = arrows[i].goingLeft ? -1 : 1;
+			arrows.erase(arrows.begin() + i);
+			return true;
+		}
+	}
+	return false;
+}
 
 void Enemy::destroyArrowsInHitbox(const glm::vec4 &attackHitbox)
 {

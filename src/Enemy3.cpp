@@ -18,8 +18,8 @@
 
 #define E3_FRAME_WIDTH     96
 #define E3_FRAME_HEIGHT    96
-#define E3_RENDER_WIDTH    64
-#define E3_RENDER_HEIGHT   64
+#define E3_RENDER_WIDTH    96
+#define E3_RENDER_HEIGHT   96
 #define E3_HITBOX_WIDTH    32
 #define E3_HITBOX_HEIGHT   32
 #define E3_SPEED            1
@@ -342,6 +342,7 @@ void Enemy3::update(int deltaTime, const glm::vec2 &playerPos)
 		int checkX = (int)fb.pos.x + (fb.goingLeft ? 0 : FIRE_RENDER_WIDTH);
 		int checkY = (int)fb.pos.y + FIRE_RENDER_HEIGHT / 2;
 		if (e3IsSolid(checkX / ts, checkY / ts, map)) { fireballs.erase(fireballs.begin() + i); continue; }
+
 	}
 
 	// --- Death animation ---
@@ -465,6 +466,7 @@ void Enemy3::update(int deltaTime, const glm::vec2 &playerPos)
 			fireSprite->changeAnimation(0);  // reset to frame 0 for each new fireball
 			FireBall fb;
 			fb.goingLeft = facingLeft;
+			fb.reflected = false;
 			float fbY     = posEnemy.y + E3_HITBOX_HEIGHT / 2.f - FIRE_RENDER_HEIGHT / 2.f - 12.f;
 			fb.pos        = facingLeft
 				? glm::vec2(posEnemy.x - FIRE_RENDER_WIDTH, fbY)
@@ -715,6 +717,40 @@ bool Enemy3::checkFireballHit(const glm::vec2 &pPos, const glm::ivec2 &pSize)
 			fb.pos.y < pPos.y + pSize.y &&
 			fb.pos.y + FIRE_RENDER_HEIGHT > pPos.y)
 		{
+			fireballs.erase(fireballs.begin() + i);
+			return true;
+		}
+	}
+	return false;
+}
+
+void Enemy3::reflectFireballHit(const glm::vec2 &pPos, const glm::ivec2 &pSize, bool playerFacingLeft)
+{
+	for (int i = (int)fireballs.size() - 1; i >= 0; --i)
+	{
+		if (fireballs[i].reflected) continue;
+		FireBall &fb = fireballs[i];
+		// Only reflect if player is facing the fireball
+		if (fb.goingLeft == playerFacingLeft) continue;
+		if (fb.pos.x < pPos.x + pSize.x && fb.pos.x + FIRE_RENDER_WIDTH  > pPos.x &&
+			fb.pos.y < pPos.y + pSize.y && fb.pos.y + FIRE_RENDER_HEIGHT > pPos.y)
+		{
+			fb.goingLeft = !fb.goingLeft;
+			fb.reflected = true;
+		}
+	}
+}
+
+bool Enemy3::checkReflectedFireballHit(const glm::vec4 &hitbox, int &outKnockDir)
+{
+	for (int i = (int)fireballs.size() - 1; i >= 0; --i)
+	{
+		if (!fireballs[i].reflected) continue;
+		const FireBall &fb = fireballs[i];
+		if (fb.pos.x < hitbox.x + hitbox.z && fb.pos.x + FIRE_RENDER_WIDTH  > hitbox.x &&
+			fb.pos.y < hitbox.y + hitbox.w && fb.pos.y + FIRE_RENDER_HEIGHT > hitbox.y)
+		{
+			outKnockDir = fb.goingLeft ? -1 : 1;
 			fireballs.erase(fireballs.begin() + i);
 			return true;
 		}

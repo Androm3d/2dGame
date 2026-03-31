@@ -19,30 +19,39 @@ static const float PLAYER_CLIMB_SPEED = 120.0f;
 static const int PLAYER_DROP_THROUGH_MS = 180;
 static const float PLAYER_DROP_THROUGH_NUDGE = 4.0f;
 #define FALL_STEP 4
-#define PLAYER_FRAME_WIDTH 32
-#define PLAYER_FRAME_HEIGHT 64
-#define PLAYER_VISUAL_SCALE_X 1.2f
-#define PLAYER_RUN_ANIM_FRAMES 8
-#define PLAYER_JUMP_UP_ANIM_FRAMES 4
-#define PLAYER_JUMP_FALL_ANIM_FRAMES 4
-#define PLAYER_JUMP_FALL_START_FRAME 4
-#define PLAYER_IDLE_ANIM_FRAMES 6
-#define PLAYER_ATTACK_ANIM_FRAMES 5
-#define PLAYER_ATTACK_FRAME_WIDTH 64
-#define PLAYER_ATTACK_FRAME_HEIGHT 92
-#define PLAYER_ATTACK_VISUAL_SCALE_X 1.2f
-#define PLAYER_CLIMB_ANIM_FRAMES 2
 
-#define ROW_RUN_TOP_PX 0
-#define ROW_JUMP_TOP_PX 64
-#define ROW_IDLE_TOP_PX 128
-#define ROW_ATTACK_TOP_PX 192
-#define ROW_CLIMB_TOP_PX 284
+// Main spritesheet (Samurai.png, 512x512, frame 56x80)
+#define PLAYER_FRAME_WIDTH    56
+#define PLAYER_FRAME_HEIGHT   80
+
+// Attack spritesheet (Samurai_Attack.png, 512x128, frame 88x106)
+#define PLAYER_ATTACK_FRAME_WIDTH  88
+#define PLAYER_ATTACK_FRAME_HEIGHT 106
+
+// Animation frame counts
+#define PLAYER_IDLE_FRAMES       6
+#define PLAYER_RUN_FRAMES        8
+#define PLAYER_JUMP_UP_FRAMES    5
+#define PLAYER_JUMP_FALL_FRAMES  4
+#define PLAYER_HURT_FRAMES       3
+#define PLAYER_DEAD_FRAMES       6
+#define PLAYER_PROTECT_FRAMES    2
+#define PLAYER_ATTACK_FRAMES     5
+#define PARRY_FRAMES    22
+#define PARRY_COOLDOWN  55
+
+// Row Y positions in Samurai.png
+#define ROW_IDLE_PX     0
+#define ROW_RUN_PX      80
+#define ROW_JUMP_PX     160
+#define ROW_HURT_PX     240
+#define ROW_DEAD_PX     320
+#define ROW_PROTECT_PX  400
 
 
 enum PlayerAnims
 {
-	STAND_LEFT, STAND_RIGHT, MOVE_LEFT, MOVE_RIGHT, JUMP_UP, JUMP_FALL, ATTACK, CLIMB_STAIRS
+	STAND_LEFT, STAND_RIGHT, MOVE_LEFT, MOVE_RIGHT, JUMP_UP, JUMP_FALL, CLIMB_STAIRS, HURT, DEAD, PROTECT
 };
 
 
@@ -50,6 +59,7 @@ Player::Player()
 {
 	sprite = NULL;
 	attackSprite = NULL;
+	stairSprite = NULL;
 	map = NULL;
 }
 
@@ -59,6 +69,8 @@ Player::~Player()
 		delete sprite;
 	if (attackSprite != NULL)
 		delete attackSprite;
+	if (stairSprite != NULL)
+		delete stairSprite;
 }
 
 void Player::init(const glm::ivec2 &tileMapPos, ShaderProgram &shaderProgram)
@@ -66,6 +78,12 @@ void Player::init(const glm::ivec2 &tileMapPos, ShaderProgram &shaderProgram)
 	bJumping = false;
 	bClimbing = false;
 	bAttacking = false;
+	bProtecting = false;
+	bDying = false;
+	bHurt = false;
+	prevShift = false;
+	parryTimer = 0;
+	parryCooldown = 0;
 	facingLeft = false;
 	alive = true;
 	hitTimer = 0;
@@ -79,110 +97,195 @@ void Player::init(const glm::ivec2 &tileMapPos, ShaderProgram &shaderProgram)
 	dashTimeLeftMs = 0;
 	posPlayerF = glm::vec2(0.0f, 0.0f);
 	verticalVelocity = 0.0f;
-	spritesheet.loadFromFile("../images/Samurai_Animation.png", TEXTURE_PIXEL_FORMAT_RGBA);
+
+	// --- Main spritesheet ---
+	spritesheet.loadFromFile("../images/Samurai.png", TEXTURE_PIXEL_FORMAT_RGBA);
 	spritesheet.setWrapS(GL_CLAMP_TO_EDGE);
 	spritesheet.setWrapT(GL_CLAMP_TO_EDGE);
 	spritesheet.setMinFilter(GL_NEAREST);
 	spritesheet.setMagFilter(GL_NEAREST);
-	glm::vec2 frameSizeInTexture(
-		float(PLAYER_FRAME_WIDTH) / float(spritesheet.width()),
-		float(PLAYER_FRAME_HEIGHT) / float(spritesheet.height())
-	);
-	float visualFrameWidth = float(PLAYER_FRAME_WIDTH) * PLAYER_VISUAL_SCALE_X;
-	sprite = Sprite::createSprite(glm::vec2(visualFrameWidth, float(PLAYER_FRAME_HEIGHT)), frameSizeInTexture, &spritesheet, &shaderProgram);
-	sprite->setNumberAnimations(8);
 
-	sprite->setAnimationSpeed(STAND_LEFT, 8);
-	sprite->setAnimationSpeed(STAND_RIGHT, 8);
-	sprite->setAnimationSpeed(MOVE_LEFT, 12);
-	sprite->setAnimationSpeed(MOVE_RIGHT, 12);
-	sprite->setAnimationSpeed(JUMP_UP, 12);
-	sprite->setAnimationSpeed(JUMP_FALL, 10);
-	sprite->setAnimationSpeed(CLIMB_STAIRS, 8);
-	sprite->setAnimationLoop(STAND_LEFT, true);
-	sprite->setAnimationLoop(STAND_RIGHT, true);
-	sprite->setAnimationLoop(MOVE_LEFT, true);
-	sprite->setAnimationLoop(MOVE_RIGHT, true);
-	sprite->setAnimationLoop(JUMP_UP, false);
-	sprite->setAnimationLoop(JUMP_FALL, false);
-	sprite->setAnimationLoop(CLIMB_STAIRS, true);
-
-	for(int frame = 0; frame < PLAYER_RUN_ANIM_FRAMES; ++frame)
-	{
-		float u = frame * frameSizeInTexture.x;
-		float v = float(ROW_RUN_TOP_PX) / float(spritesheet.height());
-		sprite->addKeyframe(MOVE_LEFT, glm::vec2(u, v));
-		sprite->addKeyframe(MOVE_RIGHT, glm::vec2(u, v));
-	}
-	for(int frame = 0; frame < PLAYER_JUMP_UP_ANIM_FRAMES; ++frame)
-	{
-		float u = frame * frameSizeInTexture.x;
-		float v = float(ROW_JUMP_TOP_PX) / float(spritesheet.height());
-		sprite->addKeyframe(JUMP_UP, glm::vec2(u, v));
-	}
-	for(int frame = 0; frame < PLAYER_JUMP_FALL_ANIM_FRAMES; ++frame)
-	{
-		float u = (frame + PLAYER_JUMP_FALL_START_FRAME) * frameSizeInTexture.x;
-		float v = float(ROW_JUMP_TOP_PX) / float(spritesheet.height());
-		sprite->addKeyframe(JUMP_FALL, glm::vec2(u, v));
-	}
-	for(int frame = 0; frame < PLAYER_IDLE_ANIM_FRAMES; ++frame)
-	{
-		float u = frame * frameSizeInTexture.x;
-		float v = float(ROW_IDLE_TOP_PX) / float(spritesheet.height());
-		glm::vec2 idleFrame(u, v);
-		sprite->addKeyframe(STAND_LEFT, idleFrame);
-		sprite->addKeyframe(STAND_RIGHT, idleFrame);
-	}
-
-	// Climb stairs animation (2 frames)
 	float texW = float(spritesheet.width());
 	float texH = float(spritesheet.height());
-	float climbV = float(ROW_CLIMB_TOP_PX) / texH;
-	for(int frame = 0; frame < PLAYER_CLIMB_ANIM_FRAMES; ++frame)
+	glm::vec2 frameSize(float(PLAYER_FRAME_WIDTH) / texW, float(PLAYER_FRAME_HEIGHT) / texH);
+
+	sprite = Sprite::createSprite(glm::ivec2(PLAYER_FRAME_WIDTH, PLAYER_FRAME_HEIGHT), frameSize, &spritesheet, &shaderProgram);
+	sprite->setNumberAnimations(10);
+
+	// Speeds
+	sprite->setAnimationSpeed(STAND_LEFT,    8);
+	sprite->setAnimationSpeed(STAND_RIGHT,   8);
+	sprite->setAnimationSpeed(MOVE_LEFT,    12);
+	sprite->setAnimationSpeed(MOVE_RIGHT,   12);
+	sprite->setAnimationSpeed(JUMP_UP,      12);
+	sprite->setAnimationSpeed(JUMP_FALL,    10);
+	sprite->setAnimationSpeed(CLIMB_STAIRS,  8);
+	sprite->setAnimationSpeed(HURT,         10);
+	sprite->setAnimationSpeed(DEAD,          8);
+	sprite->setAnimationSpeed(PROTECT,       8);
+
+	// Loops
+	sprite->setAnimationLoop(STAND_LEFT,   true);
+	sprite->setAnimationLoop(STAND_RIGHT,  true);
+	sprite->setAnimationLoop(MOVE_LEFT,    true);
+	sprite->setAnimationLoop(MOVE_RIGHT,   true);
+	sprite->setAnimationLoop(JUMP_UP,      false);
+	sprite->setAnimationLoop(JUMP_FALL,    false);
+	sprite->setAnimationLoop(CLIMB_STAIRS, true);
+	sprite->setAnimationLoop(HURT,         false);
+	sprite->setAnimationLoop(DEAD,         false);
+	sprite->setAnimationLoop(PROTECT,      false);
+
+	// Idle (row 0) — used for STAND_LEFT and STAND_RIGHT
+	for (int f = 0; f < PLAYER_IDLE_FRAMES; ++f)
 	{
-		float climbU = frame * frameSizeInTexture.x;
-		sprite->addKeyframe(CLIMB_STAIRS, glm::vec2(climbU, climbV));
+		float u = f * frameSize.x;
+		float v = float(ROW_IDLE_PX) / texH;
+		sprite->addKeyframe(STAND_LEFT,  glm::vec2(u, v));
+		sprite->addKeyframe(STAND_RIGHT, glm::vec2(u, v));
 	}
 
-	// Attack sprite (separate, larger frame: 96x104 to fit sword + slash)
-	glm::vec2 attackFrameSize(
-		float(PLAYER_ATTACK_FRAME_WIDTH) / texW,
-		float(PLAYER_ATTACK_FRAME_HEIGHT) / texH
-	);
-	float visualAttackFrameWidth = float(PLAYER_ATTACK_FRAME_WIDTH) * PLAYER_ATTACK_VISUAL_SCALE_X;
-	attackSprite = Sprite::createSprite(glm::vec2(visualAttackFrameWidth, float(PLAYER_ATTACK_FRAME_HEIGHT)), attackFrameSize, &spritesheet, &shaderProgram);
+	// Run (row 1) — used for MOVE_LEFT and MOVE_RIGHT
+	for (int f = 0; f < PLAYER_RUN_FRAMES; ++f)
+	{
+		float u = f * frameSize.x;
+		float v = float(ROW_RUN_PX) / texH;
+		sprite->addKeyframe(MOVE_LEFT,  glm::vec2(u, v));
+		sprite->addKeyframe(MOVE_RIGHT, glm::vec2(u, v));
+	}
+
+	// Jump up (row 2, frames 0–4)
+	for (int f = 0; f < PLAYER_JUMP_UP_FRAMES; ++f)
+	{
+		float u = f * frameSize.x;
+		float v = float(ROW_JUMP_PX) / texH;
+		sprite->addKeyframe(JUMP_UP, glm::vec2(u, v));
+	}
+
+	// Jump fall (row 2, frames 5–8)
+	for (int f = 0; f < PLAYER_JUMP_FALL_FRAMES; ++f)
+	{
+		float u = (f + PLAYER_JUMP_UP_FRAMES) * frameSize.x;
+		float v = float(ROW_JUMP_PX) / texH;
+		sprite->addKeyframe(JUMP_FALL, glm::vec2(u, v));
+	}
+
+	// Hurt (row 3)
+	for (int f = 0; f < PLAYER_HURT_FRAMES; ++f)
+	{
+		float u = f * frameSize.x;
+		float v = float(ROW_HURT_PX) / texH;
+		sprite->addKeyframe(HURT, glm::vec2(u, v));
+	}
+
+	// Dead (row 4)
+	for (int f = 0; f < PLAYER_DEAD_FRAMES; ++f)
+	{
+		float u = f * frameSize.x;
+		float v = float(ROW_DEAD_PX) / texH;
+		sprite->addKeyframe(DEAD, glm::vec2(u, v));
+	}
+
+	// Protection (row 5) — used for PROTECT and CLIMB_STAIRS placeholder
+	for (int f = 0; f < PLAYER_PROTECT_FRAMES; ++f)
+	{
+		float u = f * frameSize.x;
+		float v = float(ROW_PROTECT_PX) / texH;
+		sprite->addKeyframe(PROTECT,      glm::vec2(u, v));
+		sprite->addKeyframe(CLIMB_STAIRS, glm::vec2(u, v));
+	}
+
+	sprite->changeAnimation(STAND_RIGHT);
+	sprite->setFlipHorizontal(false);
+
+	// --- Attack spritesheet ---
+	attackSpritesheet.loadFromFile("../images/Samurai_Attack.png", TEXTURE_PIXEL_FORMAT_RGBA);
+	attackSpritesheet.setWrapS(GL_CLAMP_TO_EDGE);
+	attackSpritesheet.setWrapT(GL_CLAMP_TO_EDGE);
+	attackSpritesheet.setMinFilter(GL_NEAREST);
+	attackSpritesheet.setMagFilter(GL_NEAREST);
+
+	float atkTexW = float(attackSpritesheet.width());
+	float atkTexH = float(attackSpritesheet.height());
+	glm::vec2 atkFrameSize(float(PLAYER_ATTACK_FRAME_WIDTH) / atkTexW, float(PLAYER_ATTACK_FRAME_HEIGHT) / atkTexH);
+
+	attackSprite = Sprite::createSprite(glm::ivec2(PLAYER_ATTACK_FRAME_WIDTH, PLAYER_ATTACK_FRAME_HEIGHT), atkFrameSize, &attackSpritesheet, &shaderProgram);
 	attackSprite->setNumberAnimations(1);
 	attackSprite->setAnimationSpeed(0, 18);
 	attackSprite->setAnimationLoop(0, false);
-	float attackV = float(ROW_ATTACK_TOP_PX) / texH;
-	for(int frame = 0; frame < PLAYER_ATTACK_ANIM_FRAMES; ++frame)
+	for (int f = 0; f < PLAYER_ATTACK_FRAMES; ++f)
 	{
-		float attackU = frame * attackFrameSize.x;
-		attackSprite->addKeyframe(0, glm::vec2(attackU, attackV));
+		float u = f * atkFrameSize.x;
+		attackSprite->addKeyframe(0, glm::vec2(u, 0.f));
 	}
 	attackSprite->changeAnimation(0);
 	attackSprite->setFlipHorizontal(false);
-		
-	sprite->changeAnimation(0);
-	sprite->setFlipHorizontal(false);
+
+	// --- Stair spritesheet (Samurai_Stair_Animation.png, 64x64, 2 frames) ---
+	stairSpritesheet.loadFromFile("../images/Samurai_Stair_Animation.png", TEXTURE_PIXEL_FORMAT_RGBA);
+	stairSpritesheet.setWrapS(GL_CLAMP_TO_EDGE);
+	stairSpritesheet.setWrapT(GL_CLAMP_TO_EDGE);
+	stairSpritesheet.setMinFilter(GL_NEAREST);
+	stairSpritesheet.setMagFilter(GL_NEAREST);
+	{
+		float sTexW = float(stairSpritesheet.width());
+		float sTexH = float(stairSpritesheet.height());
+		glm::vec2 sFrameSize(64.f / sTexW, 64.f / sTexH);
+		stairSprite = Sprite::createSprite(glm::ivec2(96, 96), sFrameSize, &stairSpritesheet, &shaderProgram);
+		stairSprite->setNumberAnimations(1);
+		stairSprite->setAnimationSpeed(0, 8);
+		stairSprite->setAnimationLoop(0, true);
+		for (int f = 0; f < 2; ++f)
+			stairSprite->addKeyframe(0, glm::vec2(f * sFrameSize.x, 0.f));
+		stairSprite->changeAnimation(0);
+	}
+
 	tileMapDispl = tileMapPos;
-	float renderOffsetX = 0.5f * (float(PLAYER_FRAME_WIDTH) * PLAYER_VISUAL_SCALE_X - float(Player::HITBOX_WIDTH));
+	float renderOffsetX = 0.5f * (PLAYER_FRAME_WIDTH - Player::HITBOX_WIDTH);
 	float renderOffsetY = float(PLAYER_FRAME_HEIGHT - Player::HITBOX_HEIGHT);
 	sprite->setPosition(glm::vec2(float(tileMapDispl.x + posPlayer.x) - renderOffsetX, float(tileMapDispl.y + posPlayer.y) - renderOffsetY));
-
 }
 
 void Player::update(int deltaTime)
 {
 	if (!alive) return;
+	if (bDying)
+	{
+		sprite->update(deltaTime);
+		if (sprite->animationFinished())
+			alive = false;
+		// Position sprite so it stays in place
+		float renderOffsetX = 0.5f * (PLAYER_FRAME_WIDTH - Player::HITBOX_WIDTH);
+		float renderOffsetY = float(PLAYER_FRAME_HEIGHT - Player::HITBOX_HEIGHT);
+		sprite->setPosition(glm::vec2(float(tileMapDispl.x + posPlayer.x) - renderOffsetX, float(tileMapDispl.y + posPlayer.y) - renderOffsetY));
+		return;
+	}
+	if (bHurt)
+	{
+		sprite->update(deltaTime);
+		if (sprite->animationFinished())
+		{
+			bHurt = false;
+			sprite->changeAnimation(facingLeft ? STAND_LEFT : STAND_RIGHT);
+		}
+		// Still apply gravity while hurt
+		posPlayer.y += FALL_STEP;
+		bool dropThrough = false;
+		map->checkCollision(posPlayer, glm::ivec2(Player::HITBOX_WIDTH, Player::HITBOX_HEIGHT), CollisionDir::DOWN, &posPlayer.y, dropThrough);
+		float renderOffsetX = 0.5f * (PLAYER_FRAME_WIDTH - Player::HITBOX_WIDTH);
+		float renderOffsetY = float(PLAYER_FRAME_HEIGHT - Player::HITBOX_HEIGHT);
+		sprite->setPosition(glm::vec2(float(tileMapDispl.x + posPlayer.x) - renderOffsetX, float(tileMapDispl.y + posPlayer.y) - renderOffsetY));
+		if (hitTimer > 0) hitTimer--;
+		return;
+	}
 	if (hitTimer > 0) hitTimer--;
 	if (springCooldown > 0) springCooldown--;
 	if (dashCooldown > 0) dashCooldown--;
 	if (dropThroughTimerMs > 0) dropThroughTimerMs -= deltaTime;
 	springTriggered = false;
 	float dt = float(deltaTime) / 1000.0f;
-	
+
+
 	sprite->update(deltaTime);
 	glm::ivec2 posI(int(posPlayerF.x), int(posPlayerF.y));
 	bool onLadder = map->isOnLadder(posI, glm::ivec2(Player::HITBOX_WIDTH, Player::HITBOX_HEIGHT));
@@ -219,6 +322,8 @@ void Player::update(int deltaTime)
 	if(Game::instance().getKey(GLFW_KEY_SPACE) && !bAttacking && !bClimbing && Game::instance().hasSword)
 	{
 		bAttacking = true;
+		bProtecting = false;
+		parryTimer = 0;
 		attackSprite->changeAnimation(0);
 		attackSprite->setFlipHorizontal(facingLeft);
 	}
@@ -227,8 +332,29 @@ void Player::update(int deltaTime)
 		attackSprite->update(deltaTime);
 		if(attackSprite->animationFinished())
 			bAttacking = false;
-		// Only skip horizontal movement, but keep gravity/jump physics running
 	}
+
+	// Parry with SHIFT (edge trigger — one press = one parry window)
+	if(parryCooldown > 0) parryCooldown--;
+	if(parryTimer > 0)
+	{
+		parryTimer--;
+		if(parryTimer == 0)
+		{
+			bProtecting = false;
+			sprite->changeAnimation(facingLeft ? STAND_LEFT : STAND_RIGHT);
+		}
+	}
+	bool shiftHeld = Game::instance().getKey(GLFW_KEY_LEFT_SHIFT) || Game::instance().getKey(GLFW_KEY_RIGHT_SHIFT);
+	if(shiftHeld && !prevShift && !bAttacking && !bClimbing && parryCooldown == 0)
+	{
+		bProtecting = true;
+		parryTimer = PARRY_FRAMES;
+		parryCooldown = PARRY_COOLDOWN;
+		sprite->changeAnimation(PROTECT);
+	}
+	prevShift = shiftHeld;
+
 	// Spring boost
 	if (onSpring && springCooldown == 0) {
 		verticalVelocity = -SPRING_JUMP_VELOCITY;
@@ -237,7 +363,7 @@ void Player::update(int deltaTime)
 		springCooldown = 120;
 		springTriggered = true;
 	}
-	
+
 	// Dash boost
 	if (onDash && dashCooldown == 0) {
 		int dashDir = dashFacingLeft ? -1 : 1;
@@ -247,14 +373,11 @@ void Player::update(int deltaTime)
 		dashCooldown = 120;
 	}
 
-	// Climbing logic:
-	// - Stay attached to ladder while overlapping it
-	// - Move only with UP/DOWN
-	// - Hold position when no vertical input
+	// Climbing logic
 	bool tryGrabLadder = bClimbing || ((upPressed || downPressed) && !leftPressed && !rightPressed);
 	if(!skipMovement && onLadder && !bAttacking && (!bJumping || tryGrabLadder))
 	{
-		bool ladderJumpLeft = upAllowsJump && leftPressed && !rightPressed;
+		bool ladderJumpLeft  = upAllowsJump && leftPressed  && !rightPressed;
 		bool ladderJumpRight = upAllowsJump && rightPressed && !leftPressed;
 		bool detachLeftOrRight = (leftPressed || rightPressed) && !upPressed;
 
@@ -274,8 +397,8 @@ void Player::update(int deltaTime)
 		}
 		else
 		{
-		if(bJumping) 
-			bJumping = false; // Successfully grabbed ladder mid-air
+			if(bJumping)
+				bJumping = false;
 
 		if(!bClimbing)
 		{
@@ -285,7 +408,6 @@ void Player::update(int deltaTime)
 		verticalVelocity = 0.0f;
 		bJumping = false;
 
-		// Keep the player centered on ladder column to avoid side-wall collisions.
 		int tileSize = map->getTileSize();
 		int ladderCol = (int(posPlayerF.x) + Player::HITBOX_WIDTH / 2) / tileSize;
 		posPlayerF.x = float(ladderCol * tileSize + (tileSize - Player::HITBOX_WIDTH) / 2);
@@ -305,7 +427,7 @@ void Player::update(int deltaTime)
 			posPlayerF.y = float(climbPos.y);
 		}
 
-		skipMovement = true;
+			skipMovement = true;
 		}
 	}
 	else if(bClimbing && !skipMovement)
@@ -314,8 +436,8 @@ void Player::update(int deltaTime)
 		sprite->changeAnimation(facingLeft ? STAND_LEFT : STAND_RIGHT);
 	}
 
-	// Horizontal movement (blocked during attack and climbing)
-	if(!skipMovement && !bAttacking)
+	// Horizontal movement
+	if(!skipMovement && !bAttacking && !bProtecting)
 	{
 		const float walkSpeed = PLAYER_WALK_SPEED * dt;
 		if(leftPressed && !rightPressed)
@@ -483,27 +605,32 @@ void Player::update(int deltaTime)
 
 	posPlayer = glm::ivec2(int(posPlayerF.x), int(posPlayerF.y));
 
-	float renderOffsetX = 0.5f * (float(PLAYER_FRAME_WIDTH) * PLAYER_VISUAL_SCALE_X - float(Player::HITBOX_WIDTH));
+	float renderOffsetX = 0.5f * (PLAYER_FRAME_WIDTH - Player::HITBOX_WIDTH);
 	float renderOffsetY = float(PLAYER_FRAME_HEIGHT - Player::HITBOX_HEIGHT);
 	sprite->setPosition(glm::vec2(float(tileMapDispl.x + posPlayer.x) - renderOffsetX, float(tileMapDispl.y + posPlayer.y) - renderOffsetY));
 
-	// Position attack sprite with feet aligned to hitbox bottom.
-	// hitbox bottom = posPlayer.y + 64, attack quad height = 92 -> sprite.y = posPlayer.y - 28
-	// attack quad width = 64, hitbox width = 32 (centered) -> sprite.x = posPlayer.x - 16
-	float atkRenderOffsetX = 0.5f * (float(PLAYER_ATTACK_FRAME_WIDTH) * PLAYER_ATTACK_VISUAL_SCALE_X - float(Player::HITBOX_WIDTH));
-	float atkRenderOffsetY = float(PLAYER_ATTACK_FRAME_HEIGHT - Player::HITBOX_HEIGHT);
+	// Position attack sprite (center horizontally, feet-aligned)
+	float atkOffsetX = 0.5f * (PLAYER_ATTACK_FRAME_WIDTH - Player::HITBOX_WIDTH);
+	float atkOffsetY = float(PLAYER_ATTACK_FRAME_HEIGHT - Player::HITBOX_HEIGHT);
 	attackSprite->setFlipHorizontal(facingLeft);
-	attackSprite->setPosition(glm::vec2(float(tileMapDispl.x + posPlayer.x) - atkRenderOffsetX, float(tileMapDispl.y + posPlayer.y) - atkRenderOffsetY));
+	attackSprite->setPosition(glm::vec2(float(tileMapDispl.x + posPlayer.x) - atkOffsetX, float(tileMapDispl.y + posPlayer.y) - atkOffsetY));
+
+	// Position stair sprite (64x64, centered horizontally, feet-aligned)
+	stairSprite->setFlipHorizontal(facingLeft);
+	stairSprite->setPosition(glm::vec2(float(tileMapDispl.x + posPlayer.x) - 32.f, float(tileMapDispl.y + posPlayer.y) - 32.f));
+	if(bClimbing)
+		stairSprite->update(deltaTime);
 }
 
 void Player::render()
 {
 	if (!alive) return;
-	// Blink during invincibility (skip every other 4-frame window)
-	if (hitTimer > 0 && (hitTimer / 4) % 2 != 0) return;
+	if (!bDying && hitTimer > 0 && (hitTimer / 4) % 2 != 0) return;
 
 	if(bAttacking)
 		attackSprite->render();
+	else if(bClimbing)
+		stairSprite->render();
 	else
 		sprite->render();
 }
@@ -519,11 +646,17 @@ void Player::takeDamage()
 	Game::instance().lives--;
 	if (Game::instance().lives <= 0)
 	{
-		alive = false;
+		bDying = true;
+		sprite->changeAnimation(DEAD);
+		sprite->setAnimationLoop(DEAD, false);
 	}
 	else
 	{
-		hitTimer = 90;   // ~1.5s invincibility
+		hitTimer = 90;
+		bHurt = true;
+		bAttacking = false;
+		bProtecting = false;
+		sprite->changeAnimation(HURT);
 	}
 }
 
@@ -553,10 +686,7 @@ void Player::setPosition(const glm::vec2 &pos)
 {
 	posPlayerF = pos;
 	posPlayer = glm::ivec2(int(posPlayerF.x), int(posPlayerF.y));
-	float renderOffsetX = 0.5f * (float(PLAYER_FRAME_WIDTH) * PLAYER_VISUAL_SCALE_X - float(Player::HITBOX_WIDTH));
+	float renderOffsetX = 0.5f * (PLAYER_FRAME_WIDTH - Player::HITBOX_WIDTH);
 	float renderOffsetY = float(PLAYER_FRAME_HEIGHT - Player::HITBOX_HEIGHT);
 	sprite->setPosition(glm::vec2(float(tileMapDispl.x + posPlayer.x) - renderOffsetX, float(tileMapDispl.y + posPlayer.y) - renderOffsetY));
 }
-
-
-

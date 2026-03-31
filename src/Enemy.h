@@ -11,6 +11,7 @@ struct Arrow
 {
 	glm::vec2 pos;
 	bool goingLeft;
+	bool reflected;
 };
 
 
@@ -31,6 +32,8 @@ public:
 
 	void takeDamage(int knockDir);
 	bool checkArrowHit(const glm::vec2 &pPos, const glm::ivec2 &pSize);
+	void reflectArrowHit(const glm::vec2 &pPos, const glm::ivec2 &pSize, bool playerFacingLeft);
+	bool checkReflectedArrowHit(const glm::vec4 &hitbox, int &outKnockDir);
 	void destroyArrowsInHitbox(const glm::vec4 &attackHitbox);
 	void setActive(bool value);
 	bool isAlive() const { return alive; }

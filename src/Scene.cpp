@@ -562,7 +562,7 @@ void Scene::update(int deltaTime)
 		}
 	}
 
-	if (player->isAlive())
+	if (player->isAlive() || player->isDying())
 		player->update(deltaTime);
 	if (enemy->isAlive() || enemy->isDying())
 		enemy->update(deltaTime, player->getPosition());
@@ -588,10 +588,23 @@ void Scene::update(int deltaTime)
 	if (!player->isAttacking())
 		attackHitThisSwing = false;
 
-	// --- Enemy1 arrows hit player ---
-	if (player->isAlive() && !player->isInvincible() && enemy->isAlive())
-		if (enemy->checkArrowHit(player->getPosition(), glm::ivec2(Player::HITBOX_WIDTH, Player::HITBOX_HEIGHT)))
-			player->takeDamage();
+	// --- Enemy1 arrows hit player (or reflect if protecting) ---
+	if (player->isAlive() && enemy->isAlive())
+	{
+		if (player->isProtecting())
+			enemy->reflectArrowHit(player->getPosition(), glm::ivec2(Player::HITBOX_WIDTH, Player::HITBOX_HEIGHT), player->isFacingLeft());
+		else if (!player->isInvincible())
+			if (enemy->checkArrowHit(player->getPosition(), glm::ivec2(Player::HITBOX_WIDTH, Player::HITBOX_HEIGHT)))
+				player->takeDamage();
+	}
+
+	// --- Enemy1 reflected arrows vs all enemies ---
+	{
+		int kd;
+		if (enemy->isAlive()  && enemy->checkReflectedArrowHit(enemy->getHitbox(),  kd)) enemy->takeDamage(kd);
+		if (enemy2->isAlive() && enemy->checkReflectedArrowHit(enemy2->getHitbox(), kd)) enemy2->takeDamage(kd);
+		if (enemy3->isAlive() && enemy->checkReflectedArrowHit(enemy3->getHitbox(), kd)) enemy3->takeDamage(kd);
+	}
 
 	// --- Enemy2 update ---
 	if (enemy2->isAlive() || enemy2->isDying())
@@ -654,10 +667,23 @@ void Scene::update(int deltaTime)
 	if (!player->isAttacking())
 		attackHitEnemy3ThisSwing = false;
 
-	// --- Enemy3 fireballs hit player ---
-	if (player->isAlive() && !player->isInvincible() && enemy3->isAlive())
-		if (enemy3->checkFireballHit(player->getPosition(), glm::ivec2(Player::HITBOX_WIDTH, Player::HITBOX_HEIGHT)))
-			player->takeDamage();
+	// --- Enemy3 fireballs hit player (or reflect if protecting) ---
+	if (player->isAlive() && enemy3->isAlive())
+	{
+		if (player->isProtecting())
+			enemy3->reflectFireballHit(player->getPosition(), glm::ivec2(Player::HITBOX_WIDTH, Player::HITBOX_HEIGHT), player->isFacingLeft());
+		else if (!player->isInvincible())
+			if (enemy3->checkFireballHit(player->getPosition(), glm::ivec2(Player::HITBOX_WIDTH, Player::HITBOX_HEIGHT)))
+				player->takeDamage();
+	}
+
+	// --- Enemy3 reflected fireballs vs all enemies ---
+	{
+		int kd;
+		if (enemy->isAlive()  && enemy3->checkReflectedFireballHit(enemy->getHitbox(),  kd)) enemy->takeDamage(kd);
+		if (enemy2->isAlive() && enemy3->checkReflectedFireballHit(enemy2->getHitbox(), kd)) enemy2->takeDamage(kd);
+		if (enemy3->isAlive() && enemy3->checkReflectedFireballHit(enemy3->getHitbox(), kd)) enemy3->takeDamage(kd);
+	}
 
 	// --- Enemy3 melee (Attack2) hits player ---
 	if (enemy3->isMeleeAttacking() && !enemy3HitPlayerThisSwing)

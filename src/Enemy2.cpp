@@ -15,8 +15,8 @@
 
 #define E2_FRAME_WIDTH     96   // source frame in texture
 #define E2_FRAME_HEIGHT   112
-#define E2_RENDER_WIDTH    64   // displayed quad size (same as Enemy1)
-#define E2_RENDER_HEIGHT   48
+#define E2_RENDER_WIDTH    96
+#define E2_RENDER_HEIGHT   80
 #define E2_HITBOX_WIDTH    32
 #define E2_HITBOX_HEIGHT   32
 #define E2_SPEED            1

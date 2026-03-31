@@ -11,6 +11,7 @@ struct FireBall
 {
 	glm::vec2 pos;
 	bool goingLeft;
+	bool reflected;
 };
 
 
@@ -36,6 +37,8 @@ public:
 	bool isInvincible() const { return hitTimer > 0; }
 	glm::vec4 getHitbox() const;
 	bool checkFireballHit(const glm::vec2 &pPos, const glm::ivec2 &pSize);
+	void reflectFireballHit(const glm::vec2 &pPos, const glm::ivec2 &pSize, bool playerFacingLeft);
+	bool checkReflectedFireballHit(const glm::vec4 &hitbox, int &outKnockDir);
 	glm::vec4 getMeleeHitbox() const;
 	bool isMeleeAttacking() const { return bMelee; }
 

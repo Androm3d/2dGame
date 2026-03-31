@@ -32,11 +32,20 @@ public:
 	bool isInvincible() const { return hitTimer > 0; }
 	bool isAlive() const { return alive; }
 	bool consumeSpringTrigger();
+	bool isDying() const { return bDying; }
+	bool isProtecting() const { return bProtecting; }
+	bool isFacingLeft() const { return facingLeft; }
 
 private:
 	bool bJumping;
 	bool bClimbing;
 	bool bAttacking;
+	bool bProtecting;
+	bool bDying;
+	bool bHurt;
+	bool prevShift;
+	int parryTimer;
+	int parryCooldown;
 	bool facingLeft;
 	bool alive;
 	int hitTimer;
@@ -53,8 +62,11 @@ private:
 	float verticalVelocity;
 	int jumpAngle, startY;
 	Texture spritesheet;
+	Texture attackSpritesheet;
+	Texture stairSpritesheet;
 	Sprite *sprite;
 	Sprite *attackSprite;
+	Sprite *stairSprite;
 	TileMap *map;
 
 };
