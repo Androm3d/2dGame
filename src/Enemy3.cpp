@@ -18,8 +18,8 @@
 
 #define E3_FRAME_WIDTH     96
 #define E3_FRAME_HEIGHT    96
-#define E3_RENDER_WIDTH    96
-#define E3_RENDER_HEIGHT   96
+#define E3_RENDER_WIDTH    64   // (96*64/96)
+#define E3_RENDER_HEIGHT   64
 #define E3_HITBOX_WIDTH    32
 #define E3_HITBOX_HEIGHT   32
 #define E3_SPEED            1

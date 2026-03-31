@@ -21,12 +21,16 @@ static const float PLAYER_DROP_THROUGH_NUDGE = 4.0f;
 #define FALL_STEP 4
 
 // Main spritesheet (Samurai.png, 512x512, frame 56x80)
-#define PLAYER_FRAME_WIDTH    56
+#define PLAYER_FRAME_WIDTH    56   // texture frame size (UV)
 #define PLAYER_FRAME_HEIGHT   80
+#define PLAYER_RENDER_WIDTH   45   // render quad size (56*64/80)
+#define PLAYER_RENDER_HEIGHT  64
 
 // Attack spritesheet (Samurai_Attack.png, 512x128, frame 88x106)
-#define PLAYER_ATTACK_FRAME_WIDTH  88
+#define PLAYER_ATTACK_FRAME_WIDTH   88   // texture frame size (UV)
 #define PLAYER_ATTACK_FRAME_HEIGHT 106
+#define PLAYER_ATTACK_RENDER_WIDTH  53   // render quad size (88*64/106)
+#define PLAYER_ATTACK_RENDER_HEIGHT 64
 
 // Animation frame counts
 #define PLAYER_IDLE_FRAMES       6
@@ -109,7 +113,7 @@ void Player::init(const glm::ivec2 &tileMapPos, ShaderProgram &shaderProgram)
 	float texH = float(spritesheet.height());
 	glm::vec2 frameSize(float(PLAYER_FRAME_WIDTH) / texW, float(PLAYER_FRAME_HEIGHT) / texH);
 
-	sprite = Sprite::createSprite(glm::ivec2(PLAYER_FRAME_WIDTH, PLAYER_FRAME_HEIGHT), frameSize, &spritesheet, &shaderProgram);
+	sprite = Sprite::createSprite(glm::ivec2(PLAYER_RENDER_WIDTH, PLAYER_RENDER_HEIGHT), frameSize, &spritesheet, &shaderProgram);
 	sprite->setNumberAnimations(10);
 
 	// Speeds
@@ -209,7 +213,7 @@ void Player::init(const glm::ivec2 &tileMapPos, ShaderProgram &shaderProgram)
 	float atkTexH = float(attackSpritesheet.height());
 	glm::vec2 atkFrameSize(float(PLAYER_ATTACK_FRAME_WIDTH) / atkTexW, float(PLAYER_ATTACK_FRAME_HEIGHT) / atkTexH);
 
-	attackSprite = Sprite::createSprite(glm::ivec2(PLAYER_ATTACK_FRAME_WIDTH, PLAYER_ATTACK_FRAME_HEIGHT), atkFrameSize, &attackSpritesheet, &shaderProgram);
+	attackSprite = Sprite::createSprite(glm::ivec2(PLAYER_ATTACK_RENDER_WIDTH, PLAYER_ATTACK_RENDER_HEIGHT), atkFrameSize, &attackSpritesheet, &shaderProgram);
 	attackSprite->setNumberAnimations(1);
 	attackSprite->setAnimationSpeed(0, 18);
 	attackSprite->setAnimationLoop(0, false);
@@ -231,7 +235,7 @@ void Player::init(const glm::ivec2 &tileMapPos, ShaderProgram &shaderProgram)
 		float sTexW = float(stairSpritesheet.width());
 		float sTexH = float(stairSpritesheet.height());
 		glm::vec2 sFrameSize(64.f / sTexW, 64.f / sTexH);
-		stairSprite = Sprite::createSprite(glm::ivec2(96, 96), sFrameSize, &stairSpritesheet, &shaderProgram);
+		stairSprite = Sprite::createSprite(glm::ivec2(64, 64), sFrameSize, &stairSpritesheet, &shaderProgram);
 		stairSprite->setNumberAnimations(1);
 		stairSprite->setAnimationSpeed(0, 8);
 		stairSprite->setAnimationLoop(0, true);
@@ -241,8 +245,8 @@ void Player::init(const glm::ivec2 &tileMapPos, ShaderProgram &shaderProgram)
 	}
 
 	tileMapDispl = tileMapPos;
-	float renderOffsetX = 0.5f * (PLAYER_FRAME_WIDTH - Player::HITBOX_WIDTH);
-	float renderOffsetY = float(PLAYER_FRAME_HEIGHT - Player::HITBOX_HEIGHT);
+	float renderOffsetX = 0.5f * (PLAYER_RENDER_WIDTH - Player::HITBOX_WIDTH);
+	float renderOffsetY = float(PLAYER_RENDER_HEIGHT - Player::HITBOX_HEIGHT);
 	sprite->setPosition(glm::vec2(float(tileMapDispl.x + posPlayer.x) - renderOffsetX, float(tileMapDispl.y + posPlayer.y) - renderOffsetY));
 }
 
@@ -605,19 +609,19 @@ void Player::update(int deltaTime)
 
 	posPlayer = glm::ivec2(int(posPlayerF.x), int(posPlayerF.y));
 
-	float renderOffsetX = 0.5f * (PLAYER_FRAME_WIDTH - Player::HITBOX_WIDTH);
-	float renderOffsetY = float(PLAYER_FRAME_HEIGHT - Player::HITBOX_HEIGHT);
+	float renderOffsetX = 0.5f * (PLAYER_RENDER_WIDTH - Player::HITBOX_WIDTH);
+	float renderOffsetY = float(PLAYER_RENDER_HEIGHT - Player::HITBOX_HEIGHT);
 	sprite->setPosition(glm::vec2(float(tileMapDispl.x + posPlayer.x) - renderOffsetX, float(tileMapDispl.y + posPlayer.y) - renderOffsetY));
 
 	// Position attack sprite (center horizontally, feet-aligned)
-	float atkOffsetX = 0.5f * (PLAYER_ATTACK_FRAME_WIDTH - Player::HITBOX_WIDTH);
-	float atkOffsetY = float(PLAYER_ATTACK_FRAME_HEIGHT - Player::HITBOX_HEIGHT);
+	float atkOffsetX = 0.5f * (PLAYER_ATTACK_RENDER_WIDTH - Player::HITBOX_WIDTH);
+	float atkOffsetY = float(PLAYER_ATTACK_RENDER_HEIGHT - Player::HITBOX_HEIGHT);
 	attackSprite->setFlipHorizontal(facingLeft);
 	attackSprite->setPosition(glm::vec2(float(tileMapDispl.x + posPlayer.x) - atkOffsetX, float(tileMapDispl.y + posPlayer.y) - atkOffsetY));
 
 	// Position stair sprite (64x64, centered horizontally, feet-aligned)
 	stairSprite->setFlipHorizontal(facingLeft);
-	stairSprite->setPosition(glm::vec2(float(tileMapDispl.x + posPlayer.x) - 32.f, float(tileMapDispl.y + posPlayer.y) - 32.f));
+	stairSprite->setPosition(glm::vec2(float(tileMapDispl.x + posPlayer.x) - 16.f, float(tileMapDispl.y + posPlayer.y)));
 	if(bClimbing)
 		stairSprite->update(deltaTime);
 }
@@ -686,7 +690,7 @@ void Player::setPosition(const glm::vec2 &pos)
 {
 	posPlayerF = pos;
 	posPlayer = glm::ivec2(int(posPlayerF.x), int(posPlayerF.y));
-	float renderOffsetX = 0.5f * (PLAYER_FRAME_WIDTH - Player::HITBOX_WIDTH);
-	float renderOffsetY = float(PLAYER_FRAME_HEIGHT - Player::HITBOX_HEIGHT);
+	float renderOffsetX = 0.5f * (PLAYER_RENDER_WIDTH - Player::HITBOX_WIDTH);
+	float renderOffsetY = float(PLAYER_RENDER_HEIGHT - Player::HITBOX_HEIGHT);
 	sprite->setPosition(glm::vec2(float(tileMapDispl.x + posPlayer.x) - renderOffsetX, float(tileMapDispl.y + posPlayer.y) - renderOffsetY));
 }

@@ -15,8 +15,8 @@
 
 #define E2_FRAME_WIDTH     96   // source frame in texture
 #define E2_FRAME_HEIGHT   112
-#define E2_RENDER_WIDTH    96
-#define E2_RENDER_HEIGHT   80
+#define E2_RENDER_WIDTH    55   // (96*64/112)
+#define E2_RENDER_HEIGHT   64
 #define E2_HITBOX_WIDTH    32
 #define E2_HITBOX_HEIGHT   32
 #define E2_SPEED            1

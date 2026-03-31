@@ -7,8 +7,8 @@
 #include "Enemy.h"
 
 
-#define ENEMY_FRAME_WIDTH        96   // render quad size
-#define ENEMY_FRAME_HEIGHT       80
+#define ENEMY_FRAME_WIDTH        77   // render quad size (96*64/80)
+#define ENEMY_FRAME_HEIGHT       64
 #define ENEMY_TEX_FRAME_WIDTH    64   // actual frame size in the spritesheet
 #define ENEMY_TEX_FRAME_HEIGHT   48
 #define ENEMY_HITBOX_WIDTH       32
