@@ -37,21 +37,21 @@
 #define ROW_HURT_PX   336
 #define ROW_DEATH_PX  448
 
-#define PATH_RECALC_FRAMES       30
-#define HIT_INVINCIBILITY_FRAMES 150
-#define HIT_BLINK_FRAMES         50
-#define KNOCKBACK_FRAMES          8
-#define KNOCKBACK_SPEED           5
+#define PATH_RECALC_FRAMES       30   // ticks between BFS pathfinder recalculations
+#define HIT_INVINCIBILITY_FRAMES 150  // ticks of invincibility after taking damage
+#define HIT_BLINK_FRAMES          50  // ticks during which the sprite blinks
+#define KNOCKBACK_FRAMES           8  // ticks the enemy is pushed back after a hit
+#define KNOCKBACK_SPEED            5  // px per tick during knockback
 
-static const float E2_GRAVITY = 1400.0f;
-static const float E2_JUMP_VELOCITY = std::sqrt(2.0f * E2_GRAVITY * float(E2_JUMP_HEIGHT));
-static const float E2_SPRING_JUMP_VELOCITY = E2_JUMP_VELOCITY * std::sqrt(3.0f);
+static const float E2_GRAVITY            = 1400.0f;          // px/s² downward acceleration
+static const float E2_JUMP_VELOCITY      = std::sqrt(2.0f * E2_GRAVITY * float(E2_JUMP_HEIGHT)); // v = sqrt(2gh)
+static const float E2_SPRING_JUMP_VELOCITY = E2_JUMP_VELOCITY * std::sqrt(3.0f); // spring gives sqrt(3)x extra height
 
-// Melee attack: close range, sword enemy
-#define MELEE_DETECT_RANGE    36   // px horizontal (≈1 tile, sword requires contact)
-#define MELEE_DETECT_VERTICAL 48   // px vertical tolerance
-#define MELEE_HITBOX_REACH    48   // how far the sword extends in front
-#define ATTACK_COOLDOWN_FRAMES 90
+// Melee detection thresholds (sword enemy attacks at contact range)
+#define MELEE_DETECT_RANGE    36   // px horizontal — roughly 1 tile, sword requires near contact
+#define MELEE_DETECT_VERTICAL 48   // px vertical tolerance for attack to trigger
+#define MELEE_HITBOX_REACH    48   // px the sword hitbox extends in front of the enemy
+#define ATTACK_COOLDOWN_FRAMES 90  // ticks between melee attacks
 
 
 enum Enemy2Anims

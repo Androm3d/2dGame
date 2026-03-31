@@ -5,20 +5,22 @@
 #include "Game.h"
 
 
-#define JUMP_ANGLE_STEP 4
-#define JUMP_HEIGHT 96
-#define SPRING_JUMP_MULTIPLIER 3
-#define DASH_DURATION_MS 1000
-#define DASH_DISTANCE_BASE 60.0f
+// Physics — discrete step sizes for the legacy integer movement system
+#define JUMP_ANGLE_STEP      4    // degrees advanced per game tick during a jump arc
+#define JUMP_HEIGHT         96    // max height in px; used in v = sqrt(2gh)
+#define SPRING_JUMP_MULTIPLIER 3  // spring launches sqrt(3)x higher than a normal jump
+#define DASH_DURATION_MS  1000    // how long a dash powerup lasts (ms)
+#define DASH_DISTANCE_BASE 60.0f  // base horizontal distance of a dash (px)
+#define FALL_STEP            4    // px dropped per tick when not using float physics
 
-static const float PLAYER_GRAVITY = 1400.0f;
-static const float PLAYER_JUMP_VELOCITY = std::sqrt(2.0f * PLAYER_GRAVITY * float(JUMP_HEIGHT));
+// Derived physics constants (float physics, partner's system)
+static const float PLAYER_GRAVITY      = 1400.0f;          // px/s² downward acceleration
+static const float PLAYER_JUMP_VELOCITY = std::sqrt(2.0f * PLAYER_GRAVITY * float(JUMP_HEIGHT)); // v = sqrt(2gh)
 static const float SPRING_JUMP_VELOCITY = PLAYER_JUMP_VELOCITY * std::sqrt(float(SPRING_JUMP_MULTIPLIER));
-static const float PLAYER_WALK_SPEED = 180.0f;
-static const float PLAYER_CLIMB_SPEED = 120.0f;
-static const int PLAYER_DROP_THROUGH_MS = 180;
-static const float PLAYER_DROP_THROUGH_NUDGE = 4.0f;
-#define FALL_STEP 4
+static const float PLAYER_WALK_SPEED   = 180.0f;           // px/s horizontal
+static const float PLAYER_CLIMB_SPEED  = 120.0f;           // px/s on ladders
+static const int   PLAYER_DROP_THROUGH_MS    = 180;        // ms the player passes through one-way platforms
+static const float PLAYER_DROP_THROUGH_NUDGE = 4.0f;       // px nudge downward to clear the platform tile
 
 // Main spritesheet (Samurai.png, 512x512, frame 56x80)
 #define PLAYER_FRAME_WIDTH    56   // texture frame size (UV)
@@ -41,9 +43,10 @@ static const float PLAYER_DROP_THROUGH_NUDGE = 4.0f;
 #define PLAYER_DEAD_FRAMES       6
 #define PLAYER_PROTECT_FRAMES    2
 #define PLAYER_ATTACK_FRAMES     5
-#define PARRY_FRAMES    22
-#define PARRY_COOLDOWN  55
-#define ATTACK_COOLDOWN  55
+// Combat timings (in game frames, ~16 ms each at 60 fps)
+#define PARRY_FRAMES    22   // window during which a parry can deflect a projectile
+#define PARRY_COOLDOWN  55   // frames before the player can parry again
+#define ATTACK_COOLDOWN 55   // frames before the player can attack again (same as parry)
 
 // Row Y positions in Samurai.png
 #define ROW_IDLE_PX     0

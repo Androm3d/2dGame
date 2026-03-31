@@ -16,16 +16,17 @@
 //
 // Enemy3_Fire.png: 352x48, 32x48 per frame, 11 frames (fire projectile)
 
-#define E3_FRAME_WIDTH     96
-#define E3_FRAME_HEIGHT    96
-#define E3_RENDER_WIDTH    64   // (96*64/96)
-#define E3_RENDER_HEIGHT   64
-#define E3_HITBOX_WIDTH    32
+// Sprite dimensions: texture frame is 96x96 (square), rendered at 64x64 (max height target)
+#define E3_FRAME_WIDTH     96   // UV sampling width
+#define E3_FRAME_HEIGHT    96   // UV sampling height
+#define E3_RENDER_WIDTH    64   // render quad width  (96 * 64/96 = 64, already a clean multiple)
+#define E3_RENDER_HEIGHT   64   // render quad height
+#define E3_HITBOX_WIDTH    32   // collision box, centered inside the render quad
 #define E3_HITBOX_HEIGHT   32
-#define E3_SPEED            1
-#define E3_FALL_STEP        4
-#define E3_JUMP_ANGLE_STEP  4
-#define E3_JUMP_HEIGHT    112
+#define E3_SPEED            1   // px per tick horizontal movement
+#define E3_FALL_STEP        4   // px per tick gravity fallback (integer physics)
+#define E3_JUMP_ANGLE_STEP  4   // degrees per tick in the jump arc simulation
+#define E3_JUMP_HEIGHT    112   // max jump height in px; used in v = sqrt(2gh)
 
 #define E3_RUN_FRAMES       8
 #define E3_JUMP_UP_FRAMES   5
@@ -57,16 +58,16 @@
 #define MELEE_DETECT_RANGE  40
 #define MELEE_DETECT_VERT   48
 
-#define PATH_RECALC_FRAMES       30
-#define HIT_INVINCIBILITY_FRAMES 150
-#define HIT_BLINK_FRAMES         50
-#define KNOCKBACK_FRAMES          8
-#define KNOCKBACK_SPEED           5
-#define ATTACK_COOLDOWN_FRAMES   90
+#define PATH_RECALC_FRAMES       30   // ticks between BFS pathfinder recalculations
+#define HIT_INVINCIBILITY_FRAMES 150  // ticks of invincibility after taking damage
+#define HIT_BLINK_FRAMES          50  // ticks during which the sprite blinks
+#define KNOCKBACK_FRAMES           8  // ticks the enemy is pushed back after a hit
+#define KNOCKBACK_SPEED            5  // px per tick during knockback
+#define ATTACK_COOLDOWN_FRAMES    90  // ticks between attacks (fire or melee)
 
-static const float E3_GRAVITY = 1400.0f;
-static const float E3_JUMP_VELOCITY = std::sqrt(2.0f * E3_GRAVITY * float(E3_JUMP_HEIGHT));
-static const float E3_SPRING_JUMP_VELOCITY = E3_JUMP_VELOCITY * std::sqrt(3.0f);
+static const float E3_GRAVITY            = 1400.0f;          // px/s² downward acceleration
+static const float E3_JUMP_VELOCITY      = std::sqrt(2.0f * E3_GRAVITY * float(E3_JUMP_HEIGHT)); // v = sqrt(2gh)
+static const float E3_SPRING_JUMP_VELOCITY = E3_JUMP_VELOCITY * std::sqrt(3.0f); // spring gives sqrt(3)x extra height
 
 
 enum Enemy3Anims

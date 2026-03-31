@@ -7,21 +7,29 @@
 #include "Enemy.h"
 
 
-#define ENEMY_FRAME_WIDTH        77   // render quad size (96*64/80)
-#define ENEMY_FRAME_HEIGHT       64
-#define ENEMY_TEX_FRAME_WIDTH    64   // actual frame size in the spritesheet
-#define ENEMY_TEX_FRAME_HEIGHT   48
-#define ENEMY_HITBOX_WIDTH       32
+// Enemy1.png: 256x192, frame 64x48, 4 rows
+// Row 0 (y=  0): Run   — 8 frames
+// Row 1 (y= 48): Jump  — 8 frames (0-3 up, 4-7 fall)
+// Row 2 (y= 96): Hurt  — 3 frames
+// Row 3 (y=144): Death — 5 frames
+
+// Render size: scaled to 64px height while keeping aspect ratio (64x48 * 64/48 ≈ 80x64)
+#define ENEMY_FRAME_WIDTH        77   // render quad width  (64 * 64/48, rounded to nearest multiple of 8 ≈ 80)
+#define ENEMY_FRAME_HEIGHT       64   // render quad height (target max height)
+#define ENEMY_TEX_FRAME_WIDTH    64   // UV sampling width  — actual pixel frame in the texture
+#define ENEMY_TEX_FRAME_HEIGHT   48   // UV sampling height — actual pixel frame in the texture
+#define ENEMY_HITBOX_WIDTH       32   // collision box, centered inside the render quad
 #define ENEMY_HITBOX_HEIGHT      32
 #define ENEMY_RUN_FRAMES          8
 #define ENEMY_JUMP_UP_FRAMES      4
 #define ENEMY_JUMP_FALL_FRAMES    4
-#define ENEMY_JUMP_FALL_START     4
-#define ENEMY_SPEED               1
-#define ENEMY_FALL_STEP           4
-#define ENEMY_JUMP_ANGLE_STEP     4
-#define ENEMY_JUMP_HEIGHT        112
+#define ENEMY_JUMP_FALL_START     4   // first fall frame index within the jump row
+#define ENEMY_SPEED               1   // px per tick horizontal movement
+#define ENEMY_FALL_STEP           4   // px per tick gravity fallback (integer physics)
+#define ENEMY_JUMP_ANGLE_STEP     4   // degrees per tick in the jump arc simulation
+#define ENEMY_JUMP_HEIGHT        112  // max jump height in px; used in v = sqrt(2gh)
 
+// Row Y offsets in Enemy1.png (px from top)
 #define ROW_RUN_TOP_PX    0
 #define ROW_JUMP_TOP_PX  48
 #define ROW_HURT_TOP_PX  96
@@ -30,11 +38,11 @@
 #define ENEMY_HURT_FRAMES  3
 #define ENEMY_DEATH_FRAMES 5
 
-#define PATH_RECALC_FRAMES 30
-#define HIT_INVINCIBILITY_FRAMES 150
-#define HIT_BLINK_FRAMES         50
-#define KNOCKBACK_FRAMES 8
-#define KNOCKBACK_SPEED  5
+#define PATH_RECALC_FRAMES       30   // ticks between BFS pathfinder recalculations
+#define HIT_INVINCIBILITY_FRAMES 150  // ticks of invincibility after taking damage
+#define HIT_BLINK_FRAMES          50  // ticks during which the sprite blinks (subset of invincibility)
+#define KNOCKBACK_FRAMES           8  // ticks the enemy is pushed back after a hit
+#define KNOCKBACK_SPEED            5  // px per tick during knockback
 
 static const float ENEMY_GRAVITY = 1400.0f;
 static const float ENEMY_JUMP_VELOCITY = std::sqrt(2.0f * ENEMY_GRAVITY * float(ENEMY_JUMP_HEIGHT));
@@ -46,13 +54,13 @@ static const float ENEMY_SPRING_JUMP_VELOCITY = ENEMY_JUMP_VELOCITY * std::sqrt(
 #define SHOT_RENDER_HEIGHT  64
 #define SHOT_FRAMES_ROW0     8
 #define SHOT_FRAMES_ROW1     5
-#define SHOT_DETECT_RANGE  200
-#define SHOT_DETECT_VERTICAL 48
-#define SHOT_COOLDOWN_FRAMES 90
-#define ARROW_SPEED        4
-#define ARROW_SIZE         64
-#define ARROW_HITBOX_W     32
-#define ARROW_HITBOX_H     12
+#define SHOT_DETECT_RANGE   200  // px horizontal distance at which the enemy starts shooting
+#define SHOT_DETECT_VERTICAL 48  // px vertical tolerance for detecting the player
+#define SHOT_COOLDOWN_FRAMES 90  // ticks between shots
+#define ARROW_SPEED           4  // px per tick
+#define ARROW_SIZE           64  // render size of the arrow sprite (square)
+#define ARROW_HITBOX_W       32  // narrower hitbox so the arrow feels fair
+#define ARROW_HITBOX_H       12  // thin vertically so only a direct hit registers
 
 
 enum EnemyAnims
