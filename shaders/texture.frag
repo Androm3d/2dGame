@@ -7,6 +7,8 @@ uniform float flashAmount;
 uniform vec3 flashColor;
 uniform float warpAmount;
 uniform float warpPhase;
+uniform float time;
+uniform float godModeAmount;
 
 in vec2 texCoordFrag;
 out vec4 outColor;
@@ -35,6 +37,17 @@ void main()
 	float gray = dot(baseColor.rgb, vec3(0.299, 0.587, 0.114));
 	baseColor.rgb = mix(baseColor.rgb, vec3(gray), clamp(grayscaleAmount, 0.0, 1.0));
 	baseColor.rgb = mix(baseColor.rgb, flashColor, clamp(flashAmount, 0.0, 1.0));
+	if (godModeAmount > 0.001)
+	{
+		float gm = clamp(godModeAmount, 0.0, 1.0);
+		vec3 rainbow = 0.5 + 0.5 * sin(vec3(0.0, 2.0943951, 4.1887902) + time * 5.5);
+		float pulse = 0.5 + 0.5 * sin(time * 10.0);
+		float centerGlow = 1.0 - clamp(distance(uv, vec2(0.5, 0.5)) / 0.78, 0.0, 1.0);
+		vec3 glowTint = rainbow * (0.7 + 0.6 * pulse);
+		vec3 boosted = baseColor.rgb * (1.15 + 0.35 * pulse) + glowTint * (0.35 + 0.45 * centerGlow);
+		baseColor.rgb = mix(baseColor.rgb, boosted, gm);
+	}
+	baseColor.rgb = clamp(baseColor.rgb, 0.0, 1.0);
 	outColor = baseColor;
 }
 

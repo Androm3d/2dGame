@@ -3,6 +3,7 @@
 #include <GL/glew.h>
 #include "Player.h"
 #include "Game.h"
+#include "AudioManager.h"
 
 
 #include "GameConstants.h"
@@ -295,6 +296,7 @@ void Player::update(int deltaTime)
 		parryTimer = 0;
 		attackSprite->changeAnimation(0);
 		attackSprite->setFlipHorizontal(facingLeft);
+		AudioManager::instance().playSfx("sword_attack");
 	}
 	if(bAttacking)
 	{
@@ -334,6 +336,7 @@ void Player::update(int deltaTime)
 		onGround = false;
 		springCooldown = PLAYER_SPRING_COOLDOWN_MS;
 		springTriggered = true;
+		AudioManager::instance().playSfx("jump");
 	}
 
 	// Dash boost
@@ -509,6 +512,7 @@ void Player::update(int deltaTime)
 			onGround = false;
 			sprite->setFlipHorizontal(facingLeft);
 			sprite->changeAnimation(JUMP_UP);
+			AudioManager::instance().playSfx("jump");
 		}
 
 		verticalVelocity += GRAVITY * dt;
@@ -586,6 +590,7 @@ void Player::update(int deltaTime)
 			onGround = false;
 			springCooldown = PLAYER_SPRING_COOLDOWN_MS;
 			springTriggered = true;
+			AudioManager::instance().playSfx("jump");
 		}
 	}
 
@@ -653,6 +658,7 @@ void Player::takeDamage()
 		bAttacking = false;
 		bProtecting = false;
 		sprite->changeAnimation(HURT);
+		AudioManager::instance().playSfx("hurt");
 	}
 }
 

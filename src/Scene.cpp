@@ -9,6 +9,7 @@
 #include "Scene.h"
 #include "Game.h"
 #include "GameConstants.h"
+#include "AudioManager.h"
 
 
 #define SCREEN_X 0
@@ -1017,6 +1018,7 @@ void Scene::update(int deltaTime)
 			if (i < int(keyBasePositions.size()))
 				keyBasePositions.erase(keyBasePositions.begin() + i);
             std::cout << "KEY PICKED UP" << std::endl;
+			AudioManager::instance().playSfx("pickup_key");
         }
     }
 
@@ -1028,6 +1030,7 @@ void Scene::update(int deltaTime)
 		sword = nullptr;
 		swordHasBasePosition = false;
 		std::cout << "GOT THE SWORD" << std::endl;
+		AudioManager::instance().playSfx("pickup_sword");
 	}
 
 	for (int i = heals.size() - 1; i >= 0; i--) {
@@ -1041,6 +1044,7 @@ void Scene::update(int deltaTime)
 			if (i < int(healBasePositions.size()))
 				healBasePositions.erase(healBasePositions.begin() + i);
 			std::cout << "HEAL PICKED UP" << std::endl;
+			AudioManager::instance().playSfx("pickup_heal");
 		}
 	}
 
@@ -1053,6 +1057,7 @@ void Scene::update(int deltaTime)
 			if (i < int(shieldBasePositions.size()))
 				shieldBasePositions.erase(shieldBasePositions.begin() + i);
 			std::cout << "SHIELD PICKED UP" << std::endl;
+			AudioManager::instance().playSfx("pickup_shield");
 		}
 	}
 
@@ -1272,6 +1277,7 @@ void Scene::update(int deltaTime)
 
 				scheduleTransitionToWorld(targetX, targetY);
 				cout << "Teleporting to room: map_" << targetX << "_" << targetY << endl;
+				AudioManager::instance().playSfx("teleport");
 			}
         }
 		portal ->update(deltaTime); 
@@ -1297,10 +1303,12 @@ void Scene::update(int deltaTime)
 						scheduleTransitionToWorld(targetX, targetY);
 						pendingTargetDoorIndex = link.targetDoorIndex;
 						cout << "Returning to world room: map_" << targetX << "_" << targetY << endl;
+						AudioManager::instance().playSfx("teleport");
 					}
 					else {
 						scheduleTransitionToMap(link.targetMap, true, link.targetDoorIndex);
 						cout << "Entering side room: " << link.targetMap << endl;
+						AudioManager::instance().playSfx("teleport");
 					}
 				}
 			}
@@ -1343,10 +1351,14 @@ void Scene::render()
 	texProgram.setUniform3f("flashColor", flashR, flashG, flashB);
 	texProgram.setUniform1f("warpAmount", 0.0f);
 	texProgram.setUniform1f("warpPhase", currentTime / 1000.0f);
+	texProgram.setUniform1f("time", currentTime / 1000.0f);
+	texProgram.setUniform1f("godModeAmount", 0.0f);
+	texProgram.setUniform1f("mapSwayAmount", 1.0f);
 	modelview = glm::translate(glm::mat4(1.0f), glm::vec3(-cameraX, -cameraY, 0.f));
 	texProgram.setUniformMatrix4f("modelview", modelview);
 	texProgram.setUniform2f("texCoordDispl", 0.f, 0.f);
 	map->render();
+	texProgram.setUniform1f("mapSwayAmount", 0.0f);
 	Sprite::setGlobalRenderOffset(glm::vec2(-cameraX, -cameraY));
 
 	for (Sprite* key : keys) { key->render(); }
@@ -1369,8 +1381,10 @@ void Scene::render()
 	warpRatio = std::max(0.0f, std::min(1.0f, warpRatio));
 	float playerWarpAmount = 0.55f * warpRatio;
 	texProgram.setUniform1f("warpAmount", playerWarpAmount);
+	texProgram.setUniform1f("godModeAmount", Game::instance().godMode ? 1.0f : 0.0f);
 	player->render();
 	texProgram.setUniform1f("warpAmount", 0.0f);
+	texProgram.setUniform1f("godModeAmount", 0.0f);
 
 	if (!vfxParticles.empty())
 	{

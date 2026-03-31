@@ -83,7 +83,7 @@ endif()
 
 # 8. AUTOMATIC SYMLINKS
 # This ensures your executable can find your assets!
-foreach(dir images levels shaders)
+foreach(dir images levels shaders sounds)
     add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
         COMMAND ${CMAKE_COMMAND} -E create_symlink
         ${CMAKE_CURRENT_SOURCE_DIR}/${dir}

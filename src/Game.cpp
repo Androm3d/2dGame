@@ -3,6 +3,7 @@
 #include <queue>
 #include <algorithm>
 #include "Game.h"
+#include "AudioManager.h"
 
 void Game::addDoorLinkBidirectional(const std::string &fromMap, int fromDoorIndex, const std::string &toMap, int toDoorIndex)
 {
@@ -395,6 +396,7 @@ void Game::init()
 	roomCollectedKeys.clear();
 	roomRuntimeStates.clear();
 	configureRoomGraph();
+	AudioManager::instance().init();
 	glClearColor(0.3f, 0.3f, 0.3f, 1.0f);
 	currentState = GameState::MENU;
 	menuSelection = 0;
