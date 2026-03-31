@@ -1,0 +1,360 @@
+2D PLATFORMER GAME - VJ COURSE 2025-26 Q2
+
+============================================
+PROJECT DESCRIPTION
+============================================
+
+This is a 2D platformer game featuring multi-level exploration, combat mechanics,
+and puzzle-solving elements. The player navigates through a 3x3 world grid (9 levels)
+plus side rooms, collecting keys to unlock portals and progress through the game.
+
+============================================
+GAME FEATURES
+============================================
+
+Core Mechanics:
+- Full platformer movement (walk, jump, climb ladders)
+- Combat system with sword attacks
+- Enemy AI with pathfinding and ranged/melee attacks
+- Item collection (keys, sword, shield, heal)
+- Multi-room level system with portals and doors
+- Save state for collected items per room
+
+New Mechanics (Implemented):
+- Weight blocks that can be pushed and eliminate enemies
+- Shield mechanic (blocks one hit, then consumed)
+- Heal items (restore life, max 9 lives)
+- Spring tiles (automatic jump boost)
+- Dash tiles (horizontal speed boost)
+
+Game States:
+- Main Menu
+- Instructions screen
+- Credits screen
+- Gameplay
+- Automatic return to menu on game over
+
+Debug Features:
+- God mode (invincibility)
+- All keys unlock
+- Level select (1-9)
+- HUD with all game state information
+
+============================================
+CONTROLS
+============================================
+
+Main Controls:
+- LEFT/RIGHT Arrow: Move
+- UP Arrow: Jump (or enter door/climb ladder when on ladder)
+- DOWN Arrow: Descend ladder
+- SPACE: Attack (requires sword to be collected)
+- ESC: Pause/Return to menu
+
+Menu Controls:
+- UP/DOWN Arrow: Navigate menu options
+- ENTER: Select menu option
+- ESC: Exit game (from main menu)
+
+Debug Shortcuts (PLAY mode only):
+- G: Toggle god mode (invincibility, red text in HUD)
+- K: Get all keys in current world
+- 1: Jump to level 1 (map 0,2)
+- 2: Jump to level 2 (map 1,2)
+- 3: Jump to level 3 (map 2,2)
+- 4: Jump to level 4 (map 2,1)
+- 5: Jump to level 5 (map 1,1)
+- 6: Jump to level 6 (map 0,1)
+- 7: Jump to level 7 (map 0,0)
+- 8: Jump to level 8 (map 1,0)
+- 9: Jump to level 9 (map 2,0)
+
+============================================
+GAMEPLAY OBJECTIVES
+============================================
+
+Main Objective:
+- Collect all keys in each world area (including connected side rooms)
+- Use portals to progress to the next level
+- Navigate through all 9 world levels
+- Defeat or avoid enemies
+- Maintain lives (start with 3, can heal up to 9)
+
+Item Functions:
+- Keys: Required to unlock portals between levels
+- Sword: Enables attack capability (no attack without sword)
+- Shield: Absorbs one hit, then disappears
+- Heal: Restores one life (capped at 9 lives maximum)
+
+Advanced Mechanics:
+- Weights can be pushed to eliminate enemies
+- Spring tiles automatically trigger a jump boost
+- Dash tiles amplify horizontal movement
+- Both have 2-second cooldowns to prevent spam
+
+Level Progression:
+- Doors lead to side rooms within the same world
+- Portals require ALL keys from connected rooms to activate
+- Portals transition between world grid positions
+- Game saves item collection state per room
+
+Lose Condition:
+- Losing all lives returns player to main menu
+- All progress is reset on new game start
+
+============================================
+COMPILATION INSTRUCTIONS
+============================================
+
+Prerequisites:
+- CMake 3.10 or higher
+- C++ compiler with C++11 support (GCC, Clang, MSVC)
+- GLEW (OpenGL Extension Wrangler)
+- GLFW3 (Window and input management)
+- GLM (OpenGL Mathematics)
+- FreeType (Font rendering)
+- OpenGL 3.3 or higher
+
+Linux/Unix Build:
+  cmake -S . -B Release
+  cmake --build Release
+  cd Release && ./BugsBunnyCrazyCastle
+
+Windows Build:
+  cmake -S . -B Release -G "Visual Studio 17 2022"
+  cmake --build Release --config Release
+  cd Release\Release && BugsBunnyCrazyCastle.exe
+
+macOS Build:
+  cmake -S . -B Release
+  cmake --build Release
+  cd Release && ./BugsBunnyCrazyCastle
+
+Installing Dependencies:
+
+Ubuntu/Debian:
+  sudo apt install build-essential cmake
+  sudo apt install libglew-dev libglfw3-dev libglm-dev libfreetype-dev
+
+Fedora/RHEL:
+  sudo dnf install gcc-c++ cmake
+  sudo dnf install glew-devel glfw-devel glm-devel freetype-devel
+
+Arch Linux:
+  sudo pacman -S base-devel cmake
+  sudo pacman -S glew glfw-x11 glm freetype2
+
+macOS (with Homebrew):
+  brew install cmake glew glfw glm freetype
+
+Windows:
+  Install Visual Studio with C++ development tools
+  Use vcpkg to install dependencies:
+    vcpkg install glew glfw3 glm freetype
+
+============================================
+PROJECT STRUCTURE
+============================================
+
+Root Directory:
+- CMakeLists.txt        : Build configuration
+- info.txt             : This file
+- README.md            : Project overview
+
+Source Code (src/):
+- main.cpp             : Entry point
+- Game.h/cpp           : Game singleton, state machine, item tracking
+- Scene.h/cpp          : Level management, entity updates, rendering
+- Player.h/cpp         : Player mechanics, movement, combat
+- Enemy.h/cpp          : Enemy1 (archer) AI and behavior
+- Enemy2.h/cpp         : Enemy2 (melee) AI and behavior  
+- Enemy3.h/cpp         : Enemy3 (melee) AI and behavior
+- TileMap.h/cpp        : Level loading, collision detection
+- Sprite.h/cpp         : Sprite rendering and animation
+- Text.h/cpp           : Font rendering for HUD and menus
+- Texture.h/cpp        : Texture loading
+- Shader.h/cpp         : Shader compilation
+- ShaderProgram.h/cpp  : Shader program management
+
+Assets:
+- images/              : Sprite sheets and textures
+- fonts/               : TrueType fonts for text rendering
+- levels/              : JSON level files (map_X_Y.json, room_X.json)
+- shaders/             : GLSL vertex and fragment shaders
+
+Build Output:
+- Release/             : Build directory (executables and object files)
+
+============================================
+LEVEL FILE FORMAT
+============================================
+
+Levels are stored as JSON files in the levels/ directory.
+Format follows Tiled Map Editor JSON export.
+
+File Naming:
+- World levels: map_X_Y.json (X=0-2 column, Y=0-2 row)
+- Side rooms: room_X.json (connected via doors)
+
+Tile Types:
+- SOLID: Collision walls and floors
+- ONE_WAY_PLATFORM: Can jump through from below
+- LADDER: Climbable vertical traversal
+- DOOR: Entrance to side rooms
+- PORTAL: Transition between world levels
+- KEY: Collectible key item
+- SWORD: Collectible weapon (enables attacks)
+- HEAL: Collectible health restore
+- SHIELD: Collectible damage blocker
+- WEIGHT: Pushable block
+- SPAWN: Player spawn point
+- SPRING: Jump boost tile (NEW)
+- DASH: Speed boost tile (NEW)
+
+Creating New Levels:
+1. Use Tiled Map Editor to create map
+2. Add custom property "type" to tiles
+3. Export as JSON to levels/ directory
+4. Update Game.cpp door graph if adding new rooms
+
+============================================
+ENEMY TYPES
+============================================
+
+Enemy1 (Archer):
+- Ranged combat with arrows
+- Uses BFS pathfinding to navigate towards player
+- Shoots arrows when player is in range
+- Arrows can be destroyed by sword attacks
+- Health: 3 hits
+
+Enemy2 (Melee):
+- Close-range melee attacks
+- Simple patrol behavior
+- Damages player on contact during attack animation
+- Health: 3 hits
+
+Enemy3 (Melee):
+- Close-range melee attacks
+- Patrol behavior
+- Damages player on contact during attack animation
+- Health: 3 hits
+
+All enemies can be eliminated by:
+- Sword attacks from player
+- Weight block collision
+
+============================================
+KNOWN ISSUES & LIMITATIONS
+============================================
+
+Missing Features:
+- No audio implementation (code ready, assets needed)
+- No final "victory" screen for completing all levels
+- No save/load system (progress resets on menu)
+- Limited visual feedback (no particles or screen shake)
+
+Performance:
+- Game runs at locked framerate (60 FPS)
+- May have slight input lag on slower systems
+
+Gameplay:
+- Spring/dash cooldowns are global (not per-tile)
+- Shield is consumed on ANY hit (not just enemy attacks)
+- Portal activation requires ALL keys in world (can be restrictive)
+
+============================================
+DEVELOPMENT NOTES
+============================================
+
+Implemented Features (All Phases Complete):
+
+Phase 1 - Core Game Loop:
+✓ State machine (MENU, PLAY, INSTRUCTIONS, CREDITS)
+✓ Menu navigation system
+✓ Lose flow (return to menu at 0 lives)
+✓ Level progression framework
+
+Phase 2 - Mechanics:
+✓ Weight-to-enemy elimination
+✓ Shield damage blocking
+✓ Heal with max cap (9 lives)
+✓ Sword-gated attacks
+✓ Spring traversal tiles
+✓ Dash traversal tiles
+
+Phase 3 - Debug Shortcuts:
+✓ God mode (G)
+✓ All keys unlock (K)
+✓ Level select (1-9)
+✓ Restricted to PLAY state
+
+Phase 4 - HUD & Feedback:
+✓ Comprehensive HUD (lives, keys, items, debug state)
+✓ Real-time updates during gameplay
+✓ Color-coded indicators
+
+Phase 5 - Polish:
+✓ Arrow destruction mechanic (sword required)
+✓ Audio integration points documented
+✓ Improved combat feedback
+
+Phase 6 - QA & Packaging:
+✓ Build stability verified
+✓ Packaging documentation
+✓ Manual task handoff document
+
+============================================
+CREDITS
+============================================
+
+Developed for VJ (Video Games) Course
+Academic Year: 2025-26 Q2
+
+Technologies Used:
+- OpenGL 3.3+ (Graphics rendering)
+- GLEW (Extension loading)
+- GLFW3 (Window management)
+- GLM (Mathematics)
+- FreeType (Font rendering)
+- SOIL (Texture loading - embedded)
+- Tiled Map Editor (Level design)
+
+Art Assets:
+- Samurai sprite animations
+- Enemy sprite animations
+- Environment tilesets
+- UI fonts
+
+Special Thanks:
+- Course instructors and TAs
+- OpenGL community
+- GLFW, GLEW, and GLM developers
+
+============================================
+LICENSE & COPYRIGHT
+============================================
+
+This project is created for educational purposes as part of
+the VJ course curriculum.
+
+External libraries used under their respective licenses:
+- GLFW (zlib/libpng license)
+- GLEW (Modified BSD, MIT)
+- GLM (MIT license)
+- FreeType (FreeType License)
+
+All game assets and source code are provided for
+academic evaluation only.
+
+============================================
+CONTACT & SUPPORT
+============================================
+
+For questions or issues related to this project:
+- Refer to course materials and documentation
+- Check MANUAL_TODO.md for manual task instructions
+- Review CMakeLists.txt for build configuration
+
+Last Updated: 2026-03-30
+Build Version: Release 1.0

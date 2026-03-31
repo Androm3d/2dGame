@@ -31,6 +31,7 @@ public:
 
 	void takeDamage(int knockDir);
 	bool checkArrowHit(const glm::vec2 &pPos, const glm::ivec2 &pSize);
+	void destroyArrowsInHitbox(const glm::vec4 &attackHitbox);
 	bool isAlive() const { return alive; }
 	bool isDying() const { return bDying; }
 	bool isInvincible() const { return hitTimer > 0; }

@@ -725,6 +725,26 @@ bool Enemy::checkArrowHit(const glm::vec2 &pPos, const glm::ivec2 &pSize)
 	return false;
 }
 
+
+void Enemy::destroyArrowsInHitbox(const glm::vec4 &attackHitbox)
+{
+	for (int i = (int)arrows.size() - 1; i >= 0; --i)
+	{
+		const Arrow &a = arrows[i];
+		float hbX = a.pos.x + (ARROW_SIZE - ARROW_HITBOX_W) / 2.f;
+		float hbY = a.pos.y + (ARROW_SIZE - ARROW_HITBOX_H) / 2.f;
+		
+		if (hbX < attackHitbox.x + attackHitbox.z &&
+			hbX + ARROW_HITBOX_W > attackHitbox.x &&
+			hbY < attackHitbox.y + attackHitbox.w &&
+			hbY + ARROW_HITBOX_H > attackHitbox.y)
+		{
+			arrows.erase(arrows.begin() + i);
+		}
+	}
+}
+
+
 glm::vec4 Enemy::getHitbox() const
 {
 	return glm::vec4(posEnemy.x, posEnemy.y, ENEMY_HITBOX_WIDTH, ENEMY_HITBOX_HEIGHT);

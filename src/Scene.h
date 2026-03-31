@@ -27,6 +27,9 @@ public:
 	void init();
 	void update(int deltaTime);
 	void render();
+	void renderMenuScreen(int selection);
+	void renderInstructionsScreen();
+	void renderCreditsScreen();
 	bool checkAABB(const glm::vec2& pos1, const glm::ivec2& size1, const glm::vec2& pos2, const glm::ivec2& size2);
 
 	const std::vector<Sprite*>& getKeys() const { return keys; }

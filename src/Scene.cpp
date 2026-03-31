@@ -504,6 +504,9 @@ void Scene::update(int deltaTime)
 			attackHitThisSwing = true;
 		}
 	}
+	if (player->isAttacking() && Game::instance().hasSword) {
+		enemy->destroyArrowsInHitbox(player->getAttackHitbox());
+	}
 	if (!player->isAttacking())
 		attackHitThisSwing = false;
 
@@ -630,7 +633,9 @@ void Scene::update(int deltaTime)
 
 	for (int i = heals.size() - 1; i >= 0; i--) {
 		if (checkAABB(pPos, pSize, heals[i]->getPosition(), glm::ivec2(map->getTileSize(), map->getTileSize()))) {
-			Game::instance().lives++; 
+			if (Game::instance().lives < 9) {
+				Game::instance().lives++;
+			}
 			Game::instance().collectHealInCurrentRoom();
 			delete heals[i];
 			heals.erase(heals.begin() + i);
@@ -699,6 +704,26 @@ void Scene::update(int deltaTime)
 		}
 
 		weights[i]->update(deltaTime);
+			
+		// Weight collision with enemies - reuse wPos and weightSize from above
+		glm::vec4 enemyHitbox = enemy->getHitbox();
+		if (enemy->isAlive() && checkAABB(wPos, weightSize, glm::vec2(enemyHitbox.x, enemyHitbox.y), glm::ivec2(enemyHitbox.z, enemyHitbox.w))) {
+			enemy->takeDamage(0);
+			enemy->takeDamage(0);
+			enemy->takeDamage(0);
+		}
+		glm::vec4 enemy2Hitbox = enemy2->getHitbox();
+		if (enemy2->isAlive() && checkAABB(wPos, weightSize, glm::vec2(enemy2Hitbox.x, enemy2Hitbox.y), glm::ivec2(enemy2Hitbox.z, enemy2Hitbox.w))) {
+			enemy2->takeDamage(0);
+			enemy2->takeDamage(0);
+			enemy2->takeDamage(0);
+		}
+		glm::vec4 enemy3Hitbox = enemy3->getHitbox();
+		if (enemy3->isAlive() && checkAABB(wPos, weightSize, glm::vec2(enemy3Hitbox.x, enemy3Hitbox.y), glm::ivec2(enemy3Hitbox.z, enemy3Hitbox.w))) {
+			enemy3->takeDamage(0);
+			enemy3->takeDamage(0);
+			enemy3->takeDamage(0);
+		}
 	}
 
     // --- CHECK EXIT DOORS ---
@@ -822,6 +847,7 @@ void Scene::render()
 		Game &game = Game::instance();
 		std::ostringstream line1;
 		std::ostringstream line2;
+		std::ostringstream line3;
 
 		int collectedKeysInWorld = game.getCollectedKeysInCurrentWorld();
 		line1 << "Lives: " << game.lives
@@ -831,6 +857,10 @@ void Scene::render()
 
 		hudText.render(line1.str(), glm::vec2(16.f, 28.f), 24, glm::vec4(1.f, 1.f, 0.85f, 1.f));
 		hudText.render(line2.str(), glm::vec2(16.f, 56.f), 22, glm::vec4(0.8f, 1.f, 0.9f, 1.f));
+
+		if (game.godMode) {
+			hudText.render("GOD MODE", glm::vec2(16.f, 84.f), 22, glm::vec4(1.f, 0.2f, 0.2f, 1.f));
+		}
 	}
 
 }
@@ -867,3 +897,74 @@ void Scene::initShaders()
 
 
 
+void Scene::renderMenuScreen(int selection)
+{
+	glm::mat4 modelview = glm::mat4(1.0f);
+	texProgram.use();
+	texProgram.setUniformMatrix4f("projection", projection);
+	texProgram.setUniformMatrix4f("modelview", modelview);
+	texProgram.setUniform4f("color", 1.0f, 1.0f, 1.0f, 1.0f);
+	
+	if (hudReady) {
+		glm::vec4 titleColor(1.0f, 0.9f, 0.2f, 1.0f);
+		glm::vec4 normalColor(0.8f, 0.8f, 0.8f, 1.0f);
+		glm::vec4 selectedColor(1.0f, 1.0f, 0.0f, 1.0f);
+		
+		hudText.render("2D PLATFORMER GAME", glm::vec2(300.f, 100.f), 36, titleColor);
+		
+		hudText.render("PLAY", glm::vec2(400.f, 220.f), 32, selection == 0 ? selectedColor : normalColor);
+		hudText.render("INSTRUCTIONS", glm::vec2(340.f, 280.f), 32, selection == 1 ? selectedColor : normalColor);
+		hudText.render("CREDITS", glm::vec2(380.f, 340.f), 32, selection == 2 ? selectedColor : normalColor);
+		
+		hudText.render("Use UP/DOWN to navigate, ENTER to select", glm::vec2(220.f, 420.f), 20, glm::vec4(0.6f, 0.6f, 0.6f, 1.0f));
+	}
+}
+
+void Scene::renderInstructionsScreen()
+{
+	glm::mat4 modelview = glm::mat4(1.0f);
+	texProgram.use();
+	texProgram.setUniformMatrix4f("projection", projection);
+	texProgram.setUniformMatrix4f("modelview", modelview);
+	texProgram.setUniform4f("color", 1.0f, 1.0f, 1.0f, 1.0f);
+	
+	if (hudReady) {
+		glm::vec4 titleColor(1.0f, 0.9f, 0.2f, 1.0f);
+		glm::vec4 textColor(0.9f, 0.9f, 0.9f, 1.0f);
+		
+		hudText.render("INSTRUCTIONS", glm::vec2(340.f, 60.f), 32, titleColor);
+		
+		hudText.render("Arrow Keys - Move", glm::vec2(100.f, 140.f), 24, textColor);
+		hudText.render("SPACE - Jump", glm::vec2(100.f, 180.f), 24, textColor);
+		hudText.render("A - Attack (requires sword)", glm::vec2(100.f, 220.f), 24, textColor);
+		hudText.render("UP - Enter doors", glm::vec2(100.f, 260.f), 24, textColor);
+		hudText.render("ESC - Pause/Menu", glm::vec2(100.f, 300.f), 24, textColor);
+		
+		hudText.render("Debug shortcuts (PLAY mode):", glm::vec2(100.f, 350.f), 22, glm::vec4(0.7f, 0.7f, 1.0f, 1.0f));
+		hudText.render("G - God Mode, K - Get all keys, 1-9 - Jump to level", glm::vec2(120.f, 380.f), 20, textColor);
+		
+		hudText.render("Press ESC to return to menu", glm::vec2(260.f, 440.f), 20, glm::vec4(0.6f, 0.6f, 0.6f, 1.0f));
+	}
+}
+
+void Scene::renderCreditsScreen()
+{
+	glm::mat4 modelview = glm::mat4(1.0f);
+	texProgram.use();
+	texProgram.setUniformMatrix4f("projection", projection);
+	texProgram.setUniformMatrix4f("modelview", modelview);
+	texProgram.setUniform4f("color", 1.0f, 1.0f, 1.0f, 1.0f);
+	
+	if (hudReady) {
+		glm::vec4 titleColor(1.0f, 0.9f, 0.2f, 1.0f);
+		glm::vec4 textColor(0.9f, 0.9f, 0.9f, 1.0f);
+		
+		hudText.render("CREDITS", glm::vec2(400.f, 100.f), 32, titleColor);
+		
+		hudText.render("2D Platformer Game", glm::vec2(300.f, 200.f), 28, textColor);
+		hudText.render("Developed for VJ Course", glm::vec2(260.f, 250.f), 24, textColor);
+		hudText.render("2025-26 Q2", glm::vec2(380.f, 290.f), 24, textColor);
+		
+		hudText.render("Press ESC to return to menu", glm::vec2(260.f, 440.f), 20, glm::vec4(0.6f, 0.6f, 0.6f, 1.0f));
+	}
+}

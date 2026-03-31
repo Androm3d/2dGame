@@ -58,6 +58,8 @@ void Player::init(const glm::ivec2 &tileMapPos, ShaderProgram &shaderProgram)
 	facingLeft = false;
 	alive = true;
 	hitTimer = 0;
+	springCooldown = 0;
+	dashCooldown = 0;
 	spritesheet.loadFromFile("../images/Samurai_Animation.png", TEXTURE_PIXEL_FORMAT_RGBA);
 	spritesheet.setWrapS(GL_CLAMP_TO_EDGE);
 	spritesheet.setWrapT(GL_CLAMP_TO_EDGE);
@@ -156,8 +158,13 @@ void Player::update(int deltaTime)
 {
 	if (!alive) return;
 	if (hitTimer > 0) hitTimer--;
+	if (springCooldown > 0) springCooldown--;
+	if (dashCooldown > 0) dashCooldown--;
+	
 	sprite->update(deltaTime);
 	bool onLadder = map->isOnLadder(posPlayer, glm::ivec2(Player::HITBOX_WIDTH, Player::HITBOX_HEIGHT));
+	bool onSpring = map->isOnSpring(posPlayer, glm::ivec2(Player::HITBOX_WIDTH, Player::HITBOX_HEIGHT));
+	bool onDash = map->isOnDash(posPlayer, glm::ivec2(Player::HITBOX_WIDTH, Player::HITBOX_HEIGHT));
 	bool upPressed = Game::instance().getKey(GLFW_KEY_UP);
 	bool upAllowsJump = upPressed && !Game::instance().isJumpInputBlocked();
 	bool downPressed = Game::instance().getKey(GLFW_KEY_DOWN);
@@ -166,7 +173,7 @@ void Player::update(int deltaTime)
 	bool skipMovement = false;
 
 	// Attack with SPACE
-	if(Game::instance().getKey(GLFW_KEY_SPACE) && !bAttacking && !bClimbing)
+	if(Game::instance().getKey(GLFW_KEY_SPACE) && !bAttacking && !bClimbing && Game::instance().hasSword)
 	{
 		bAttacking = true;
 		attackSprite->changeAnimation(0);
@@ -178,6 +185,23 @@ void Player::update(int deltaTime)
 		if(attackSprite->animationFinished())
 			bAttacking = false;
 		// Only skip horizontal movement, but keep gravity/jump physics running
+	}
+	// Spring boost
+	if (onSpring && !bJumping && springCooldown == 0) {
+		bJumping = true;
+		jumpAngle = 0;
+		startY = posPlayer.y;
+		springCooldown = 120;
+	}
+	
+	// Dash boost
+	if (onDash && dashCooldown == 0) {
+		if (leftPressed) {
+			posPlayer.x -= 60;
+		} else if (rightPressed) {
+			posPlayer.x += 60;
+		}
+		dashCooldown = 120;
 	}
 
 	// Climbing logic:
@@ -386,7 +410,12 @@ void Player::render()
 
 void Player::takeDamage()
 {
-	if (!alive || hitTimer > 0) return;   // already invincible
+	if (!alive || hitTimer > 0 || Game::instance().godMode) return;
+	if (Game::instance().hasShield) {
+		Game::instance().hasShield = false;
+		hitTimer = 90;
+		return;
+	}
 	Game::instance().lives--;
 	if (Game::instance().lives <= 0)
 	{

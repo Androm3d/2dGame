@@ -39,6 +39,8 @@ private:
 	bool facingLeft;
 	bool alive;
 	int hitTimer;
+	int springCooldown;
+	int dashCooldown;
 	glm::ivec2 tileMapDispl, posPlayer;
 	int jumpAngle, startY;
 	Texture spritesheet;

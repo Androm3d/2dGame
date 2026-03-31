@@ -321,12 +321,54 @@ void Game::init()
 	roomCollectedKeys.clear();
 	configureRoomGraph();
 	glClearColor(0.3f, 0.3f, 0.3f, 1.0f);
+	currentState = GameState::MENU;
+	menuSelection = 0;
+	godMode = false;
 	scene.init();
 }
 
+void Game::resetGameState()
+{
+	lives = 3;
+	keysCollected = 0;
+	totalKeysInLevel = 0;
+	hasSword = false;
+	hasShield = false;
+	currentRoomX = 0;
+	currentRoomY = 2;
+	inSideRoom = false;
+	sideRoomMapName.clear();
+	jumpInputBlocked = false;
+	hasNextSpawnDoor = false;
+	nextSpawnMap.clear();
+	nextSpawnDoorIndex = -1;
+	roomTotalKeys.clear();
+	roomCollectedKeys.clear();
+	roomCollectedHeals.clear();
+	roomCollectedShields.clear();
+	roomCollectedSword.clear();
+	godMode = false;
+	scene.init();
+}
+
+void Game::transitionToState(GameState newState)
+{
+	currentState = newState;
+	if (newState == GameState::PLAY) {
+		resetGameState();
+	}
+}
+
+
 bool Game::update(int deltaTime)
 {
-	scene.update(deltaTime);
+	if (currentState == GameState::PLAY) {
+		scene.update(deltaTime);
+		
+		if (lives <= 0) {
+			transitionToState(GameState::MENU);
+		}
+	}
 
 	return bPlay;
 }
@@ -334,13 +376,80 @@ bool Game::update(int deltaTime)
 void Game::render()
 {
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-	scene.render();
+	
+	if (currentState == GameState::MENU) {
+		scene.renderMenuScreen(menuSelection);
+	} else if (currentState == GameState::INSTRUCTIONS) {
+		scene.renderInstructionsScreen();
+	} else if (currentState == GameState::CREDITS) {
+		scene.renderCreditsScreen();
+	} else if (currentState == GameState::PLAY) {
+		scene.render();
+	}
 }
+
 
 void Game::keyPressed(int key)
 {
-	if(key == GLFW_KEY_ESCAPE) // Escape code
-		bPlay = false;
+	if(key == GLFW_KEY_ESCAPE) {
+		if (currentState == GameState::PLAY) {
+			transitionToState(GameState::MENU);
+		} else if (currentState == GameState::INSTRUCTIONS || currentState == GameState::CREDITS) {
+			transitionToState(GameState::MENU);
+		} else {
+			bPlay = false;
+		}
+	}
+	
+	if (currentState == GameState::MENU) {
+		if (key == GLFW_KEY_UP) {
+			menuSelection = (menuSelection - 1 + numMenuOptions) % numMenuOptions;
+		} else if (key == GLFW_KEY_DOWN) {
+			menuSelection = (menuSelection + 1) % numMenuOptions;
+		} else if (key == GLFW_KEY_ENTER || key == GLFW_KEY_SPACE) {
+			if (menuSelection == 0) {
+				transitionToState(GameState::PLAY);
+			} else if (menuSelection == 1) {
+				transitionToState(GameState::INSTRUCTIONS);
+			} else if (menuSelection == 2) {
+				transitionToState(GameState::CREDITS);
+			}
+		}
+	}
+	
+	if (currentState == GameState::PLAY) {
+		if (key == GLFW_KEY_G) {
+			godMode = !godMode;
+		}
+		if (key == GLFW_KEY_K) {
+			const std::string worldMap = getCurrentWorldMapName();
+			int totalKeys = getTotalKeysInCurrentWorld();
+			for (auto &entry : roomCollectedKeys) {
+				if (entry.first.find("../levels/map_") != std::string::npos) {
+					entry.second = getRoomTotalKeys(entry.first);
+				}
+			}
+			keysCollected = totalKeys;
+		}
+		if (key >= GLFW_KEY_1 && key <= GLFW_KEY_9) {
+			int level = key - GLFW_KEY_1 + 1;
+			switch (level) {
+				case 1: currentRoomX = 0; currentRoomY = 2; break;
+				case 2: currentRoomX = 1; currentRoomY = 2; break;
+				case 3: currentRoomX = 2; currentRoomY = 2; break;
+				case 4: currentRoomX = 2; currentRoomY = 1; break;
+				case 5: currentRoomX = 1; currentRoomY = 1; break;
+				case 6: currentRoomX = 0; currentRoomY = 1; break;
+				case 7: currentRoomX = 0; currentRoomY = 0; break;
+				case 8: currentRoomX = 1; currentRoomY = 0; break;
+				case 9: currentRoomX = 2; currentRoomY = 0; break;
+			}
+			inSideRoom = false;
+			sideRoomMapName.clear();
+			scene.init();
+		}
+	}
+	
 	keys[key] = true;
 }
 

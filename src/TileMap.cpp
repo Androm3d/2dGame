@@ -267,6 +267,8 @@ bool TileMap::loadLevelJSON(const string &levelFile)
 							else if (typeVal == "SHIELD") tileDictionary[globalId] = TileType::SHIELD;
 							else if (typeVal == "WEIGHT") tileDictionary[globalId] = TileType::WEIGHT;
 							else if (typeVal == "SPAWN") tileDictionary[globalId] = TileType::SPAWN;
+							else if (typeVal == "SPRING") tileDictionary[globalId] = TileType::SPRING;
+							else if (typeVal == "DASH") tileDictionary[globalId] = TileType::DASH;
                         }
                     }
                 }
@@ -556,6 +558,40 @@ bool TileMap::isOnLadder(const glm::ivec2 &pos, const glm::ivec2 &size) const
 	for (int y = y0; y <= y1; y++)
 	{
 		if (getTileType(map[y * mapSize.x + centerX]) == TileType::LADDER)
+			return true;
+	}
+	return false;
+}
+
+bool TileMap::isOnSpring(const glm::ivec2 &pos, const glm::ivec2 &size) const
+{
+	int x0 = pos.x / tileSize;
+	int x1 = (pos.x + size.x - 1) / tileSize;
+	int yBottom = (pos.y + size.y) / tileSize;
+
+	if (x0 < 0 || x1 >= mapSize.x || yBottom < 0 || yBottom >= mapSize.y)
+		return false;
+
+	for (int x = x0; x <= x1; x++)
+	{
+		if (getTileType(map[yBottom * mapSize.x + x]) == TileType::SPRING)
+			return true;
+	}
+	return false;
+}
+
+bool TileMap::isOnDash(const glm::ivec2 &pos, const glm::ivec2 &size) const
+{
+	int x0 = pos.x / tileSize;
+	int x1 = (pos.x + size.x - 1) / tileSize;
+	int yBottom = (pos.y + size.y) / tileSize;
+
+	if (x0 < 0 || x1 >= mapSize.x || yBottom < 0 || yBottom >= mapSize.y)
+		return false;
+
+	for (int x = x0; x <= x1; x++)
+	{
+		if (getTileType(map[yBottom * mapSize.x + x]) == TileType::DASH)
 			return true;
 	}
 	return false;

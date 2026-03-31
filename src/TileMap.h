@@ -25,7 +25,12 @@ enum class TileType {
 	HEAL,
 	SHIELD, 
 	WEIGHT,
-	SPAWN
+	SPAWN,
+	SPRING,
+	DASH,
+	ENEMY_SPAWN_1,
+	ENEMY_SPAWN_2,
+	ENEMY_SPAWN_3
 };
 
 enum class CollisionDir { LEFT, RIGHT, UP, DOWN };
@@ -52,6 +57,8 @@ public:
 
 	bool checkCollision(const glm::ivec2 &pos, const glm::ivec2 &size, CollisionDir dir, int *correctedPos = nullptr, bool dropThrough = false) const;
 	bool isOnLadder(const glm::ivec2 &pos, const glm::ivec2 &size) const;
+	bool isOnSpring(const glm::ivec2 &pos, const glm::ivec2 &size) const;
+	bool isOnDash(const glm::ivec2 &pos, const glm::ivec2 &size) const;
 	TileType getTileType(const int tileId) const;
 	TileType getTileTypeAtPos(const glm::ivec2 &pos) const;
 

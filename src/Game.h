@@ -46,6 +46,7 @@ public:
 
     bool hasSword = false;
     bool hasShield = false;
+	bool godMode = false;
 
 	int currentRoomX = 0;
 	int currentRoomY = 2;
@@ -100,6 +101,9 @@ public:
 	void init();
 	bool update(int deltaTime);
 	void render();
+
+	void resetGameState();
+	void transitionToState(GameState newState);
 	
 	// Input callback methods
 	void keyPressed(int key);
@@ -125,6 +129,9 @@ private:
 	std::unordered_map<std::string, bool> roomCollectedSword;
 	DoorGraph doorGraph;
 	Scene scene;
+
+	int menuSelection = 0;
+	int numMenuOptions = 3;
 
 };
 
