@@ -857,8 +857,9 @@ bool Enemy::checkArrowHit(const glm::vec2 &pPos, const glm::ivec2 &pSize)
 }
 
 
-void Enemy::reflectArrowHit(const glm::vec2 &pPos, const glm::ivec2 &pSize, bool playerFacingLeft)
+bool Enemy::reflectArrowHit(const glm::vec2 &pPos, const glm::ivec2 &pSize, bool playerFacingLeft)
 {
+	bool reflectedAny = false;
 	for (int i = (int)arrows.size() - 1; i >= 0; --i)
 	{
 		if (arrows[i].reflected) continue;
@@ -871,8 +872,10 @@ void Enemy::reflectArrowHit(const glm::vec2 &pPos, const glm::ivec2 &pSize, bool
 		{
 			arrows[i].goingLeft = !arrows[i].goingLeft;
 			arrows[i].reflected = true;
+			reflectedAny = true;
 		}
 	}
+	return reflectedAny;
 }
 
 bool Enemy::checkReflectedArrowHit(const glm::vec4 &hitbox, int &outKnockDir)

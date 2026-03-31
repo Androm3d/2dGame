@@ -54,6 +54,8 @@ private:
 	void clearLevelEntities();
 	void updateCamera();
 	void updateVfx(int deltaTime);
+	void saveCurrentRoomRuntimeState();
+	int findPortalSpawnIndexForSide(const std::vector<glm::ivec2> &portalSpawns, int sideCode) const;
 	void spawnExplosionParticles(const glm::vec2 &center);
 	void spawnLandingDustParticles(const glm::vec2 &center, const glm::vec4 &baseColor, float impact);
 	glm::vec4 sampleGroundDustColor(const glm::vec2 &playerPos) const;
@@ -120,6 +122,8 @@ private:
 	bool hudReady = false;
 	std::vector<VfxParticle> vfxParticles;
 	int explosionFlashMs = 0;
+	int parryFlashMs = 0;
+	int teleportWarpMs = 0;
 	float grayscaleAmount = 0.0f;
 
 };

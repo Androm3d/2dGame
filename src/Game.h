@@ -27,6 +27,25 @@ public:
 		int targetDoorIndex = -1;
 	};
 
+	enum class PortalEntrySide {
+		NONE,
+		LEFT,
+		RIGHT,
+		TOP,
+		BOTTOM
+	};
+
+	struct RoomRuntimeState {
+		std::vector<glm::vec2> weightPositions;
+		std::vector<float> weightVelocities;
+		bool enemy1Alive = true;
+		bool enemy2Alive = true;
+		bool enemy3Alive = true;
+		glm::vec2 enemy1Pos = glm::vec2(0.0f);
+		glm::vec2 enemy2Pos = glm::vec2(0.0f);
+		glm::vec2 enemy3Pos = glm::vec2(0.0f);
+	};
+
 private:
 	using DoorGraph = std::unordered_map<std::string, std::vector<DoorLink>>;
 
@@ -77,6 +96,7 @@ public:
 	bool hasSwordBeenCollectedInRoom(const std::string &mapName) const;
 	void collectSwordInCurrentRoom();
 	void preloadConnectedRoomKeys();
+	void grantAllKeysInCurrentWorld();
 	int getTotalKeysInCurrentWorld();
 	int getCollectedKeysInCurrentWorld() const;
 	bool canUsePortalsFromCurrentWorld();
@@ -86,6 +106,10 @@ public:
 
 	void setNextSpawnDoor(const std::string &mapName, int doorIndex);
 	bool consumeNextSpawnDoor(const std::string &mapName, int &doorIndexOut);
+	void setNextSpawnPortal(const std::string &mapName, PortalEntrySide side);
+	bool consumeNextSpawnPortal(const std::string &mapName, PortalEntrySide &sideOut);
+	void saveRoomRuntimeState(const std::string &mapName, const RoomRuntimeState &state);
+	bool loadRoomRuntimeState(const std::string &mapName, RoomRuntimeState &stateOut) const;
 
     // Helper methods for the Scene to call
     void addKey() { keysCollected++; }
@@ -122,11 +146,15 @@ private:
 	bool hasNextSpawnDoor = false;
 	std::string nextSpawnMap;
 	int nextSpawnDoorIndex = -1;
+	bool hasNextSpawnPortal = false;
+	std::string nextSpawnPortalMap;
+	PortalEntrySide nextSpawnPortalSide = PortalEntrySide::NONE;
 	std::unordered_map<std::string, int> roomTotalKeys;
 	std::unordered_map<std::string, int> roomCollectedKeys;
 	std::unordered_map<std::string, int> roomCollectedHeals;
 	std::unordered_map<std::string, int> roomCollectedShields;
 	std::unordered_map<std::string, bool> roomCollectedSword;
+	std::unordered_map<std::string, RoomRuntimeState> roomRuntimeStates;
 	DoorGraph doorGraph;
 	Scene scene;
 

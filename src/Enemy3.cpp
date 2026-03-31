@@ -759,8 +759,9 @@ bool Enemy3::checkFireballHit(const glm::vec2 &pPos, const glm::ivec2 &pSize)
 	return false;
 }
 
-void Enemy3::reflectFireballHit(const glm::vec2 &pPos, const glm::ivec2 &pSize, bool playerFacingLeft)
+bool Enemy3::reflectFireballHit(const glm::vec2 &pPos, const glm::ivec2 &pSize, bool playerFacingLeft)
 {
+	bool reflectedAny = false;
 	for (int i = (int)fireballs.size() - 1; i >= 0; --i)
 	{
 		if (fireballs[i].reflected) continue;
@@ -772,8 +773,10 @@ void Enemy3::reflectFireballHit(const glm::vec2 &pPos, const glm::ivec2 &pSize, 
 		{
 			fb.goingLeft = !fb.goingLeft;
 			fb.reflected = true;
+			reflectedAny = true;
 		}
 	}
+	return reflectedAny;
 }
 
 bool Enemy3::checkReflectedFireballHit(const glm::vec4 &hitbox, int &outKnockDir)
