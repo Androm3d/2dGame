@@ -48,7 +48,6 @@ int TileMap::countKeysInLevelFile(const std::string &levelFile)
 	ifstream fin;
 	string resolvedPath;
 	if (!openWithFallback(fin, levelFile, resolvedPath)) {
-		cout << "Warning: Could not open JSON file for key count: " << levelFile << endl;
 		return 0;
 	}
 
@@ -169,7 +168,6 @@ bool TileMap::loadLevelJSON(const string &levelFile)
 	ifstream fin;
 	string resolvedPath;
 	if(!openWithFallback(fin, levelFile, resolvedPath)) {
-        cout << "Error: Could not open JSON file: " << levelFile << endl;
         return false;
     }
 
@@ -205,10 +203,7 @@ bool TileMap::loadLevelJSON(const string &levelFile)
         imgHeight = j["tilesets"][0]["imageheight"];
     } else {
         // The tileset is an external .tsx file
-        cout << "WARNING: Tileset is not embedded in Tiled! Falling back to default." << endl;
-        rawImagePath = "tiles.png"; 
-        
-        // Put the width/height of your actual tiles.png here as a fallback
+        rawImagePath = "tiles.png";
         // If your tile is 32x32, and the image is 10 tiles wide / 10 tiles high:
         imgWidth = 320;  
         imgHeight = 320; 

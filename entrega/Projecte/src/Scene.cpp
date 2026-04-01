@@ -181,11 +181,8 @@ void Scene::init()
 
 	player->init(glm::ivec2(SCREEN_X, SCREEN_Y), texProgram);
 	if (map->getSpawnLocations().empty()) {
-		std::cerr << "Warning: No spawn point defined in the map! Defaulting to (0,0)." << std::endl;
-		
 	}
 	else {
-		std::cout << "Player spawn point: (" << map->getSpawnLocations()[0].x << ", " << map->getSpawnLocations()[0].y << ")" << std::endl;
 		playerInitPos =  glm::vec2(map->getSpawnLocations()[0]);
 		playerInitPos.y -= float(Player::HITBOX_HEIGHT - map->getTileSize());
 		playerInitPos.y -= PLAYER_SPAWN_CLIP_OFFSET;
@@ -267,8 +264,7 @@ void Scene::init()
 			enemyActivated.push_back(!isAlive || isActivated);
 		}
 		if (spawnPoints.empty()) {
-			std::cerr << "Warning: No SPAWN_ENEMY_1 tiles found. Enemy1 disabled." << std::endl;
-		}
+			}
 	}
 	
 	// Spawn all Enemy2 instances from all spawn points
@@ -305,8 +301,7 @@ void Scene::init()
 			enemy2Activated.push_back(!isAlive || isActivated);
 		}
 		if (spawnPoints.empty()) {
-			std::cerr << "Warning: No SPAWN_ENEMY_2 tiles found. Enemy2 disabled." << std::endl;
-		}
+			}
 	}
 	
 	// Spawn all Enemy3 instances from all spawn points
@@ -343,8 +338,7 @@ void Scene::init()
 			enemy3Activated.push_back(!isAlive || isActivated);
 		}
 		if (spawnPoints.empty()) {
-			std::cerr << "Warning: No SPAWN_ENEMY_3 tiles found. Enemy3 disabled." << std::endl;
-		}
+			}
 	}
 	
 	viewWidth = float(map->getRoomSize().x * map->getTileSize());
@@ -608,8 +602,7 @@ void Scene::init()
 		if(fontPath != nullptr)
 			hudReady = hudText.init(fontPath);
 		if(!hudReady)
-			std::cerr << "Warning: HUD font failed to initialize. Status text will be hidden." << std::endl;
-	}
+		}
 
 	// Menu samurai cover sprite (idle animation, scaled to view)
 	{
@@ -1187,7 +1180,6 @@ void Scene::update(int deltaTime)
 	// Fall out of bounds death check
 	if (pPos.y > map->getMapSize().y * map->getTileSize() + pSize.y) {
 		Game::instance().lives--;
-		std::cout << "Player fell! Lives remaining: " << Game::instance().lives << std::endl;
 		if (Game::instance().lives <= 0)
 			return;
 		player->setPosition(playerInitPos);
@@ -1215,7 +1207,6 @@ void Scene::update(int deltaTime)
             keys.erase(keys.begin() + i); 
 			if (i < int(keyBasePositions.size()))
 				keyBasePositions.erase(keyBasePositions.begin() + i);
-            std::cout << "KEY PICKED UP" << std::endl;
 			AudioManager::instance().playSfx("pickup_key");
         }
     }
@@ -1227,7 +1218,6 @@ void Scene::update(int deltaTime)
 		delete sword;
 		sword = nullptr;
 		swordHasBasePosition = false;
-		std::cout << "GOT THE SWORD" << std::endl;
 		AudioManager::instance().playSfx("pickup_sword");
 	}
 
@@ -1241,7 +1231,6 @@ void Scene::update(int deltaTime)
 			heals.erase(heals.begin() + i);
 			if (i < int(healBasePositions.size()))
 				healBasePositions.erase(healBasePositions.begin() + i);
-			std::cout << "HEAL PICKED UP" << std::endl;
 			AudioManager::instance().playSfx("pickup_heal");
 		}
 	}
@@ -1254,7 +1243,6 @@ void Scene::update(int deltaTime)
 			shields.erase(shields.begin() + i);
 			if (i < int(shieldBasePositions.size()))
 				shieldBasePositions.erase(shieldBasePositions.begin() + i);
-			std::cout << "SHIELD PICKED UP" << std::endl;
 			AudioManager::instance().playSfx("pickup_shield");
 		}
 	}
@@ -1461,8 +1449,7 @@ void Scene::update(int deltaTime)
             
 			if (upJustPressed && !transitionPending) {
 				if (!Game::instance().canUsePortalsFromCurrentWorld()) {
-					cout << "Portal is locked: collect all keys in this map and its connected rooms." << endl;
-					continue;
+						continue;
 				}
 				teleportWarpMs = std::max(teleportWarpMs, TELEPORT_WARP_MS);
 				
@@ -1508,7 +1495,6 @@ void Scene::update(int deltaTime)
 				Game::instance().setNextSpawnPortal(targetMap, destinationSpawnSide);
 
 				scheduleTransitionToWorld(targetX, targetY);
-				cout << "Teleporting to room: map_" << targetX << "_" << targetY << endl;
 				AudioManager::instance().playSfx("teleport");
 			}
         }
@@ -1535,11 +1521,9 @@ void Scene::update(int deltaTime)
 					if (parseWorldMapCoords(link.targetMap, targetX, targetY)) {
 						scheduleTransitionToWorld(targetX, targetY);
 						pendingTargetDoorIndex = link.targetDoorIndex;
-						cout << "Returning to world room: map_" << targetX << "_" << targetY << endl;
 					}
 					else {
 						scheduleTransitionToMap(link.targetMap, true, link.targetDoorIndex);
-						cout << "Entering side room: " << link.targetMap << endl;
 					}
 				}
 			}

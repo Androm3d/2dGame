@@ -42,7 +42,6 @@ bool Texture::loadFromFile(const string &filename, PixelFormat format)
 
 	if(image == NULL)
 	{
-		cerr << "Texture load failed: " << filename << endl;
 		return false;
 }
 
