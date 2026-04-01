@@ -57,6 +57,7 @@ private:
 	bool springTriggered;
 	bool hardLandingTriggered;
 	float hardLandingSpeed;
+	int footstepCooldownMs;
 	int jumpHeight;
 	float dashVelocity;
 	float dashVelocityStart;

@@ -5,13 +5,13 @@
 #include <GL/glew.h>
 #include "Enemy3.h"
 #include "EnemyNavigator.h"
+#include "AudioManager.h"
 
 
 #include "GameConstants.h"
 
 static const float E3_JUMP_VELOCITY = std::sqrt(2.0f * GRAVITY * float(E3_JUMP_HEIGHT));
 static const float E3_SPRING_JUMP_VELOCITY = E3_JUMP_VELOCITY * std::sqrt(3.0f);
-static const int E3_DROP_THROUGH_MS = PLAYER_DROP_THROUGH_MS;
 
 
 enum Enemy3Anims
@@ -286,6 +286,14 @@ void Enemy3::update(int deltaTime, const glm::vec2 &playerPos)
 
 	if (attackCooldown > 0) attackCooldown--;
 
+	// Keep facing the player for combat readability (shooting/melee), but still allow path chase.
+	float faceDx = playerPos.x - posEnemy.x;
+	if (std::abs(faceDx) > 2.0f)
+	{
+		facingLeft = (faceDx < 0.0f);
+		sprite->setFlipHorizontal(facingLeft);
+	}
+
 	// --- Fire cast: freeze until animation finishes, then spawn fireball ---
 	if (bCasting)
 	{
@@ -427,6 +435,7 @@ void Enemy3::takeDamage(int knockDir)
 	bMelee   = false;
 	if (health <= 0)
 	{
+		AudioManager::instance().playHurt(AudioManager::HurtProfile::EnemyHigh);
 		alive           = false;
 		bDying          = true;
 		knockbackFrames = 0;
@@ -438,6 +447,7 @@ void Enemy3::takeDamage(int knockDir)
 		knockbackFrames = KNOCKBACK_FRAMES;
 		knockbackDir    = knockDir;
 		sprite->changeAnimation(HURT);
+		AudioManager::instance().playHurt(AudioManager::HurtProfile::EnemyHigh);
 	}
 }
 

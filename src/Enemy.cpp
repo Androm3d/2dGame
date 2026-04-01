@@ -6,13 +6,29 @@
 #include <GL/glew.h>
 #include "Enemy.h"
 #include "EnemyNavigator.h"
+#include "AudioManager.h"
 
 
 #include "GameConstants.h"
 
 static const float ENEMY_JUMP_VELOCITY = std::sqrt(2.0f * GRAVITY * float(ENEMY_JUMP_HEIGHT));
 static const float ENEMY_SPRING_JUMP_VELOCITY = ENEMY_JUMP_VELOCITY * std::sqrt(3.0f);
-static const int ENEMY_DROP_THROUGH_MS = PLAYER_DROP_THROUGH_MS;
+
+namespace {
+bool hasHorizontalLineOfSight(TileMap *map, const glm::ivec2 &fromPos, const glm::ivec2 &toPos)
+{
+	if (map == nullptr) return false;
+	int startX = std::min(fromPos.x, toPos.x);
+	int endX = std::max(fromPos.x, toPos.x);
+	int y = fromPos.y;
+	for (int x = startX; x <= endX; x += 8)
+	{
+		if (map->getTileTypeAtPos(glm::ivec2(x, y)) == TileType::SOLID)
+			return false;
+	}
+	return true;
+}
+}
 
 
 enum EnemyAnims
@@ -363,20 +379,53 @@ void Enemy::update(int deltaTime, const glm::vec2 &playerPos)
 		return;
 	}
 
-	// --- Check if we should start shooting ---
-	if (shotCooldown <= 0 && onGround && !bJumping)
-	{
-		float dx = playerPos.x - posEnemy.x;
-		float dy = playerPos.y - (posEnemy.y - 16.f); // approximate vertical alignment
-		bool playerInFront = (facingLeft && dx < 0) || (!facingLeft && dx > 0);
+	float dx = playerPos.x - posEnemy.x;
+	float dy = playerPos.y - (posEnemy.y - 16.f);
+	bool playerInShootBand = (std::abs(dx) < SHOT_DETECT_RANGE && std::abs(dy) < SHOT_DETECT_VERTICAL);
+	glm::ivec2 enemyEye(posEnemy.x + ENEMY_HITBOX_WIDTH / 2, posEnemy.y + ENEMY_HITBOX_HEIGHT / 4);
+	glm::ivec2 playerAim(int(playerPos.x) + ENEMY_HITBOX_WIDTH / 2, int(playerPos.y) + ENEMY_HITBOX_HEIGHT / 3);
+	bool playerVisible = hasHorizontalLineOfSight(map, enemyEye, playerAim);
 
-		if (playerInFront && abs(dx) < SHOT_DETECT_RANGE && abs(dy) < SHOT_DETECT_VERTICAL)
-		{
-			bShooting = true;
-			shotSprite->changeAnimation(0);
-			shotSprite->setFlipHorizontal(facingLeft);
-			return;
+	// Archers should immediately face the player when in shooting band even if pathing fails.
+	if (playerInShootBand)
+	{
+		facingLeft = dx < 0.0f;
+		sprite->setFlipHorizontal(facingLeft);
+		shotSprite->setFlipHorizontal(facingLeft);
+	}
+
+	// --- Check if we should start shooting ---
+	if (shotCooldown <= 0 && onGround && !bJumping && playerInShootBand && playerVisible)
+	{
+		bShooting = true;
+		shotSprite->changeAnimation(0);
+		shotSprite->setFlipHorizontal(facingLeft);
+		return;
+	}
+
+	// If player is in a valid shooting lane, hold position and keep aiming instead of chasing.
+	if (!bShooting && playerInShootBand && playerVisible)
+	{
+		if (sprite->animation() != RUN)
+			sprite->changeAnimation(RUN);
+		verticalVelocity += GRAVITY * dt;
+		posEnemyF.y += verticalVelocity * dt;
+		glm::ivec2 holdPos(int(posEnemyF.x), int(posEnemyF.y));
+		onGround = map->checkCollision(holdPos, glm::ivec2(ENEMY_HITBOX_WIDTH, ENEMY_HITBOX_HEIGHT), CollisionDir::DOWN, &holdPos.y);
+		if (onGround) {
+			posEnemyF.y = float(holdPos.y);
+			verticalVelocity = 0.0f;
+			bJumping = false;
+		} else {
+			bJumping = true;
 		}
+		posEnemy = holdPos;
+		sprite->setPosition(glm::vec2(float(tileMapDispl.x + posEnemy.x) - renderOffsetX, float(tileMapDispl.y + posEnemy.y) - renderOffsetY));
+		float stairsRenderOffsetX = 0.5f * float(ENEMY_STAIRS_RENDER_WIDTH - ENEMY_HITBOX_WIDTH);
+		float stairsRenderOffsetY = float(ENEMY_FRAME_HEIGHT - ENEMY_HITBOX_HEIGHT);
+		stairsSprite->setFlipHorizontal(facingLeft);
+		stairsSprite->setPosition(glm::vec2(float(tileMapDispl.x + posEnemy.x) - stairsRenderOffsetX, float(tileMapDispl.y + posEnemy.y) - stairsRenderOffsetY));
+		return;
 	}
 
 	BaseEnemyMoveConfig moveConfig;
@@ -448,6 +497,7 @@ void Enemy::takeDamage(int knockDir)
 	bShooting = false;
 	if (health <= 0)
 	{
+		AudioManager::instance().playHurt(AudioManager::HurtProfile::EnemyLow);
 		alive = false;
 		bDying = true;
 		knockbackFrames = 0;
@@ -459,6 +509,7 @@ void Enemy::takeDamage(int knockDir)
 		knockbackFrames = KNOCKBACK_FRAMES;
 		knockbackDir = knockDir;
 		sprite->changeAnimation(HURT);
+		AudioManager::instance().playHurt(AudioManager::HurtProfile::EnemyLow);
 	}
 }
 

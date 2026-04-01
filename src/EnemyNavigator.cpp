@@ -145,6 +145,7 @@ std::vector<glm::ivec2> computeEnemyGroundPath(
 		glm::ivec2 c = q.front();
 		q.pop();
 		std::vector<glm::ivec2> nbrs;
+		bool pursuingLowerGoal = (goal.y > c.y);
 		bool currentOnSpring = isOnSpringTile(c.x, c.y, map);
 		int currentDashDir = 0;
 		bool currentOnDash = isOnDashTile(c.x, c.y, map, &currentDashDir);
@@ -175,8 +176,11 @@ std::vector<glm::ivec2> computeEnemyGroundPath(
 				nbrs.push_back(glm::ivec2(nx, c.y));
 			else
 			{
-				int ly = landingY(nx, c.y, map);
-				if (allowLanding(c.y, ly)) nbrs.push_back(glm::ivec2(nx, ly));
+				if (pursuingLowerGoal)
+				{
+					int ly = landingY(nx, c.y, map);
+					if (allowLanding(c.y, ly)) nbrs.push_back(glm::ivec2(nx, ly));
+				}
 			}
 		}
 

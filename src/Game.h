@@ -38,6 +38,15 @@ public:
 	struct RoomRuntimeState {
 		std::vector<glm::vec2> weightPositions;
 		std::vector<float> weightVelocities;
+		std::vector<bool> enemy1AliveList;
+		std::vector<bool> enemy2AliveList;
+		std::vector<bool> enemy3AliveList;
+		std::vector<glm::vec2> enemy1PosList;
+		std::vector<glm::vec2> enemy2PosList;
+		std::vector<glm::vec2> enemy3PosList;
+		std::vector<bool> enemy1ActivatedList;
+		std::vector<bool> enemy2ActivatedList;
+		std::vector<bool> enemy3ActivatedList;
 		bool enemy1Alive = true;
 		bool enemy2Alive = true;
 		bool enemy3Alive = true;
@@ -160,6 +169,8 @@ private:
 
 	int menuSelection = 0;
 	int numMenuOptions = 3;
+	bool canResumePlay = false;
+ 	bool menuOpenedFromDeath = false;
 
 };
 

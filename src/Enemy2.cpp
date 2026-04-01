@@ -5,6 +5,7 @@
 #include <GL/glew.h>
 #include "Enemy2.h"
 #include "EnemyNavigator.h"
+#include "AudioManager.h"
 
 
 #include "GameConstants.h"
@@ -338,6 +339,7 @@ void Enemy2::takeDamage(int knockDir)
 	bAttacking = false;
 	if (health <= 0)
 	{
+		AudioManager::instance().playHurt(AudioManager::HurtProfile::EnemyLow);
 		alive = false;
 		bDying = true;
 		knockbackFrames = 0;
@@ -349,6 +351,7 @@ void Enemy2::takeDamage(int knockDir)
 		knockbackFrames = KNOCKBACK_FRAMES;
 		knockbackDir = knockDir;
 		sprite->changeAnimation(HURT);
+		AudioManager::instance().playHurt(AudioManager::HurtProfile::EnemyLow);
 	}
 }
 
