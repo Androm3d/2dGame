@@ -539,12 +539,7 @@ void Scene::init()
 
 
 	// puertas y portales
-<<<<<<< HEAD
-	texDoor.loadFromFile("../images/door.png", TEXTURE_PIXEL_FORMAT_RGBA);
-=======
-	// 1. Load the texture
 	texDoor.loadFromFile("images/door.png", TEXTURE_PIXEL_FORMAT_RGBA);
->>>>>>> 526ce77 (refactor ultra tocho)
 	texDoor.setMinFilter(GL_NEAREST);
 	texDoor.setMagFilter(GL_NEAREST);
 
@@ -607,6 +602,7 @@ void Scene::init()
 		if(fontPath != nullptr)
 			hudReady = hudText.init(fontPath);
 		if(!hudReady)
+			std::cout << "Font could not be loaded" << std::endl;
 		}
 
 	// Menu samurai cover sprite (idle animation, scaled to view)

@@ -202,18 +202,6 @@ void AudioManager::resumePid(int pid)
     }
 }
 
-void AudioManager::pausePid(int pid)
-{
-    if (pid > 0)
-        kill(-pid, SIGSTOP);
-}
-
-void AudioManager::resumePid(int pid)
-{
-    if (pid > 0)
-        kill(-pid, SIGCONT);
-}
-
 void AudioManager::startMusicPath(const std::string &path, MusicTrack track, bool restartFromBeginning, float volume)
 {
     if (!initialized)

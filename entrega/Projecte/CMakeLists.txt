@@ -44,7 +44,7 @@ include_directories(
     include
     external/soil/include
     external/soil/include/SOIL
-    external/json/include        
+    external/json
     ${GLEW_INCLUDE_PATHS}
     ${GLFW_INCLUDE_PATHS}
     ${FREETYPE_INCLUDE_DIRS}
