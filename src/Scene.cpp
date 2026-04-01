@@ -1251,24 +1251,34 @@ void Scene::update(int deltaTime)
 				int targetY = currentY;
 				Game::PortalEntrySide destinationSpawnSide = Game::PortalEntrySide::NONE;
 
-				// Is the portal on the Right side of the screen? (e.g., X > 800)
-				if (portPos.x > SCREEN_WIDTH * 0.8f) {
-					targetX = currentX + 1; // Go Right
+				float mapW = float(map->getMapSize().x * map->getTileSize());
+				float mapH = float(map->getMapSize().y * map->getTileSize());
+
+				// Normalize portal position to [0,1] within the map
+				float nx = portPos.x / mapW;
+				float ny = portPos.y / mapH;
+
+				// Determine which edge the portal is closest to
+				float dLeft   = nx;
+				float dRight  = 1.0f - nx;
+				float dTop    = ny;
+				float dBottom = 1.0f - ny;
+				float minDist = std::min({dLeft, dRight, dTop, dBottom});
+
+				if (minDist == dRight) {
+					targetX = currentX + 1;
 					destinationSpawnSide = Game::PortalEntrySide::LEFT;
 				}
-				// Is it on the Left side?
-				else if (portPos.x < SCREEN_WIDTH * 0.2f) {
-					targetX = currentX - 1; // Go Left
+				else if (minDist == dLeft) {
+					targetX = currentX - 1;
 					destinationSpawnSide = Game::PortalEntrySide::RIGHT;
 				}
-				// Is it at the Top?
-				else if (portPos.y < SCREEN_HEIGHT * 0.2f) {
-					targetY = currentY - 1; // Go Up
+				else if (minDist == dTop) {
+					targetY = currentY - 1;
 					destinationSpawnSide = Game::PortalEntrySide::BOTTOM;
 				}
-				// Must be at the Bottom!
 				else {
-					targetY = currentY + 1; // Go Down
+					targetY = currentY + 1;
 					destinationSpawnSide = Game::PortalEntrySide::TOP;
 				}
 
