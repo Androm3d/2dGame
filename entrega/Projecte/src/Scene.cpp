@@ -398,7 +398,7 @@ void Scene::init()
 	// texturas
 	texKey.loadFromFile("../images/key.png", TEXTURE_PIXEL_FORMAT_RGBA);
     texKey.setMinFilter(GL_NEAREST);
-    texKey.setMagFilter(GL_NEAREST); // GL_NEAREST keeps pixel art crisp!
+    texKey.setMagFilter(GL_NEAREST);
 
 	texSword.loadFromFile("../images/sword.png", TEXTURE_PIXEL_FORMAT_RGBA);
     texSword.setMinFilter(GL_NEAREST);
@@ -431,10 +431,9 @@ void Scene::init()
 	const std::vector<glm::ivec2> &allKeySpawns = map->getKeySpawns();
 	for (int keyIndex = alreadyCollectedKeys; keyIndex < int(allKeySpawns.size()); ++keyIndex) {
 		glm::ivec2 pos = allKeySpawns[keyIndex];
-        // Create a real Sprite object (you'll need to load a key texture in Scene.h!)
         Sprite* newKey = Sprite::createSprite(glm::vec2(map->getTileSize(), map->getTileSize()), glm::vec2(1.0, 1.0), &texKey, &texProgram);
         newKey->setPosition(pos);
-        keys.push_back(newKey); // Add it to your vector
+        keys.push_back(newKey);
 		keyBasePositions.push_back(glm::vec2(float(pos.x), float(pos.y)));
     }
 
@@ -546,7 +545,6 @@ void Scene::init()
 
 
 	// puertas y portales
-	// 1. Load the texture
 	texDoor.loadFromFile("../images/door.png", TEXTURE_PIXEL_FORMAT_RGBA);
 	texDoor.setMinFilter(GL_NEAREST);
 	texDoor.setMagFilter(GL_NEAREST);
@@ -556,25 +554,23 @@ void Scene::init()
 		float(2 * map->getTileSize()) / float(texDoor.height())
 	);
 
-	// 2. Spawn Doors
 	for (glm::ivec2 pos : map->getDoors()) {
 		Sprite* door = Sprite::createSprite(glm::vec2(map->getTileSize(), 2 * map->getTileSize()), doorSizeInTexture, &texDoor, &texProgram);
-		
+
 		door->setNumberAnimations(2);
-		
-		// Animation 0: Closed (Just the very first frame)
+
+		// Cerrada
 		door->setAnimationSpeed(0, 1);
-		door->addKeyframe(0, glm::vec2(0.0f, 0.0f)); 
-		
-		// Animation 1: Opening (7 frames, horizontally)
-		door->setAnimationSpeed(1, 10); // 10 frames per second looks good
-		door->setAnimationLoop(1, false); // CRITICAL: Don't loop! Stop when fully open.
+		door->addKeyframe(0, glm::vec2(0.0f, 0.0f));
+
+		// Abriendo (7 frames)
+		door->setAnimationSpeed(1, 10);
+		door->setAnimationLoop(1, false);
 		for (int f = 0; f < 7; f++) {
-			// Change the X coordinate (f * width), leave Y at 0.0f
-			door->addKeyframe(1, glm::vec2(f * doorSizeInTexture.x, 0.0f)); 
+			door->addKeyframe(1, glm::vec2(f * doorSizeInTexture.x, 0.0f));
 		}
-		
-		door->changeAnimation(0); // Start closed
+
+		door->changeAnimation(0);
 		door->setPosition(glm::vec2(pos.x, pos.y - map->getTileSize()));
 		doors.push_back(door);
 	}
@@ -595,12 +591,10 @@ void Scene::init()
 		
 		portal->setNumberAnimations(1);
 		portal->setAnimationSpeed(0, 10); 
-		portal->setAnimationLoop(0, true); // CRITICAL: Loop forever
-		
-		// 10 frames, horizontally
+		portal->setAnimationLoop(0, true);
+
 		for (int f = 0; f < 10; f++) {
-			// Notice the first argument is 0 (we are adding frames to Animation 0)
-			portal->addKeyframe(0, glm::vec2(f * portalSizeInTexture.x, 0.0f)); 
+			portal->addKeyframe(0, glm::vec2(f * portalSizeInTexture.x, 0.0f));
 		}
 		
 		portal->changeAnimation(0); 
@@ -640,7 +634,6 @@ void Scene::init()
 
 
 	// fondo con shaders
-	    // 1. Compile the Background Shader
     Shader bgVert, bgFrag;
 	bgVert.initFromFile(VERTEX_SHADER, "../shaders/bg.vert");
 	bgFrag.initFromFile(FRAGMENT_SHADER, "../shaders/bg.frag");
@@ -654,8 +647,6 @@ void Scene::init()
     bgVert.free();
     bgFrag.free();
 
-// 2. Build the Fullscreen Rectangle (Quad)
-    // These are the X, Y coordinates for two triangles making a 640x320 rectangle
     float vertices[12] = {
         0.0f, 0.0f,
         SCREEN_WIDTH, 0.0f,
@@ -672,7 +663,6 @@ void Scene::init()
     glBindBuffer(GL_ARRAY_BUFFER, bgVbo);
     glBufferData(GL_ARRAY_BUFFER, 12 * sizeof(float), vertices, GL_STATIC_DRAW);
 
-    // Bind the "position" variable from our bg.vert shader
     GLint posLocation = bgProgram.bindVertexAttribute("position", 2, 0, 0);
     glEnableVertexAttribArray(posLocation);
 }
@@ -1216,7 +1206,7 @@ void Scene::update(int deltaTime)
 		}
 	}
 
-    // un bucle por tipo de item, como solo hay 5 no pasa nada pero si añadimos más habría que crear una clase Item o algo así para no repetir código
+    // recoger items
     for (int i = keys.size() - 1; i >= 0; i--) {
         if (checkAABB(pPos, pSize, keys[i]->getPosition(), glm::ivec2(map->getTileSize(), map->getTileSize()))) {
             
@@ -1466,10 +1456,9 @@ void Scene::update(int deltaTime)
 
     // --- CHECK EXIT DOORS ---
     for (Sprite* portal : portals) {
-        // We use a small AABB to make sure Bugs is standing right in front of it
+        // comprobar colision con portal
         if (checkAABB(pPos, pSize, portal->getPosition(), glm::ivec2(map->getTileSize(), 2 * map->getTileSize()))) {
             
-            // Player pressed UP?
 			if (upJustPressed && !transitionPending) {
 				if (!Game::instance().canUsePortalsFromCurrentWorld()) {
 					cout << "Portal is locked: collect all keys in this map and its connected rooms." << endl;
@@ -1538,7 +1527,7 @@ void Scene::update(int deltaTime)
 					continue;
 
 				if (!link.targetMap.empty()) {
-					door->changeAnimation(1); // Open door first, swap room after delay
+					door->changeAnimation(1);
 					AudioManager::instance().playSfx("door", 1.0f, 1.0f);
 
 					int targetX = 0;
@@ -1577,7 +1566,6 @@ void Scene::render()
 	bgProgram.use();
     bgProgram.setUniformMatrix4f("projection", projection);
     
-    // Pass time in seconds (currentTime is usually in milliseconds)
     bgProgram.setUniform1f("time", currentTime / 1000.0f); 
     
     glBindVertexArray(bgVao);

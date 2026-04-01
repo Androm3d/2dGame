@@ -230,7 +230,7 @@ bool TileMap::loadLevelJSON(const string &levelFile)
     
     tileTexSize = glm::vec2(1.f / tilesheetSize.x, 1.f / tilesheetSize.y);
     
-    // 1. CLEAR EVERYTHING IN CASE WE RELOAD A LEVEL
+    // limpiar datos anteriores
     tileDictionary.clear();
     doorSpawnLocations.clear();
     keySpawnLocations.clear();
@@ -247,7 +247,7 @@ bool TileMap::loadLevelJSON(const string &levelFile)
 	enemy2SpawnLocations.clear();
 	enemy3SpawnLocations.clear();
 
-    // 2. READ TILESET PROPERTIES FIRST (Build the Dictionary)
+    // leer propiedades del tileset
     // (Changed jsonDocument to j)
     for (const auto& tileset : j["tilesets"]) {
         int firstgid = tileset["firstgid"];
@@ -288,7 +288,7 @@ bool TileMap::loadLevelJSON(const string &levelFile)
 			}
     }
 
-    // 3. READ THE MAP DATA SECOND (Place tiles and spawn entities)
+    // leer datos del mapa y colocar tiles/spawns
     map = new int[mapSize.x * mapSize.y];
     auto data = j["layers"][0]["data"];
     
@@ -563,7 +563,6 @@ bool TileMap::checkCollision(const glm::ivec2 &pos, const glm::ivec2 &size, Coll
 
 		case CollisionDir::UP:
 			for (int x = x0; x <= x1; x++) {
-				// Notice ONE_WAY_PLATFORM isn't checked here. You pass right through!
 				if (getTileType(map[y0 * mapSize.x + x]) == TileType::SOLID) {
 					if (correctedPos) *correctedPos = (y0 + 1) * tileSize;
 					return true;
