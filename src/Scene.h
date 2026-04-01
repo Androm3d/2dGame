@@ -38,6 +38,8 @@ public:
 	void renderMenuScreen(int selection);
 	void renderInstructionsScreen();
 	void renderCreditsScreen();
+	void renderWinScreen();
+	bool allEnemiesDead() const;
 	bool checkAABB(const glm::vec2& pos1, const glm::ivec2& size1, const glm::vec2& pos2, const glm::ivec2& size2);
 
 	const std::vector<Sprite*>& getKeys() const { return keys; }
@@ -130,6 +132,8 @@ private:
 	std::vector<glm::vec2> enemySpawnPos;
 	std::vector<glm::vec2> enemy2SpawnPos;
 	std::vector<glm::vec2> enemy3SpawnPos;
+	Texture texMenuSamurai;
+	Sprite *menuSamurai = nullptr;
 	Text hudText;
 	bool hudReady = false;
 	std::vector<VfxParticle> vfxParticles;

@@ -16,7 +16,7 @@
 
 // Game is a singleton (a class with a single instance) that represents our whole application
 
-enum class GameState { MENU, PLAY, INSTRUCTIONS, CREDITS };
+enum class GameState { MENU, PLAY, INSTRUCTIONS, CREDITS, GAME_WIN };
 
 class Game
 {

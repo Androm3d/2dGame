@@ -3,6 +3,7 @@
 #include <GL/glew.h>
 #include <glm/gtc/matrix_transform.hpp>
 #include "Text.h"
+#include "Game.h"
 
 
 #define ATLAS_FONT_SIZE 64
@@ -96,7 +97,8 @@ void Text::render(char c, const glm::vec2 &pixel, int size, const glm::vec4 &col
 	glEnable(GL_BLEND);
 	program.use();
 	glGetIntegerv(GL_VIEWPORT, vp);
-	projection = glm::ortho(0.f, float(vp[2] - 1), float(vp[3] - 1), 0.f);
+	// Use logical screen size instead of viewport size so text scales with window
+	projection = glm::ortho(0.f, float(SCREEN_WIDTH), float(SCREEN_HEIGHT), 0.f);
 	program.setUniformMatrix4f("projection", projection);
 	program.setUniform4f("color", color.r, color.g, color.b, color.a);
 	modelview = glm::mat4(1.0f);
@@ -121,7 +123,8 @@ void Text::render(const string &str, const glm::vec2 &pixel, int size, const glm
 	glEnable(GL_BLEND);
 	program.use();
 	glGetIntegerv(GL_VIEWPORT, vp);
-	projection = glm::ortho(0.f, float(vp[2] - 1), float(vp[3] - 1), 0.f);
+	// Use logical screen size instead of viewport size so text scales with window
+	projection = glm::ortho(0.f, float(SCREEN_WIDTH), float(SCREEN_HEIGHT), 0.f);
 	program.setUniformMatrix4f("projection", projection);
 	program.setUniform4f("color", color.r, color.g, color.b, color.a);
 

@@ -76,6 +76,10 @@ Scene::~Scene()
 	texProgram.free();
 	bgProgram.free();
 	particleProgram.free();
+	if (menuSamurai != nullptr) {
+		delete menuSamurai;
+		menuSamurai = nullptr;
+	}
 }
 
 void Scene::clearLevelEntities()
@@ -611,6 +615,27 @@ void Scene::init()
 			hudReady = hudText.init(fontPath);
 		if(!hudReady)
 			std::cerr << "Warning: HUD font failed to initialize. Status text will be hidden." << std::endl;
+	}
+
+	// Menu samurai cover sprite (idle animation, scaled to view)
+	{
+		if (menuSamurai != nullptr) { delete menuSamurai; menuSamurai = nullptr; }
+		texMenuSamurai.loadFromFile("../images/Samurai.png", TEXTURE_PIXEL_FORMAT_RGBA);
+		texMenuSamurai.setMinFilter(GL_NEAREST);
+		texMenuSamurai.setMagFilter(GL_NEAREST);
+
+		float fw = float(PLAYER_FRAME_WIDTH)  / float(texMenuSamurai.width());
+		float fh = float(PLAYER_FRAME_HEIGHT) / float(texMenuSamurai.height());
+		float scale = (viewHeight * 0.7f) / float(PLAYER_FRAME_HEIGHT);
+		menuSamurai = Sprite::createSprite(
+			glm::vec2(PLAYER_FRAME_WIDTH * scale, PLAYER_FRAME_HEIGHT * scale),
+			glm::vec2(fw, fh), &texMenuSamurai, &texProgram);
+		menuSamurai->setNumberAnimations(1);
+		menuSamurai->setAnimationSpeed(0, 6);
+		menuSamurai->setAnimationLoop(0, true);
+		for (int f = 0; f < PLAYER_IDLE_FRAMES; ++f)
+			menuSamurai->addKeyframe(0, glm::vec2(f * fw, float(PLAYER_ROW_IDLE) / float(texMenuSamurai.height())));
+		menuSamurai->changeAnimation(0);
 	}
 
 
@@ -1532,9 +1557,17 @@ void Scene::update(int deltaTime)
 		}
 		door->update(deltaTime);
 	}
-    
 
-    
+	// --- Victory condition: all enemies dead in room_M (boss room) ---
+	{
+		std::string currentMap = Game::instance().getCurrentMapName();
+		bool isBossRoom = (currentMap.find("room_M") != std::string::npos);
+		bool hasEnemies = !enemies.empty() || !enemies2.empty() || !enemies3.empty();
+		if (isBossRoom && hasEnemies && allEnemiesDead()) {
+			Game::instance().transitionToState(GameState::GAME_WIN);
+			return;
+		}
+	}
 }
 
 void Scene::render()
@@ -1801,19 +1834,46 @@ void Scene::renderMenuScreen(int selection)
 	texProgram.setUniform3f("flashColor", 1.0f, 1.0f, 1.0f);
 	texProgram.setUniform1f("warpAmount", 0.0f);
 	texProgram.setUniform1f("warpPhase", 0.0f);
-	
+	texProgram.setUniform1f("time", currentTime / 1000.0f);
+	texProgram.setUniform1f("godModeAmount", 0.0f);
+	texProgram.setUniform1f("mapSwayAmount", 0.0f);
+	texProgram.setUniform2f("texCoordDispl", 0.f, 0.f);
+
+	// Render samurai cover art on the left
+	if (menuSamurai != nullptr) {
+		Sprite::setGlobalRenderOffset(glm::vec2(0.f, 0.f));
+		menuSamurai->setPosition(glm::vec2(20.f, 80.f));
+		menuSamurai->update(16);
+		menuSamurai->render();
+	}
+
 	if (hudReady) {
-		glm::vec4 titleColor(1.0f, 0.9f, 0.2f, 1.0f);
-		glm::vec4 normalColor(0.8f, 0.8f, 0.8f, 1.0f);
+		glm::vec4 titleColor(1.0f, 0.85f, 0.1f, 1.0f);
+		glm::vec4 subtitleColor(0.9f, 0.7f, 0.3f, 1.0f);
+		glm::vec4 normalColor(0.7f, 0.7f, 0.7f, 1.0f);
 		glm::vec4 selectedColor(1.0f, 1.0f, 0.0f, 1.0f);
-		
-		hudText.render("2D PLATFORMER GAME", glm::vec2(300.f, 100.f), 36, titleColor);
-		
-		hudText.render("PLAY", glm::vec2(400.f, 220.f), 32, selection == 0 ? selectedColor : normalColor);
-		hudText.render("INSTRUCTIONS", glm::vec2(340.f, 280.f), 32, selection == 1 ? selectedColor : normalColor);
-		hudText.render("CREDITS", glm::vec2(380.f, 340.f), 32, selection == 2 ? selectedColor : normalColor);
-		
-		hudText.render("Use UP/DOWN to navigate, ENTER to select", glm::vec2(220.f, 420.f), 20, glm::vec4(0.6f, 0.6f, 0.6f, 1.0f));
+		glm::vec4 hintColor(0.5f, 0.5f, 0.5f, 1.0f);
+
+		// Title
+		hudText.render("SAMURAI", glm::vec2(480.f, 100.f), 52, titleColor);
+		hudText.render("VENGEANCE", glm::vec2(480.f, 155.f), 40, subtitleColor);
+
+
+		// Menu options with arrow indicator
+		float optX = 530.f;
+		float optStartY = 240.f;
+		float optSpacing = 55.f;
+		const char *labels[] = { "PLAY", "INSTRUCTIONS", "CREDITS" };
+		float labelOffsets[] = { 0.f, -60.f, -20.f };
+		for (int i = 0; i < 3; ++i) {
+			float y = optStartY + i * optSpacing;
+			glm::vec4 col = (selection == i) ? selectedColor : normalColor;
+			if (selection == i)
+				hudText.render(">", glm::vec2(optX + labelOffsets[i] - 30.f, y), 32, selectedColor);
+			hudText.render(labels[i], glm::vec2(optX + labelOffsets[i], y), 32, col);
+		}
+
+		hudText.render("UP/DOWN - ENTER", glm::vec2(500.f, 440.f), 18, hintColor);
 	}
 }
 
@@ -1862,17 +1922,95 @@ void Scene::renderCreditsScreen()
 	texProgram.setUniform3f("flashColor", 1.0f, 1.0f, 1.0f);
 	texProgram.setUniform1f("warpAmount", 0.0f);
 	texProgram.setUniform1f("warpPhase", 0.0f);
-	
+	texProgram.setUniform1f("time", currentTime / 1000.0f);
+	texProgram.setUniform1f("godModeAmount", 0.0f);
+	texProgram.setUniform1f("mapSwayAmount", 0.0f);
+	texProgram.setUniform2f("texCoordDispl", 0.f, 0.f);
+
 	if (hudReady) {
-		glm::vec4 titleColor(1.0f, 0.9f, 0.2f, 1.0f);
-		glm::vec4 textColor(0.9f, 0.9f, 0.9f, 1.0f);
-		
-		hudText.render("CREDITS", glm::vec2(400.f, 100.f), 32, titleColor);
-		
-		hudText.render("2D Platformer Game", glm::vec2(300.f, 200.f), 28, textColor);
-		hudText.render("Developed for VJ Course", glm::vec2(260.f, 250.f), 24, textColor);
-		hudText.render("2025-26 Q2", glm::vec2(380.f, 290.f), 24, textColor);
-		
-		hudText.render("Press ESC to return to menu", glm::vec2(260.f, 440.f), 20, glm::vec4(0.6f, 0.6f, 0.6f, 1.0f));
+		glm::vec4 titleColor(1.0f, 0.85f, 0.1f, 1.0f);
+		glm::vec4 roleColor(0.9f, 0.7f, 0.3f, 1.0f);
+		glm::vec4 nameColor(0.95f, 0.95f, 0.95f, 1.0f);
+		glm::vec4 infoColor(0.7f, 0.7f, 0.8f, 1.0f);
+		glm::vec4 hintColor(0.5f, 0.5f, 0.5f, 1.0f);
+
+		hudText.render("CREDITS", glm::vec2(380.f, 70.f), 40, titleColor);
+		hudText.render("______________________", glm::vec2(320.f, 105.f), 20, glm::vec4(0.4f, 0.35f, 0.2f, 1.0f));
+
+		hudText.render("Developed by", glm::vec2(380.f, 150.f), 22, roleColor);
+		hudText.render("Jesus Garcia (Jergasus)", glm::vec2(300.f, 195.f), 28, nameColor);
+		hudText.render("Marcel (Androm3d)", glm::vec2(330.f, 240.f), 28, nameColor);
+
+		hudText.render("Videojocs - FIB UPC", glm::vec2(340.f, 310.f), 22, infoColor);
+		hudText.render("2025-26 Q2", glm::vec2(400.f, 345.f), 22, infoColor);
+
+		hudText.render("Press ESC to return to menu", glm::vec2(290.f, 440.f), 18, hintColor);
 	}
+}
+
+void Scene::renderWinScreen()
+{
+	glm::mat4 modelview = glm::mat4(1.0f);
+	texProgram.use();
+	texProgram.setUniformMatrix4f("projection", projection);
+	texProgram.setUniformMatrix4f("modelview", modelview);
+	texProgram.setUniform4f("color", 1.0f, 1.0f, 1.0f, 1.0f);
+	texProgram.setUniform1f("grayscaleAmount", 0.0f);
+	texProgram.setUniform1f("flashAmount", 0.0f);
+	texProgram.setUniform3f("flashColor", 1.0f, 1.0f, 1.0f);
+	texProgram.setUniform1f("warpAmount", 0.0f);
+	texProgram.setUniform1f("warpPhase", 0.0f);
+	texProgram.setUniform1f("time", currentTime / 1000.0f);
+	texProgram.setUniform1f("godModeAmount", 0.0f);
+	texProgram.setUniform1f("mapSwayAmount", 0.0f);
+	texProgram.setUniform2f("texCoordDispl", 0.f, 0.f);
+
+	// Render samurai celebrating
+	if (menuSamurai != nullptr) {
+		Sprite::setGlobalRenderOffset(glm::vec2(0.f, 0.f));
+		menuSamurai->setPosition(glm::vec2(330.f, 40.f));
+		menuSamurai->update(16);
+		menuSamurai->render();
+	}
+
+	if (hudReady) {
+		glm::vec4 goldColor(1.0f, 0.85f, 0.1f, 1.0f);
+		glm::vec4 subtitleColor(0.9f, 0.7f, 0.3f, 1.0f);
+		glm::vec4 nameColor(0.95f, 0.95f, 0.95f, 1.0f);
+		glm::vec4 infoColor(0.7f, 0.7f, 0.8f, 1.0f);
+		glm::vec4 hintColor(0.5f, 0.5f, 0.5f, 1.0f);
+
+		hudText.render("VICTORY!", glm::vec2(100.f, 100.f), 48, goldColor);
+		hudText.render("The samurai has prevailed", glm::vec2(50.f, 160.f), 22, subtitleColor);
+
+		hudText.render("CREDITS", glm::vec2(110.f, 240.f), 30, goldColor);
+		hudText.render("Jesus Garcia", glm::vec2(90.f, 290.f), 26, nameColor);
+		hudText.render("(Jergasus)", glm::vec2(110.f, 320.f), 20, infoColor);
+		hudText.render("Marcel", glm::vec2(90.f, 360.f), 26, nameColor);
+		hudText.render("(Androm3d)", glm::vec2(110.f, 390.f), 20, infoColor);
+
+		hudText.render("Videojocs - FIB UPC", glm::vec2(70.f, 430.f), 18, infoColor);
+		hudText.render("ESC - Menu", glm::vec2(820.f, 455.f), 16, hintColor);
+	}
+}
+
+bool Scene::allEnemiesDead() const
+{
+	int activated = 0;
+	for (size_t i = 0; i < enemies.size(); ++i)
+		if (enemyActivated[i]) {
+			++activated;
+			if (enemies[i]->isAlive() || enemies[i]->isDying()) return false;
+		}
+	for (size_t i = 0; i < enemies2.size(); ++i)
+		if (enemy2Activated[i]) {
+			++activated;
+			if (enemies2[i]->isAlive() || enemies2[i]->isDying()) return false;
+		}
+	for (size_t i = 0; i < enemies3.size(); ++i)
+		if (enemy3Activated[i]) {
+			++activated;
+			if (enemies3[i]->isAlive() || enemies3[i]->isDying()) return false;
+		}
+	return activated > 0;
 }

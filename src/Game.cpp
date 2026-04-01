@@ -492,6 +492,8 @@ void Game::render()
 		scene.renderInstructionsScreen();
 	} else if (currentState == GameState::CREDITS) {
 		scene.renderCreditsScreen();
+	} else if (currentState == GameState::GAME_WIN) {
+		scene.renderWinScreen();
 	} else if (currentState == GameState::PLAY) {
 		scene.render();
 	}
@@ -505,7 +507,7 @@ void Game::keyPressed(int key)
 			menuOpenedFromDeath = false;
 			canResumePlay = true;
 			transitionToState(GameState::MENU);
-		} else if (currentState == GameState::INSTRUCTIONS || currentState == GameState::CREDITS) {
+		} else if (currentState == GameState::INSTRUCTIONS || currentState == GameState::CREDITS || currentState == GameState::GAME_WIN) {
 			transitionToState(GameState::MENU);
 		} else {
 			AudioManager::instance().shutdown();
