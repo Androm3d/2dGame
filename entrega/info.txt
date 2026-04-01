@@ -1,0 +1,120 @@
+============================================
+INTEGRANTS DEL GRUP
+============================================
+
+- Jesus Jose Garcia Ayala (Jergasus)
+- Marcel (Androm3d)
+
+
+============================================
+FUNCIONALITATS IMPLEMENTADES
+============================================
+
+Sistema de joc:
+- Maquina d'estats completa: Menu, Joc, Instruccions, Credits, Victoria
+- Menu principal amb portada animada del samurai
+- Pantalla de victoria al completar la boss room (room_M)
+- Pantalla de credits amb noms dels desenvolupadors
+- Sistema de vides (3 inicials, max 9) amb game over
+
+Moviment i plataformes:
+- Moviment horitzontal, salt, escalada per escales
+- Plataformes one-way (es pot saltar a traves des de sota)
+- Tiles de molla (spring) amb impuls automatic de salt
+- Tiles de dash amb acceleracio horitzontal gradual
+- Caiguda amb gravetat realista (float-based physics)
+
+Combat:
+- Atac amb espasa (requereix recollir l'objecte espasa)
+- Parry/defensa amb cooldown
+- Sistema de knockback en rebre dany
+- Invencibilitat temporal amb parpalleig del sprite
+- Escut que absorbeix un cop
+
+Enemics (3 tipus amb IA):
+- Enemy1 (Arquer): Dispara fletxes, pathfinding BFS
+- Enemy2 (Espadatxi): Atac melee, persecucio amb BFS
+- Enemy3 (Mag): Boles de foc + atac melee, pathfinding BFS
+- Activacio per proximitat (els enemics no es mouen fins que el jugador s'apropa)
+- Les fletxes i boles de foc es poden reflectir amb el parry
+- Tots els enemics poden ser eliminats amb blocs de pes
+
+Objectes i items:
+- Claus: necessaries per obrir portals entre nivells
+- Espasa: habilita atac
+- Escut: absorbeix un cop de dany
+- Curacio: restaura una vida
+- Blocs de pes: es poden empenyar per eliminar enemics
+
+Nivells i progressio:
+- Grid de 3x3 mapes (9 nivells principals)
+- 13 habitacions laterals (side rooms) connectades per portes
+- Boss room (room_M) com a nivell final
+- Sistema de portals entre nivells (requereix totes les claus)
+- Estat d'items persistit per habitacio durant la partida
+
+Efectes visuals:
+- Particules d'explosio en mort d'enemics
+- Particules de pols en aterratge dur
+- Flash de pantalla en explosions i parrys
+- Efecte arcoiris en god mode
+- Animacio de fons amb shaders
+
+Audio:
+- Musica de menu i de joc
+- Efectes de so: atac, parry, recollida d'items, dany, portes, teletransport, molles
+
+HUD:
+- Vides, claus recollides/totals, estat d'escut i espasa
+- Indicador de god mode
+- Text renderitzat amb FreeType i font personalitzada
+
+Depuracio (debug):
+- God mode (G): invencibilitat
+- Totes les claus (K): desbloqueja portals
+- Seleccio de nivell (1-9): salt directe a qualsevol mapa
+
+
+============================================
+INSTRUCCIONS DEL JOC
+============================================
+
+Objectiu:
+- Explora els 9 nivells del mon i les habitacions laterals
+- Recull totes les claus de cada zona per obrir els portals
+- Vencel enemics amb l'espasa o amb blocs de pes
+- Arriba a la boss room (room_M) i derrota tots els enemics per guanyar
+
+Controls:
+- ESQUERRA / DRETA: Moure's
+- AMUNT: Saltar / Pujar escala / Entrar porta o portal
+- AVALL: Baixar escala / Travessar plataforma one-way
+- ESPAI: Atacar (requereix espasa)
+- SHIFT: Parry/Defensa (requereix espasa)
+- ESC: Pausar / Tornar al menu
+
+Menu:
+- AMUNT / AVALL: Navegar opcions
+- ENTER: Seleccionar
+- ESC: Sortir del joc (des del menu principal)
+
+
+============================================
+COMPILACIO
+============================================
+
+Requisits:
+- CMake 3.10+
+- Compilador C++11 (GCC, Clang, MSVC)
+- GLEW, GLFW3, GLM, FreeType, OpenGL 3.3+
+
+Compilar:
+  cmake -S . -B build
+  cmake --build build
+  cd build && ./BugsBunnyCrazyCastle
+
+Instal·lar dependencies (macOS):
+  brew install cmake glew glfw glm freetype
+
+Instal·lar dependencies (Ubuntu):
+  sudo apt install build-essential cmake libglew-dev libglfw3-dev libglm-dev libfreetype-dev
