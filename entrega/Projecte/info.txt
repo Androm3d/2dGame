@@ -14,7 +14,7 @@ INSTRUCCIONS D'EXECUCIÓ (JUGAR DIRECTAMENT)
 ============================================
 
 Aquest lliurament inclou un executable natiu per a Windows per facilitar-ne l'avaluació.
-1. Obriu la carpeta "Binari/bin/".
+1. Obriu la carpeta "Binari".
 2. Windows: Feu doble clic a "GameWindows.exe".
    MacOS: Feu doble clic a "GameMacOS"
    Linux: Feu servir wine per executar "GameWindows.exe"
