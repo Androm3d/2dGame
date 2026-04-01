@@ -1,0 +1,38 @@
+============================================================
+INSTRUCCIONS DE COMPILACIÓ / COMPILATION INSTRUCTIONS
+============================================================
+
+This project uses CMake and is fully self-contained. No external 
+system libraries (like apt/aur packages) are required, except for 
+the native OpenGL drivers provided by the OS.
+
+PREREQUISITES:
+- CMake (version 3.10 or higher)
+- A C++11 compatible compiler (GCC, Clang, or MSVC)
+
+------------------------------------------------------------
+1. LINUX & macOS (Terminal)
+------------------------------------------------------------
+Navigate to the `Projecte` directory and run:
+
+    mkdir build
+    cd build
+    cmake ..
+    make
+
+The game executable and assets will be output to the build folder.
+Run it using:
+    ./BugsBunnyCrazyCastle
+
+------------------------------------------------------------
+2. WINDOWS (Visual Studio / Command Line)
+------------------------------------------------------------
+If using Visual Studio:
+Simply open the `Projecte` folder using "Open Folder". Visual Studio 
+will automatically detect CMake and configure the project.
+
+If using MSVC Developer Command Prompt:
+    mkdir build
+    cd build
+    cmake ..
+    cmake --build . --config Release
