@@ -180,9 +180,7 @@ void Scene::init()
 	playerInitPos = glm::vec2(0, 0);
 
 	player->init(glm::ivec2(SCREEN_X, SCREEN_Y), texProgram);
-	if (map->getSpawnLocations().empty()) {
-	}
-	else {
+	if (!map->getSpawnLocations().empty()) {
 		playerInitPos =  glm::vec2(map->getSpawnLocations()[0]);
 		playerInitPos.y -= float(Player::HITBOX_HEIGHT - map->getTileSize());
 		playerInitPos.y -= PLAYER_SPAWN_CLIP_OFFSET;
@@ -230,7 +228,7 @@ void Scene::init()
 		}
 	}
 	
-	// Spawn all Enemy1 instances from all spawn points
+	// Generar todas las instancias de Enemy1 desde todos los puntos de aparición
 	{
 		const auto &spawnPoints = map->getEnemy1Spawns();
 		for (size_t i = 0; i < spawnPoints.size(); ++i) {
@@ -263,11 +261,9 @@ void Scene::init()
 			enemySpawnPos.push_back(spawnPos);
 			enemyActivated.push_back(!isAlive || isActivated);
 		}
-		if (spawnPoints.empty()) {
-			}
 	}
 	
-	// Spawn all Enemy2 instances from all spawn points
+	// Generar todas las instancias de Enemy2 desde todos los puntos de aparición
 	{
 		const auto &spawnPoints = map->getEnemy2Spawns();
 		for (size_t i = 0; i < spawnPoints.size(); ++i) {
@@ -300,11 +296,9 @@ void Scene::init()
 			enemy2SpawnPos.push_back(spawnPos);
 			enemy2Activated.push_back(!isAlive || isActivated);
 		}
-		if (spawnPoints.empty()) {
-			}
 	}
 	
-	// Spawn all Enemy3 instances from all spawn points
+	// Generar todas las instancias de Enemy3 desde todos los puntos de aparición
 	{
 		const auto &spawnPoints = map->getEnemy3Spawns();
 		for (size_t i = 0; i < spawnPoints.size(); ++i) {
@@ -337,8 +331,6 @@ void Scene::init()
 			enemy3SpawnPos.push_back(spawnPos);
 			enemy3Activated.push_back(!isAlive || isActivated);
 		}
-		if (spawnPoints.empty()) {
-			}
 	}
 	
 	viewWidth = float(map->getRoomSize().x * map->getTileSize());
@@ -346,7 +338,7 @@ void Scene::init()
 	if (viewWidth > mapPixelWidth) viewWidth = mapPixelWidth;
 	if (viewHeight > mapPixelHeight) viewHeight = mapPixelHeight;
 
-	// Resize background VBO to match exact view dimensions natively instead of SCREEN_WIDTH fixed
+	// Redimensionar el VBO de fondo para que coincida con las dimensiones exactas de la vista de forma nativa en lugar de usar SCREEN_WIDTH fijo
 	float bgVerts[12] = {
 		0.0f, 0.0f,
 		viewWidth, 0.0f,
@@ -435,7 +427,7 @@ void Scene::init()
 		glm::ivec2 pos = map->getSwordSpawns()[0]; 
 		Sprite* newSword = Sprite::createSprite(glm::vec2(map->getTileSize(), map->getTileSize()), glm::vec2(1.0, 1.0), &texSword, &texProgram);
 		newSword->setPosition(pos);
-		sword = newSword; // Store it in the sword member variable
+		sword = newSword; // Almacenarlo en la variable miembro sword
 		swordBasePosition = glm::vec2(float(pos.x), float(pos.y));
 		swordHasBasePosition = true;
 	}
@@ -478,7 +470,7 @@ void Scene::init()
 		if (!hasRuntimeState)
 			spawnPos.y -= WEIGHT_SPAWN_RAISE_PX;
 		if (spawnPos.y < 0.0f) spawnPos.y = 0.0f;
-		// Resolve initial placement onto support tiles to avoid first-frame one-way clipping.
+		// Resolver la ubicación inicial en tiles de soporte para evitar recortes unidireccionales en el primer frame.
 		glm::ivec2 spawnCheckPos(int(spawnPos.x), int(spawnPos.y + 1.0f));
 		glm::ivec2 weightSize(map->getTileSize(), map->getTileSize());
 		int correctedY = 0;
@@ -605,7 +597,7 @@ void Scene::init()
 			std::cout << "Font could not be loaded" << std::endl;
 		}
 
-	// Menu samurai cover sprite (idle animation, scaled to view)
+	// Sprite de portada del samurái del menú (animación inactiva, escalada a la vista)
 	{
 		if (menuSamurai != nullptr) { delete menuSamurai; menuSamurai = nullptr; }
 		texMenuSamurai.loadFromFile("images/Samurai.png", TEXTURE_PIXEL_FORMAT_RGBA);
@@ -679,7 +671,7 @@ void Scene::updateCamera()
 	float maxCamX = std::max(0.f, mapPixelWidth - viewWidth);
 	float maxCamY = std::max(0.f, mapPixelHeight - viewHeight);
 
-	// Allow camera to go above 0 (no bottom constraint on Y for top viewport movement)
+	// Permitir que la cámara vaya por encima de 0 (sin restricción inferior en Y para el movimiento superior de la ventana gráfica)
 	cameraX = std::max(0.f, std::min(targetX, maxCamX));
 	cameraY = std::min(targetY, maxCamY);
 }
@@ -752,7 +744,7 @@ void Scene::saveCurrentRoomRuntimeState()
 	state.enemy2ActivatedList = enemy2Activated;
 	state.enemy3ActivatedList = enemy3Activated;
 
-	// Save first alive enemy of each type (for backward compatibility with single-enemy persistence)
+	// Guardar el primer enemigo vivo de cada tipo (para retrocompatibilidad con la persistencia de un solo enemigo)
 	if (!enemies.empty() && enemies[0] != nullptr) {
 		bool activated = !enemyActivated.empty() ? enemyActivated[0] : false;
 		state.enemy1Alive = !activated || enemies[0]->isAlive();
@@ -872,7 +864,7 @@ void Scene::update(int deltaTime)
 		glm::vec2 pp = player->getPosition();
 		float activationRange = float(ENEMY_ACTIVATION_RANGE);
 		
-		// Activate Enemy1 instances
+		// Activar instancias de Enemy1
 		for (size_t i = 0; i < enemies.size(); ++i) {
 			if (!enemyActivated[i]) {
 				float dx = pp.x - enemySpawnPos[i].x;
@@ -884,7 +876,7 @@ void Scene::update(int deltaTime)
 			}
 		}
 		
-		// Activate Enemy2 instances
+		// Activar instancias de Enemy2
 		for (size_t i = 0; i < enemies2.size(); ++i) {
 			if (!enemy2Activated[i]) {
 				float dx = pp.x - enemy2SpawnPos[i].x;
@@ -896,7 +888,7 @@ void Scene::update(int deltaTime)
 			}
 		}
 		
-		// Activate Enemy3 instances
+		// Activar instancias de Enemy3
 		for (size_t i = 0; i < enemies3.size(); ++i) {
 			if (!enemy3Activated[i]) {
 				float dx = pp.x - enemy3SpawnPos[i].x;
@@ -912,7 +904,7 @@ void Scene::update(int deltaTime)
 	if (player->isAlive() || player->isDying())
 		player->update(deltaTime);
 	
-	// Update all Enemy1 instances
+	// Actualizar todas las instancias de Enemy1
 	for (Enemy *e : enemies) {
 		if (e->isAlive() || e->isDying())
 			e->update(deltaTime, player->getPosition());

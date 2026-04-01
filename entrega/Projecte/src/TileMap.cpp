@@ -203,7 +203,8 @@ bool TileMap::loadLevelJSON(const string &levelFile)
         imgHeight = j["tilesets"][0]["imageheight"];
     } else {
         // The tileset is an external .tsx file
-        rawImagePath = "tiles.png";
+        rawImagePath = "tiles.png"; 
+        
         // If your tile is 32x32, and the image is 10 tiles wide / 10 tiles high:
         imgWidth = 320;  
         imgHeight = 320; 
