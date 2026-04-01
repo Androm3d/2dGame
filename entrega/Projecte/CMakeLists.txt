@@ -1,35 +1,40 @@
 cmake_minimum_required(VERSION 3.10)
-project(BugsBunnyCrazyCastle)
+project(SamuraiVengeance)
 
 set(CMAKE_CXX_STANDARD 11)
 
-# 1. Load PkgConfig FIRST (This fixes the "Unknown CMake command" error!)
-find_package(PkgConfig REQUIRED)
-
-# 2. Locate Dependencies
-find_package(GLEW REQUIRED)
-find_package(glfw3 CONFIG QUIET)
-if(NOT glfw3_FOUND)
-    pkg_check_modules(GLFW REQUIRED glfw3)
+if(POLICY CMP0072)
+    cmake_policy(SET CMP0072 NEW)
 endif()
+
+# 1. Locate System OpenGL (This is the ONLY thing that should come from the OS)
 find_package(OpenGL REQUIRED)
-find_package(Freetype REQUIRED)
 
-# Handle both modern imported target and legacy variable-based GLEW discovery.
-set(GLEW_INCLUDE_PATHS ${GLEW_INCLUDE_DIRS})
-if(NOT GLEW_INCLUDE_PATHS AND DEFINED GLEW_INCLUDE_DIR)
-    set(GLEW_INCLUDE_PATHS ${GLEW_INCLUDE_DIR})
-endif()
+# 2. Configure and Add Local GLFW
+set(GLFW_BUILD_DOCS OFF CACHE BOOL "" FORCE)
+set(GLFW_BUILD_TESTS OFF CACHE BOOL "" FORCE)
+set(GLFW_BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
+add_subdirectory(external/glfw)
 
-set(GLEW_LINK_LIBS ${GLEW_LIBRARIES})
-if(NOT GLEW_LINK_LIBS AND DEFINED GLEW_LIBRARY)
-    set(GLEW_LINK_LIBS ${GLEW_LIBRARY})
-endif()
+# 3. Configure and Add Local FreeType
+# Disable external dependencies so FreeType compiles 100% standalone
+set(FT_DISABLE_ZLIB TRUE CACHE BOOL "" FORCE)
+set(FT_DISABLE_BZIP2 TRUE CACHE BOOL "" FORCE)
+set(FT_DISABLE_PNG TRUE CACHE BOOL "" FORCE)
+set(FT_DISABLE_HARFBUZZ TRUE CACHE BOOL "" FORCE)
+set(FT_DISABLE_BROTLI TRUE CACHE BOOL "" FORCE)
 
-set(GLFW_INCLUDE_PATHS ${GLFW_INCLUDE_DIRS})
-set(GLFW_LINK_LIBS ${GLFW_LIBRARIES})
+# Force FreeType to accept modern CMake policies without terminal flags
+set(CMAKE_POLICY_VERSION_MINIMUM 3.5 CACHE STRING "" FORCE)
 
-# 3. SOIL Sources
+add_subdirectory(external/freetype)
+
+# 4. Local GLEW (GLEW is simple enough to compile directly as a source file)
+add_definitions(-DGLEW_STATIC)
+set(GLEW_SOURCES "${CMAKE_CURRENT_SOURCE_DIR}/external/glew/src/glew.c")
+include_directories(external/glew/include)
+
+# 5. Local SOIL
 set(SOIL_ROOT "${CMAKE_CURRENT_SOURCE_DIR}/external/soil")
 set(SOIL_SOURCES 
     "${SOIL_ROOT}/src/soil.c"
@@ -38,46 +43,31 @@ set(SOIL_SOURCES
     "${SOIL_ROOT}/src/stb_image_aug.c"
 )
 
-# 4. Include Directories
+# 6. Include Directories for your game
 include_directories(
     src
     include
     external/soil/include
     external/soil/include/SOIL
     external/json
-    ${GLEW_INCLUDE_PATHS}
-    ${GLFW_INCLUDE_PATHS}
-    ${FREETYPE_INCLUDE_DIRS}
 )
 
-# 5. Source Files
+# 7. Source Files
 file(GLOB SOURCES CONFIGURE_DEPENDS "src/*.cpp")
 
-# 6. Build Executable
-add_executable(${PROJECT_NAME} ${SOURCES} ${SOIL_SOURCES})
+# 8. Build Executable (We compile GLEW and SOIL right into the exe)
+add_executable(${PROJECT_NAME} ${SOURCES} ${SOIL_SOURCES} ${GLEW_SOURCES})
 
-# 7. Linking
+# 9. Linking
+# Link against the local CMake targets (glfw, freetype) and system OpenGL
 target_link_libraries(${PROJECT_NAME}
+    glfw
+    freetype
     ${OPENGL_LIBRARIES}
-    ${FREETYPE_LIBRARIES}
 )
 
 if(WIN32)
     target_link_libraries(${PROJECT_NAME} winmm)
-endif()
-
-if(TARGET GLEW::GLEW)
-    target_link_libraries(${PROJECT_NAME} GLEW::GLEW)
-else()
-    target_link_libraries(${PROJECT_NAME} ${GLEW_LINK_LIBS})
-endif()
-
-if(TARGET glfw)
-    target_link_libraries(${PROJECT_NAME} glfw)
-elseif(TARGET glfw::glfw)
-    target_link_libraries(${PROJECT_NAME} glfw::glfw)
-else()
-    target_link_libraries(${PROJECT_NAME} ${GLFW_LINK_LIBS})
 endif()
 
 if(APPLE)
@@ -85,8 +75,7 @@ if(APPLE)
     target_link_libraries(${PROJECT_NAME} ${COREFOUNDATION_FRAMEWORK})
 endif()
 
-# 8. AUTOMATIC SYMLINKS
-# This ensures your executable can find your assets!
+# 10. AUTOMATIC SYMLINKS
 foreach(dir images levels shaders sounds fonts)
     add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
         COMMAND ${CMAKE_COMMAND} -E copy_directory
