@@ -64,7 +64,7 @@ void Player::init(const glm::ivec2 &tileMapPos, ShaderProgram &shaderProgram)
 	verticalVelocity = 0.0f;
 
 	// --- Main spritesheet ---
-	spritesheet.loadFromFile("../images/Samurai.png", TEXTURE_PIXEL_FORMAT_RGBA);
+	spritesheet.loadFromFile("images/Samurai.png", TEXTURE_PIXEL_FORMAT_RGBA);
 	spritesheet.setWrapS(GL_CLAMP_TO_EDGE);
 	spritesheet.setWrapT(GL_CLAMP_TO_EDGE);
 	spritesheet.setMinFilter(GL_NEAREST);
@@ -164,7 +164,7 @@ void Player::init(const glm::ivec2 &tileMapPos, ShaderProgram &shaderProgram)
 	sprite->setFlipHorizontal(false);
 
 	// --- Attack spritesheet ---
-	attackSpritesheet.loadFromFile("../images/Samurai_Attack.png", TEXTURE_PIXEL_FORMAT_RGBA);
+	attackSpritesheet.loadFromFile("images/Samurai_Attack.png", TEXTURE_PIXEL_FORMAT_RGBA);
 	attackSpritesheet.setWrapS(GL_CLAMP_TO_EDGE);
 	attackSpritesheet.setWrapT(GL_CLAMP_TO_EDGE);
 	attackSpritesheet.setMinFilter(GL_NEAREST);
@@ -187,7 +187,7 @@ void Player::init(const glm::ivec2 &tileMapPos, ShaderProgram &shaderProgram)
 	attackSprite->setFlipHorizontal(false);
 
 	// --- Stair spritesheet (Samurai_Stair_Animation.png, 64x64, 2 frames) ---
-	stairSpritesheet.loadFromFile("../images/Samurai_Stair_Animation.png", TEXTURE_PIXEL_FORMAT_RGBA);
+	stairSpritesheet.loadFromFile("images/Samurai_Stair_Animation.png", TEXTURE_PIXEL_FORMAT_RGBA);
 	stairSpritesheet.setWrapS(GL_CLAMP_TO_EDGE);
 	stairSpritesheet.setWrapT(GL_CLAMP_TO_EDGE);
 	stairSpritesheet.setMinFilter(GL_NEAREST);

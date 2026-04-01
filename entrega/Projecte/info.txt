@@ -1,0 +1,105 @@
+============================================
+FITXER INFO - PROJECTE VIDEOJOCS (VJ)
+============================================
+
+============================================
+NOM I COGNOMS DELS INTEGRANTS DEL GRUP
+============================================
+
+- Jesus Jose Garcia Ayala
+- Marcel Alabart Benoit 
+
+============================================
+INSTRUCCIONS D'EXECUCIÓ (JUGAR DIRECTAMENT)
+============================================
+
+Aquest lliurament inclou un executable natiu per a Windows per facilitar-ne l'avaluació.
+1. Obriu la carpeta "Binari/bin/".
+2. Feu doble clic a "BugsBunnyCrazyCastle.exe".
+(Totes les .dll i els recursos necessaris ja estan inclosos a la carpeta, no cal compilar res).
+
+* Nota per a usuaris de Linux/macOS: Podeu compilar el joc fàcilment des del codi font 
+seguint les instruccions de l'arxiu "Projecte/COMPILAR.txt".
+
+============================================
+FUNCIONALITATS IMPLEMENTADES
+============================================
+
+1) Sistema general del joc
+- Màquina d'estats completa: MENU, PLAY, INSTRUCTIONS, CREDITS i GAME_WIN.
+- Pantalles de menú, instruccions, crèdits i victòria.
+- Retorn al menú en perdre totes les vides.
+
+2) Moviment i plataformes
+- Moviment lateral, salt i escalada per escales (ladders).
+- Plataformes one-way (es poden travessar des de sota i baixar amb la fletxa AVALL).
+- Física amb gravetat realista, "smart spawning" per retenir posició entre sales, i col·lisions per tiles.
+
+3) Combat i supervivència
+- Atac amb espasa (només disponible després de recollir-la).
+- Parry/defensa amb cooldown i desviament de projectils (requereix espasa).
+- Sistema de vides (inici a 3, màxim 9 amb curacions).
+- Escut consumible que bloqueja un cop.
+- Invencibilitat temporal després de rebre dany (amb efecte visual de parpelleig).
+
+4) Enemics i IA
+- Tres tipus d'enemics:
+  - Enemy1 (arquer): atac a distància amb fletxes.
+  - Enemy2 (espadatxí): persecució i atac cos a cos.
+  - Enemy3 (mag): projectils (boles de foc) i atac cos a cos.
+- Pathfinding avançat (algorisme BFS) per a la navegació del mapa (salts, plataformes i escales).
+- Activació per proximitat del jugador.
+- Eliminació d'enemics amb l'espasa, reflectint els seus propis projectils, o aixafant-los amb blocs de pes.
+
+5) Mapa, objectes i progressió
+- Mapa principal 3x3 (9 nivells interconnectats estil Metroidvania) + sales laterals connectades per portes.
+- Portals entre nivells, que funcionen com a portes amb pany i s'activen quan s'han recollit totes les claus de la zona.
+- Objectes implementats: claus, espasa, curació, escut i blocs de pes. 
+- Estat d'objectes i enemics mort/viu persistit per sala durant tota la partida (Global Game State).
+
+6) "Level Items"
+- Tiles de spring (impuls de salt automàtic).
+- Tiles de dash (impuls horitzontal).
+- Blocs de pes (weights) empentables amb gravetat pròpia. Funcionen com a bombes que es poden empenyer i exploten en contacte amb els enemics.
+
+7) HUD, efectes visuals (Shaders) i àudio[POLISH]
+- HUD interactiu amb vides, claus i estat d'ítems (utilitzant FreeType).
+- Efectes visuals avançats amb Shaders: 
+  - Fons procedural animat.
+  - Efecte "Iris Wipe" tipus Looney Tunes a les transicions de pantalla.
+  - Efecte de glitch/distorsió en rebre dany i warp en teletransport.
+- Partícules visuals per a explosions de pesos i pols en caigudes fortes (hard landing).
+- Àudio integrat (AudioHandler): música de menú/joc i efectes dinàmics (atac, parry, dany, recollides, portals, spring, etc.).
+
+8) Eines de debug
+- G: God mode (invulnerabilitat).
+- K: Obtenir totes les claus de la zona actual de cop per poder avançar ràpid (desapareixen visualment per evitar duplicats).
+- 1-9: Salt directe entre nivells de la graella principal.
+
+
+============================================
+INSTRUCCIONS DEL JOC
+============================================
+
+Objectiu principal
+- Explorar els nivells, recollir claus i activar portals per avançar.
+- Sobreviure als enemics i arribar a la sala final de victòria.
+- Es comença al mapa inferior esquerre i s'ha d'avançar en "S" fins al mapa superior dret, on una de les sales conté els enemics més perillosos. Una vegada eliminats, el joc acaba amb una pantalla de victòria.
+
+Controls principals
+- FLETXA ESQUERRA/DRETA: Mou el personatge.
+- FLETXA AMUNT: Salta, puja escales i entra a portes/portals.
+- FLETXA AVALL: Baixa escales i es deixa caure per plataformes one-way.
+- ESPAI: Atac amb espasa (si s'ha recollit).
+- SHIFT: Parry/defensa per bloquejar/reflectir atacs (si s'ha recollit espasa).
+- ESC: Pausa o retorn al menú segons el context.
+
+Controls de menú
+- AMUNT/AVALL: Navegar opcions.
+- ENTER: Seleccionar opció.
+- ESC: Sortir del joc des del menú principal.
+
+Consells ràpids
+- Sense l'espasa no et pots defensar ni atacar. Busca-la!
+- L'escut bloqueja un únic impacte complet i després es consumeix.
+- Les claus són absolutament necessàries per desbloquejar els portals que et permeten canviar de mapa.

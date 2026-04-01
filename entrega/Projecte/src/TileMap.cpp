@@ -5,7 +5,7 @@
 #include <algorithm>
 #include <cctype>
 #include "TileMap.h"
-#include "../external/json/nlohmann/json.hpp"
+#include "external/json/nlohmann/json.hpp"
 
 using namespace std;
 using json = nlohmann::json;
@@ -21,7 +21,7 @@ bool openWithFallback(ifstream &fin, const string &path, string &resolvedPath)
 		return true;
 	}
 
-	const string fallback = "../" + path;
+	const string fallback = "" + path;
 	fin.clear();
 	fin.open(fallback.c_str());
 	if(fin.is_open())
@@ -212,7 +212,7 @@ bool TileMap::loadLevelJSON(const string &levelFile)
     // Robust Image Path Handling
     size_t lastSlash = rawImagePath.find_last_of("/\\");
     string filename = (lastSlash == string::npos) ? rawImagePath : rawImagePath.substr(lastSlash + 1);
-    string tilesheetFile = "../images/" + filename;
+    string tilesheetFile = "images/" + filename;
     
     tilesheetSize.x = imgWidth / tileSize;
     tilesheetSize.y = imgHeight / tileSize;

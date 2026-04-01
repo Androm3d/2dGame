@@ -46,7 +46,7 @@ void Enemy3::init(const glm::ivec2 &tileMapPos, ShaderProgram &shaderProgram)
 	attackCooldown  = 0;
 
 	// --- Main spritesheet ---
-	spritesheet.loadFromFile("../images/Enemy3.png", TEXTURE_PIXEL_FORMAT_RGBA);
+	spritesheet.loadFromFile("images/Enemy3.png", TEXTURE_PIXEL_FORMAT_RGBA);
 	spritesheet.setWrapS(GL_CLAMP_TO_EDGE);
 	spritesheet.setWrapT(GL_CLAMP_TO_EDGE);
 	spritesheet.setMinFilter(GL_NEAREST);
@@ -88,7 +88,7 @@ void Enemy3::init(const glm::ivec2 &tileMapPos, ShaderProgram &shaderProgram)
 	sprite->changeAnimation(RUN);
 	sprite->setFlipHorizontal(false);
 
-	stairsSpritesheet.loadFromFile("../images/Enemy3_Stairs.png", TEXTURE_PIXEL_FORMAT_RGBA);
+	stairsSpritesheet.loadFromFile("images/Enemy3_Stairs.png", TEXTURE_PIXEL_FORMAT_RGBA);
 	stairsSpritesheet.setWrapS(GL_CLAMP_TO_EDGE);
 	stairsSpritesheet.setWrapT(GL_CLAMP_TO_EDGE);
 	stairsSpritesheet.setMinFilter(GL_NEAREST);
@@ -107,7 +107,7 @@ void Enemy3::init(const glm::ivec2 &tileMapPos, ShaderProgram &shaderProgram)
 	stairsSprite->changeAnimation(0);
 
 	// --- Fire projectile spritesheet (Enemy3_Fire.png: 352x48, 32x48, 11 frames) ---
-	fireSpritesheet.loadFromFile("../images/Enemy3_Fire.png", TEXTURE_PIXEL_FORMAT_RGBA);
+	fireSpritesheet.loadFromFile("images/Enemy3_Fire.png", TEXTURE_PIXEL_FORMAT_RGBA);
 	fireSpritesheet.setWrapS(GL_CLAMP_TO_EDGE);
 	fireSpritesheet.setWrapT(GL_CLAMP_TO_EDGE);
 	fireSpritesheet.setMinFilter(GL_NEAREST);

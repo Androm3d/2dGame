@@ -3,10 +3,18 @@
 #include <sstream>
 #include <random>
 #include <algorithm>
+
+#ifndef _WIN32
 #include <csignal>
 #include <unistd.h>
+#endif
+
 #include "AudioManager.h"
 
+#ifdef _WIN32
+#include <windows.h>
+#include <mmsystem.h>
+#endif
 
 AudioManager &AudioManager::instance()
 {
@@ -20,30 +28,30 @@ void AudioManager::init()
         return;
 
     // These files are optional. Missing files are simply skipped at runtime.
-    sfxByEvent["pickup_key"] = "../sounds/key_pickup.wav";
-    sfxByEvent["pickup_sword"] = "../sounds/sword_pickup.wav";
-    sfxByEvent["pickup_heal"] = "../sounds/heal_pickup.wav";
-    sfxByEvent["pickup_shield"] = "../sounds/shield_pickup.wav";
-    sfxByEvent["teleport"] = "../sounds/teleport.wav";
-    sfxByEvent["door"] = "../sounds/door.wav";
-    sfxByEvent["jump"] = "../sounds/spring.wav";
-    sfxByEvent["spring"] = "../sounds/spring.wav";
-    sfxByEvent["hurt"] = "../sounds/hurt.wav";
-    sfxByEvent["walk"] = "../sounds/walk.wav";
-    sfxByEvent["parry"] = "../sounds/parry.wav";
-    sfxByEvent["explosion"] = "../sounds/explosion.wav";
-    sfxByEvent["sword_attack"] = "../sounds/sword_attack.wav";
-    sfxByEvent["menu_music"] = "../sounds/menu_music.mp3";
-    sfxByEvent["game_music"] = "../sounds/game_music.mp3";
+    sfxByEvent["pickup_key"] = "sounds/key_pickup.wav";
+    sfxByEvent["pickup_sword"] = "sounds/sword_pickup.wav";
+    sfxByEvent["pickup_heal"] = "sounds/heal_pickup.wav";
+    sfxByEvent["pickup_shield"] = "sounds/shield_pickup.wav";
+    sfxByEvent["teleport"] = "sounds/teleport.wav";
+    sfxByEvent["door"] = "sounds/door.wav";
+    sfxByEvent["jump"] = "sounds/spring.wav";
+    sfxByEvent["spring"] = "sounds/spring.wav";
+    sfxByEvent["hurt"] = "sounds/hurt.wav";
+    sfxByEvent["walk"] = "sounds/walk.wav";
+    sfxByEvent["parry"] = "sounds/parry.wav";
+    sfxByEvent["explosion"] = "sounds/explosion.wav";
+    sfxByEvent["sword_attack"] = "sounds/sword_attack.wav";
+    sfxByEvent["menu_music"] = "sounds/menu_music.mp3";
+    sfxByEvent["game_music"] = "sounds/game_music.mp3";
 
-    menuMusicPath = "../sounds/menu_music.mp3";
+    menuMusicPath = "sounds/menu_music.mp3";
     if (!fileExists(menuMusicPath))
         menuMusicPath.clear();
 
-    gameMusicPath = "../sounds/game_music.mp3";
+    gameMusicPath = "sounds/game_music.mp3";
     if (!fileExists(gameMusicPath))
     {
-        gameMusicPath = "../sounds/music_bg.mp3";
+        gameMusicPath = "sounds/music_bg.mp3";
         if (!fileExists(gameMusicPath))
             gameMusicPath.clear();
     }
@@ -106,6 +114,26 @@ int AudioManager::spawnLoopingMusic(const std::string &path, float volume)
     if (path.empty() || !fileExists(path))
         return -1;
 
+#ifdef _WIN32
+    // WINDOWS: Native MP3 Playback
+    // Give it a unique alias so we can control it later
+    std::string alias = (path.find("menu") != std::string::npos) ? "bgm_menu" : "bgm_game";
+    
+    std::string cmdClose = "close " + alias;
+    mciSendStringA(cmdClose.c_str(), NULL, 0, NULL);
+
+    std::string cmdOpen = "open \"" + path + "\" type mpegvideo alias " + alias;
+    mciSendStringA(cmdOpen.c_str(), NULL, 0, NULL);
+
+    std::string cmdVol = "setaudio " + alias + " volume to " + std::to_string(int(volume * 500.0f));    // de 0 a 1000 según la documentación de MCI
+    mciSendStringA(cmdVol.c_str(), NULL, 0, NULL);
+    
+    std::string cmdPlay = "play " + alias + " repeat";
+    mciSendStringA(cmdPlay.c_str(), NULL, 0, NULL);
+    
+    return (alias == "bgm_menu") ? 100 : 200; // Return a fake PID for Windows
+#else
+    // LINUX: Your coworker's original code
     const std::string q = shellQuote(path);
     std::ostringstream volSs;
     volSs.setf(std::ios::fixed);
@@ -119,7 +147,6 @@ int AudioManager::spawnLoopingMusic(const std::string &path, float volume)
     std::string pidQ = shellQuote(pidFile);
     std::string ffplayLoop = "ffplay -nodisp -loglevel quiet -nostats -probesize 32 -analyzeduration 0 -stream_loop -1 -autoexit -af \"volume=" + volSs.str() + "\" " + q;
     std::string fallbackLoop = "while true; do paplay --volume=" + pulseVolSs.str() + " " + q + " || aplay " + q + " || play -q " + q + "; done";
-    // Launch in a dedicated session so we can terminate the whole process group reliably.
     std::string cmd = "sh -c 'setsid sh -c \"(" + ffplayLoop + " || " + fallbackLoop + ") >/dev/null 2>&1\" & echo $! > " + pidQ + "'";
     std::system(cmd.c_str());
 
@@ -130,19 +157,48 @@ int AudioManager::spawnLoopingMusic(const std::string &path, float volume)
     pidIn.close();
     std::remove(pidFile.c_str());
     return pid;
+#endif
 }
 
 void AudioManager::stopPid(int &pidRef)
 {
     if (pidRef > 0)
     {
-        // First try to kill the whole process group, then fallback to single PID.
+#ifdef _WIN32
+        if (pidRef == 100) mciSendStringA("close bgm_menu", NULL, 0, NULL);
+        if (pidRef == 200) mciSendStringA("close bgm_game", NULL, 0, NULL);
+#else
         kill(-pidRef, SIGTERM);
         kill(pidRef, SIGTERM);
         usleep(120000);
         kill(-pidRef, SIGKILL);
         kill(pidRef, SIGKILL);
+#endif
         pidRef = -1;
+    }
+}
+
+void AudioManager::pausePid(int pid)
+{
+    if (pid > 0) {
+#ifdef _WIN32
+        if (pid == 100) mciSendStringA("pause bgm_menu", NULL, 0, NULL);
+        if (pid == 200) mciSendStringA("pause bgm_game", NULL, 0, NULL);
+#else
+        kill(-pid, SIGSTOP);
+#endif
+    }
+}
+
+void AudioManager::resumePid(int pid)
+{
+    if (pid > 0) {
+#ifdef _WIN32
+        if (pid == 100) mciSendStringA("resume bgm_menu", NULL, 0, NULL);
+        if (pid == 200) mciSendStringA("resume bgm_game", NULL, 0, NULL);
+#else
+        kill(-pid, SIGCONT);
+#endif
     }
 }
 
@@ -273,6 +329,12 @@ bool AudioManager::fileExists(const std::string &path)
 
 void AudioManager::runPlaybackCommand(const std::string &path, float volume, float pitch)
 {
+#ifdef _WIN32
+    // WINDOWS: Native WAV Playback
+    // (Windows PlaySound doesn't support pitch shifting easily, but it works instantly and won't crash!)
+    PlaySoundA(path.c_str(), NULL, SND_FILENAME | SND_ASYNC | SND_NODEFAULT);
+#else
+    // LINUX: Your coworker's original code
     const float sfxMaster = 0.45f;
     const std::string q = shellQuote(path);
     float safeVol = std::max(0.0f, std::min(3.0f, volume * sfxMaster));
@@ -301,4 +363,5 @@ void AudioManager::runPlaybackCommand(const std::string &path, float volume, flo
     else
         cmd = "sh -c '(" + ffplayCmd + " || " + paplayCmd + " || " + aplayCmd + " || " + soxCmd + ") >/dev/null 2>&1 &'";
     std::system(cmd.c_str());
+#endif
 }

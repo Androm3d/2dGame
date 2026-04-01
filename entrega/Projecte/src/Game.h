@@ -85,7 +85,7 @@ public:
 	std::string getCurrentMapName() {
 		if (inSideRoom && !sideRoomMapName.empty())
 			return sideRoomMapName;
-		return "../levels/map_" + std::to_string(currentRoomX) + "_" + std::to_string(currentRoomY) + ".json";
+		return "levels/map_" + std::to_string(currentRoomX) + "_" + std::to_string(currentRoomY) + ".json";
     }
 	void enterSideRoom(const std::string &roomMapName);
 	void exitSideRoom();

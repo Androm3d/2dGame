@@ -45,7 +45,7 @@ void Enemy2::init(const glm::ivec2 &tileMapPos, ShaderProgram &shaderProgram)
 	bAttacking    = false;
 	attackCooldown = 0;
 
-	spritesheet.loadFromFile("../images/Enemy2.png", TEXTURE_PIXEL_FORMAT_RGBA);
+	spritesheet.loadFromFile("images/Enemy2.png", TEXTURE_PIXEL_FORMAT_RGBA);
 	spritesheet.setWrapS(GL_CLAMP_TO_EDGE);
 	spritesheet.setWrapT(GL_CLAMP_TO_EDGE);
 	spritesheet.setMinFilter(GL_NEAREST);
@@ -90,7 +90,7 @@ void Enemy2::init(const glm::ivec2 &tileMapPos, ShaderProgram &shaderProgram)
 	sprite->changeAnimation(RUN);
 	sprite->setFlipHorizontal(false);
 
-	stairsSpritesheet.loadFromFile("../images/Enemy2_Stairs.png", TEXTURE_PIXEL_FORMAT_RGBA);
+	stairsSpritesheet.loadFromFile("images/Enemy2_Stairs.png", TEXTURE_PIXEL_FORMAT_RGBA);
 	stairsSpritesheet.setWrapS(GL_CLAMP_TO_EDGE);
 	stairsSpritesheet.setWrapT(GL_CLAMP_TO_EDGE);
 	stairsSpritesheet.setMinFilter(GL_NEAREST);

@@ -90,6 +90,7 @@
 #define ENEMY_HURT_FRAMES             3
 #define ENEMY_DEATH_FRAMES            5
 
+
 // Offsets Y de cada fila en Enemy1.png (px)
 #define E1_ROW_RUN                    0
 #define E1_ROW_JUMP                  48

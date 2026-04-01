@@ -62,6 +62,10 @@ target_link_libraries(${PROJECT_NAME}
     ${FREETYPE_LIBRARIES}
 )
 
+if(WIN32)
+    target_link_libraries(${PROJECT_NAME} winmm)
+endif()
+
 if(TARGET GLEW::GLEW)
     target_link_libraries(${PROJECT_NAME} GLEW::GLEW)
 else()
@@ -83,11 +87,11 @@ endif()
 
 # 8. AUTOMATIC SYMLINKS
 # This ensures your executable can find your assets!
-foreach(dir images levels shaders sounds)
+foreach(dir images levels shaders sounds fonts)
     add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
-        COMMAND ${CMAKE_COMMAND} -E create_symlink
+        COMMAND ${CMAKE_COMMAND} -E copy_directory
         ${CMAKE_CURRENT_SOURCE_DIR}/${dir}
         ${CMAKE_CURRENT_BINARY_DIR}/${dir}
-        COMMENT "Creating symlink for ${dir}"
+        COMMENT "Copying directory ${dir}"
     )
 endforeach()

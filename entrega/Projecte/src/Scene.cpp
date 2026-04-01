@@ -33,7 +33,7 @@ static const float ITEM_BOB_SPEED_RAD = 2.8f;
 namespace {
 bool parseWorldMapCoords(const std::string &mapName, int &x, int &y)
 {
-	return std::sscanf(mapName.c_str(), "../levels/map_%d_%d.json", &x, &y) == 2;
+	return std::sscanf(mapName.c_str(), "levels/map_%d_%d.json", &x, &y) == 2;
 }
 
 bool fileExists(const char *path)
@@ -44,7 +44,7 @@ bool fileExists(const char *path)
 
 const char *pickHudFontPath()
 {
-	const char *fontPath = "../fonts/samurai.ttf";
+	const char *fontPath = "fonts/samurai.ttf";
 	if(fileExists(fontPath))
 	return fontPath;
 	return nullptr;
@@ -390,31 +390,31 @@ void Scene::init()
 	swordHasBasePosition = false;
 
 	// texturas
-	texKey.loadFromFile("../images/key.png", TEXTURE_PIXEL_FORMAT_RGBA);
+	texKey.loadFromFile("images/key.png", TEXTURE_PIXEL_FORMAT_RGBA);
     texKey.setMinFilter(GL_NEAREST);
     texKey.setMagFilter(GL_NEAREST);
 
-	texSword.loadFromFile("../images/sword.png", TEXTURE_PIXEL_FORMAT_RGBA);
+	texSword.loadFromFile("images/sword.png", TEXTURE_PIXEL_FORMAT_RGBA);
     texSword.setMinFilter(GL_NEAREST);
     texSword.setMagFilter(GL_NEAREST);
 
-	texHeal.loadFromFile("../images/heal.png", TEXTURE_PIXEL_FORMAT_RGBA);
+	texHeal.loadFromFile("images/heal.png", TEXTURE_PIXEL_FORMAT_RGBA);
     texHeal.setMinFilter(GL_NEAREST);
     texHeal.setMagFilter(GL_NEAREST);
 
-	texShield.loadFromFile("../images/shield.png", TEXTURE_PIXEL_FORMAT_RGBA);
+	texShield.loadFromFile("images/shield.png", TEXTURE_PIXEL_FORMAT_RGBA);
 	texShield.setMinFilter(GL_NEAREST);
 	texShield.setMagFilter(GL_NEAREST);
 
-	texWeight.loadFromFile("../images/weight.png", TEXTURE_PIXEL_FORMAT_RGBA);
+	texWeight.loadFromFile("images/weight.png", TEXTURE_PIXEL_FORMAT_RGBA);
 	texWeight.setMinFilter(GL_NEAREST);
 	texWeight.setMagFilter(GL_NEAREST);
 
-	texSpring.loadFromFile("../images/spring.png", TEXTURE_PIXEL_FORMAT_RGBA);
+	texSpring.loadFromFile("images/spring.png", TEXTURE_PIXEL_FORMAT_RGBA);
 	texSpring.setMinFilter(GL_NEAREST);
 	texSpring.setMagFilter(GL_NEAREST);
 
-	texDash.loadFromFile("../images/dash.png", TEXTURE_PIXEL_FORMAT_RGBA);
+	texDash.loadFromFile("images/dash.png", TEXTURE_PIXEL_FORMAT_RGBA);
 	texDash.setMinFilter(GL_NEAREST);
 	texDash.setMagFilter(GL_NEAREST);
 
@@ -539,7 +539,12 @@ void Scene::init()
 
 
 	// puertas y portales
+<<<<<<< HEAD
 	texDoor.loadFromFile("../images/door.png", TEXTURE_PIXEL_FORMAT_RGBA);
+=======
+	// 1. Load the texture
+	texDoor.loadFromFile("images/door.png", TEXTURE_PIXEL_FORMAT_RGBA);
+>>>>>>> 526ce77 (refactor ultra tocho)
 	texDoor.setMinFilter(GL_NEAREST);
 	texDoor.setMagFilter(GL_NEAREST);
 
@@ -571,7 +576,7 @@ void Scene::init()
 
 
 	// portales
-	texPortal.loadFromFile("../images/portal.png", TEXTURE_PIXEL_FORMAT_RGBA);
+	texPortal.loadFromFile("images/portal.png", TEXTURE_PIXEL_FORMAT_RGBA);
 	texPortal.setMinFilter(GL_NEAREST);
 	texPortal.setMagFilter(GL_NEAREST);
 
@@ -607,7 +612,7 @@ void Scene::init()
 	// Menu samurai cover sprite (idle animation, scaled to view)
 	{
 		if (menuSamurai != nullptr) { delete menuSamurai; menuSamurai = nullptr; }
-		texMenuSamurai.loadFromFile("../images/Samurai.png", TEXTURE_PIXEL_FORMAT_RGBA);
+		texMenuSamurai.loadFromFile("images/Samurai.png", TEXTURE_PIXEL_FORMAT_RGBA);
 		texMenuSamurai.setMinFilter(GL_NEAREST);
 		texMenuSamurai.setMagFilter(GL_NEAREST);
 
@@ -628,8 +633,8 @@ void Scene::init()
 
 	// fondo con shaders
     Shader bgVert, bgFrag;
-	bgVert.initFromFile(VERTEX_SHADER, "../shaders/bg.vert");
-	bgFrag.initFromFile(FRAGMENT_SHADER, "../shaders/bg.frag");
+	bgVert.initFromFile(VERTEX_SHADER, "shaders/bg.vert");
+	bgFrag.initFromFile(FRAGMENT_SHADER, "shaders/bg.frag");
     
     bgProgram.init();
     bgProgram.addShader(bgVert);
@@ -1491,7 +1496,7 @@ void Scene::update(int deltaTime)
 					destinationSpawnSide = Game::PortalEntrySide::TOP;
 				}
 
-				std::string targetMap = "../levels/map_" + std::to_string(targetX) + "_" + std::to_string(targetY) + ".json";
+				std::string targetMap = "levels/map_" + std::to_string(targetX) + "_" + std::to_string(targetY) + ".json";
 				Game::instance().setNextSpawnPortal(targetMap, destinationSpawnSide);
 
 				scheduleTransitionToWorld(targetX, targetY);
@@ -1666,13 +1671,13 @@ void Scene::initShaders()
 	Shader vShader, fShader;
 	Shader pVShader, pFShader;
 
-	vShader.initFromFile(VERTEX_SHADER, "../shaders/texture.vert");
+	vShader.initFromFile(VERTEX_SHADER, "shaders/texture.vert");
 	if(!vShader.isCompiled())
 	{
 		cout << "Vertex Shader Error" << endl;
 		cout << "" << vShader.log() << endl << endl;
 	}
-	fShader.initFromFile(FRAGMENT_SHADER, "../shaders/texture.frag");
+	fShader.initFromFile(FRAGMENT_SHADER, "shaders/texture.frag");
 	if(!fShader.isCompiled())
 	{
 		cout << "Fragment Shader Error" << endl;
@@ -1691,13 +1696,13 @@ void Scene::initShaders()
 	vShader.free();
 	fShader.free();
 
-	pVShader.initFromFile(VERTEX_SHADER, "../shaders/particles.vert");
+	pVShader.initFromFile(VERTEX_SHADER, "shaders/particles.vert");
 	if(!pVShader.isCompiled())
 	{
 		cout << "Particle Vertex Shader Error" << endl;
 		cout << "" << pVShader.log() << endl << endl;
 	}
-	pFShader.initFromFile(FRAGMENT_SHADER, "../shaders/particles.frag");
+	pFShader.initFromFile(FRAGMENT_SHADER, "shaders/particles.frag");
 	if(!pFShader.isCompiled())
 	{
 		cout << "Particle Fragment Shader Error" << endl;
@@ -1911,7 +1916,7 @@ void Scene::renderCreditsScreen()
 
 		hudText.render("Developed by", glm::vec2(380.f, 150.f), 22, roleColor);
 		hudText.render("Jesus Garcia (Jergasus)", glm::vec2(300.f, 195.f), 28, nameColor);
-		hudText.render("Marcel (Androm3d)", glm::vec2(330.f, 240.f), 28, nameColor);
+		hudText.render("Marcel Alabart (Androm3d)", glm::vec2(330.f, 240.f), 28, nameColor);
 
 		hudText.render("Videojocs - FIB UPC", glm::vec2(340.f, 310.f), 22, infoColor);
 		hudText.render("2025-26 Q2", glm::vec2(400.f, 345.f), 22, infoColor);
@@ -1958,7 +1963,7 @@ void Scene::renderWinScreen()
 		hudText.render("CREDITS", glm::vec2(110.f, 240.f), 30, goldColor);
 		hudText.render("Jesus Garcia", glm::vec2(90.f, 290.f), 26, nameColor);
 		hudText.render("(Jergasus)", glm::vec2(110.f, 320.f), 20, infoColor);
-		hudText.render("Marcel", glm::vec2(90.f, 360.f), 26, nameColor);
+		hudText.render("Marcel Alabart", glm::vec2(90.f, 360.f), 26, nameColor);
 		hudText.render("(Androm3d)", glm::vec2(110.f, 390.f), 20, infoColor);
 
 		hudText.render("Videojocs - FIB UPC", glm::vec2(70.f, 430.f), 18, infoColor);

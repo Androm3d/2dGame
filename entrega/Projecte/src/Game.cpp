@@ -26,19 +26,19 @@ void Game::configureRoomGraph()
 
 	// Graph edges: each door index in one room points to a destination room,
 	// and this helper also writes the reverse edge on the destination side.
-	addDoorLinkBidirectional("../levels/map_0_2.json", 0, "../levels/room_A.json", 0);
-	addDoorLinkBidirectional("../levels/map_0_2.json", 1, "../levels/room_B.json", 0);
-	addDoorLinkBidirectional("../levels/map_1_2.json", 0, "../levels/room_C.json", 0);
-	addDoorLinkBidirectional("../levels/map_2_1.json", 0, "../levels/room_D.json", 0);
-	addDoorLinkBidirectional("../levels/map_2_1.json", 1, "../levels/room_E.json", 0);
-	addDoorLinkBidirectional("../levels/map_1_1.json", 0, "../levels/room_F.json", 0);
-	addDoorLinkBidirectional("../levels/map_0_1.json", 0, "../levels/room_G.json", 0);
-	addDoorLinkBidirectional("../levels/map_0_0.json", 0, "../levels/room_H.json", 0);
-	addDoorLinkBidirectional("../levels/map_0_0.json", 1, "../levels/room_I.json", 0);
-	addDoorLinkBidirectional("../levels/map_1_0.json", 0, "../levels/room_J.json", 0);
-	addDoorLinkBidirectional("../levels/map_2_0.json", 2, "../levels/room_K.json", 0);
-	addDoorLinkBidirectional("../levels/map_2_0.json", 1, "../levels/room_L.json", 0);
-	addDoorLinkBidirectional("../levels/map_2_0.json", 0, "../levels/room_M.json", 0);
+	addDoorLinkBidirectional("levels/map_0_2.json", 0, "levels/room_A.json", 0);
+	addDoorLinkBidirectional("levels/map_0_2.json", 1, "levels/room_B.json", 0);
+	addDoorLinkBidirectional("levels/map_1_2.json", 0, "levels/room_C.json", 0);
+	addDoorLinkBidirectional("levels/map_2_1.json", 0, "levels/room_D.json", 0);
+	addDoorLinkBidirectional("levels/map_2_1.json", 1, "levels/room_E.json", 0);
+	addDoorLinkBidirectional("levels/map_1_1.json", 0, "levels/room_F.json", 0);
+	addDoorLinkBidirectional("levels/map_0_1.json", 0, "levels/room_G.json", 0);
+	addDoorLinkBidirectional("levels/map_0_0.json", 0, "levels/room_H.json", 0);
+	addDoorLinkBidirectional("levels/map_0_0.json", 1, "levels/room_I.json", 0);
+	addDoorLinkBidirectional("levels/map_1_0.json", 0, "levels/room_J.json", 0);
+	addDoorLinkBidirectional("levels/map_2_0.json", 2, "levels/room_K.json", 0);
+	addDoorLinkBidirectional("levels/map_2_0.json", 1, "levels/room_L.json", 0);
+	addDoorLinkBidirectional("levels/map_2_0.json", 0, "levels/room_M.json", 0);
 }
 
 bool Game::getDoorLink(const std::string &fromMap, int doorIndex, DoorLink &outLink) const
@@ -60,7 +60,7 @@ bool Game::getDoorLink(const std::string &fromMap, int doorIndex, DoorLink &outL
 
 std::string Game::getCurrentWorldMapName() const
 {
-	return "../levels/map_" + std::to_string(currentRoomX) + "_" + std::to_string(currentRoomY) + ".json";
+	return "levels/map_" + std::to_string(currentRoomX) + "_" + std::to_string(currentRoomY) + ".json";
 }
 
 int Game::getRoomTotalKeys(const std::string &mapName)
