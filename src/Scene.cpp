@@ -26,7 +26,7 @@ static const float WEIGHT_SPAWN_RAISE_PX = 12.0f;
 static const float PLAYER_SPAWN_CLIP_OFFSET = 12.0f;
 static const int EXPLOSION_FLASH_MS = 180;
 static const int PARRY_FLASH_MS = 120;
-static const int TELEPORT_WARP_MS = 520;
+static const int TELEPORT_WARP_MS = 820;
 static const float ITEM_BOB_AMPLITUDE_PX = 3.0f;
 static const float ITEM_BOB_SPEED_RAD = 2.8f;
 
@@ -56,9 +56,6 @@ Scene::Scene()
 {
 	map = NULL;
 	player = NULL;
-	enemy = NULL;
-	enemy2 = NULL;
-	enemy3 = NULL;
 	sword = nullptr;
 	bgVao = 0;
 	bgVbo = 0;
@@ -127,18 +124,21 @@ void Scene::clearLevelEntities()
 		delete player;
 		player = nullptr;
 	}
-	if (enemy != NULL) {
-		delete enemy;
-		enemy = NULL;
-	}
-	if (enemy2 != NULL) {
-		delete enemy2;
-		enemy2 = NULL;
-	}
-	if (enemy3 != NULL) {
-		delete enemy3;
-		enemy3 = NULL;
-	}
+	
+	for (Enemy *e : enemies) delete e;
+	enemies.clear();
+	enemySpawnPos.clear();
+	enemyActivated.clear();
+	
+	for (Enemy2 *e : enemies2) delete e;
+	enemies2.clear();
+	enemy2SpawnPos.clear();
+	enemy2Activated.clear();
+	
+	for (Enemy3 *e : enemies3) delete e;
+	enemies3.clear();
+	enemy3SpawnPos.clear();
+	enemy3Activated.clear();
 }
 
 
@@ -228,63 +228,121 @@ void Scene::init()
 			player->setPosition(playerInitPos);
 		}
 	}
-	enemy = new Enemy();
-	enemy->init(glm::ivec2(SCREEN_X, SCREEN_Y), texProgram);
-	if (hasRuntimeState) {
-		enemy->setActive(runtimeState.enemy1Alive);
-		if (runtimeState.enemy1Alive)
-			enemy->setPosition(runtimeState.enemy1Pos);
+	
+	// Spawn all Enemy1 instances from all spawn points
+	{
+		const auto &spawnPoints = map->getEnemy1Spawns();
+		for (size_t i = 0; i < spawnPoints.size(); ++i) {
+			Enemy *e = new Enemy();
+			e->init(glm::ivec2(SCREEN_X, SCREEN_Y), texProgram);
+			e->setTileMap(map);
+			
+			glm::vec2 spawnPos = glm::vec2(spawnPoints[i]);
+			bool isAlive = true;
+			bool isActivated = false;
+			glm::vec2 posToUse = spawnPos;
+			if (hasRuntimeState) {
+				if (i < runtimeState.enemy1AliveList.size())
+					isAlive = runtimeState.enemy1AliveList[i];
+				else if (i == 0)
+					isAlive = runtimeState.enemy1Alive;
+				if (isAlive) {
+					if (i < runtimeState.enemy1PosList.size())
+						posToUse = runtimeState.enemy1PosList[i];
+					else if (i == 0)
+						posToUse = runtimeState.enemy1Pos;
+				}
+				if (i < runtimeState.enemy1ActivatedList.size())
+					isActivated = runtimeState.enemy1ActivatedList[i];
+			}
+			e->setPosition(posToUse);
+			e->setActive(isAlive && isActivated);
+			
+			enemies.push_back(e);
+			enemySpawnPos.push_back(spawnPos);
+			enemyActivated.push_back(!isAlive || isActivated);
+		}
+		if (spawnPoints.empty()) {
+			std::cerr << "Warning: No SPAWN_ENEMY_1 tiles found. Enemy1 disabled." << std::endl;
+		}
 	}
-	else if (!map->getEnemy1Spawns().empty()) {
-		enemySpawnPos = glm::vec2(map->getEnemy1Spawns()[0]);
-		enemy->setPosition(enemySpawnPos);
-		enemy->setActive(false);   // empieza dormido
-		enemyActivated = false;
-	} else {
-		enemy->setActive(false);
-		enemyActivated = false;
-		enemySpawnPos = glm::vec2(-9999.f);
-		std::cerr << "Warning: No SPAWN_ENEMY_1 tile found. Enemy1 disabled." << std::endl;
+	
+	// Spawn all Enemy2 instances from all spawn points
+	{
+		const auto &spawnPoints = map->getEnemy2Spawns();
+		for (size_t i = 0; i < spawnPoints.size(); ++i) {
+			Enemy2 *e = new Enemy2();
+			e->init(glm::ivec2(SCREEN_X, SCREEN_Y), texProgram);
+			e->setTileMap(map);
+			
+			glm::vec2 spawnPos = glm::vec2(spawnPoints[i]);
+			bool isAlive = true;
+			bool isActivated = false;
+			glm::vec2 posToUse = spawnPos;
+			if (hasRuntimeState) {
+				if (i < runtimeState.enemy2AliveList.size())
+					isAlive = runtimeState.enemy2AliveList[i];
+				else if (i == 0)
+					isAlive = runtimeState.enemy2Alive;
+				if (isAlive) {
+					if (i < runtimeState.enemy2PosList.size())
+						posToUse = runtimeState.enemy2PosList[i];
+					else if (i == 0)
+						posToUse = runtimeState.enemy2Pos;
+				}
+				if (i < runtimeState.enemy2ActivatedList.size())
+					isActivated = runtimeState.enemy2ActivatedList[i];
+			}
+			e->setPosition(posToUse);
+			e->setActive(isAlive && isActivated);
+			
+			enemies2.push_back(e);
+			enemy2SpawnPos.push_back(spawnPos);
+			enemy2Activated.push_back(!isAlive || isActivated);
+		}
+		if (spawnPoints.empty()) {
+			std::cerr << "Warning: No SPAWN_ENEMY_2 tiles found. Enemy2 disabled." << std::endl;
+		}
 	}
-	enemy->setTileMap(map);
-	enemy2 = new Enemy2();
-	enemy2->init(glm::ivec2(SCREEN_X, SCREEN_Y), texProgram);
-	if (hasRuntimeState) {
-		enemy2->setActive(runtimeState.enemy2Alive);
-		if (runtimeState.enemy2Alive)
-			enemy2->setPosition(runtimeState.enemy2Pos);
+	
+	// Spawn all Enemy3 instances from all spawn points
+	{
+		const auto &spawnPoints = map->getEnemy3Spawns();
+		for (size_t i = 0; i < spawnPoints.size(); ++i) {
+			Enemy3 *e = new Enemy3();
+			e->init(glm::ivec2(SCREEN_X, SCREEN_Y), texProgram);
+			e->setTileMap(map);
+			
+			glm::vec2 spawnPos = glm::vec2(spawnPoints[i]);
+			bool isAlive = true;
+			bool isActivated = false;
+			glm::vec2 posToUse = spawnPos;
+			if (hasRuntimeState) {
+				if (i < runtimeState.enemy3AliveList.size())
+					isAlive = runtimeState.enemy3AliveList[i];
+				else if (i == 0)
+					isAlive = runtimeState.enemy3Alive;
+				if (isAlive) {
+					if (i < runtimeState.enemy3PosList.size())
+						posToUse = runtimeState.enemy3PosList[i];
+					else if (i == 0)
+						posToUse = runtimeState.enemy3Pos;
+				}
+				if (i < runtimeState.enemy3ActivatedList.size())
+					isActivated = runtimeState.enemy3ActivatedList[i];
+			}
+			e->setPosition(posToUse);
+			e->setActive(isAlive && isActivated);
+			
+			enemies3.push_back(e);
+			enemy3SpawnPos.push_back(spawnPos);
+			enemy3Activated.push_back(!isAlive || isActivated);
+		}
+		if (spawnPoints.empty()) {
+			std::cerr << "Warning: No SPAWN_ENEMY_3 tiles found. Enemy3 disabled." << std::endl;
+		}
 	}
-	else if (!map->getEnemy2Spawns().empty()) {
-		enemy2SpawnPos = glm::vec2(map->getEnemy2Spawns()[0]);
-		enemy2->setPosition(enemy2SpawnPos);
-		enemy2->setActive(false);
-		enemy2Activated = false;
-	} else {
-		enemy2->setActive(false);
-		enemy2Activated = false;
-		enemy2SpawnPos = glm::vec2(-9999.f);
-		std::cerr << "Warning: No SPAWN_ENEMY_2 tile found. Enemy2 disabled." << std::endl;
-	}
-	enemy2->setTileMap(map);
-	enemy3 = new Enemy3();
-	enemy3->init(glm::ivec2(SCREEN_X, SCREEN_Y), texProgram);
-	if (hasRuntimeState) {
-		enemy3->setActive(runtimeState.enemy3Alive);
-		if (runtimeState.enemy3Alive)
-			enemy3->setPosition(runtimeState.enemy3Pos);
-	}
-	else if (!map->getEnemy3Spawns().empty()) {
-		enemy3SpawnPos = glm::vec2(map->getEnemy3Spawns()[0]);
-		enemy3->setPosition(enemy3SpawnPos);
-		enemy3->setActive(false);
-		enemy3Activated = false;
-	} else {
-		enemy3->setActive(false);
-		enemy3Activated = false;
-		enemy3SpawnPos = glm::vec2(-9999.f);
-		std::cerr << "Warning: No SPAWN_ENEMY_3 tile found. Enemy3 disabled." << std::endl;
-	}
-	enemy3->setTileMap(map);
+	
 	viewWidth = float(map->getRoomSize().x * map->getTileSize());
 	viewHeight = float(map->getRoomSize().y * map->getTileSize());
 	if (viewWidth > mapPixelWidth) viewWidth = mapPixelWidth;
@@ -612,8 +670,9 @@ void Scene::updateCamera()
 	float maxCamX = std::max(0.f, mapPixelWidth - viewWidth);
 	float maxCamY = std::max(0.f, mapPixelHeight - viewHeight);
 
+	// Allow camera to go above 0 (no bottom constraint on Y for top viewport movement)
 	cameraX = std::max(0.f, std::min(targetX, maxCamX));
-	cameraY = std::max(0.f, std::min(targetY, maxCamY));
+	cameraY = std::min(targetY, maxCamY);
 }
 
 int Scene::findPortalSpawnIndexForSide(const std::vector<glm::ivec2> &portalSpawns, int sideCode) const
@@ -649,17 +708,56 @@ void Scene::saveCurrentRoomRuntimeState()
 		state.weightPositions.push_back(weights[i]->getPosition());
 		state.weightVelocities.push_back(i < weightVelocities.size() ? weightVelocities[i] : 0.0f);
 	}
-	if (enemy != nullptr) {
-		state.enemy1Alive = enemy->isAlive();
-		state.enemy1Pos = glm::vec2(enemy->getPosition());
+	state.enemy1AliveList.reserve(enemies.size());
+	state.enemy2AliveList.reserve(enemies2.size());
+	state.enemy3AliveList.reserve(enemies3.size());
+	state.enemy1PosList.reserve(enemies.size());
+	state.enemy2PosList.reserve(enemies2.size());
+	state.enemy3PosList.reserve(enemies3.size());
+	state.enemy1ActivatedList.reserve(enemyActivated.size());
+	state.enemy2ActivatedList.reserve(enemy2Activated.size());
+	state.enemy3ActivatedList.reserve(enemy3Activated.size());
+
+	for (size_t i = 0; i < enemies.size(); ++i) {
+		Enemy *e = enemies[i];
+		bool activated = (i < enemyActivated.size()) ? enemyActivated[i] : false;
+		bool alivePersist = (e != nullptr) ? (!activated || e->isAlive()) : false;
+		state.enemy1AliveList.push_back(alivePersist);
+		state.enemy1PosList.push_back(e != nullptr ? glm::vec2(e->getPosition()) : glm::vec2(0.0f));
 	}
-	if (enemy2 != nullptr) {
-		state.enemy2Alive = enemy2->isAlive();
-		state.enemy2Pos = glm::vec2(enemy2->getPosition());
+	for (size_t i = 0; i < enemies2.size(); ++i) {
+		Enemy2 *e = enemies2[i];
+		bool activated = (i < enemy2Activated.size()) ? enemy2Activated[i] : false;
+		bool alivePersist = (e != nullptr) ? (!activated || e->isAlive()) : false;
+		state.enemy2AliveList.push_back(alivePersist);
+		state.enemy2PosList.push_back(e != nullptr ? glm::vec2(e->getPosition()) : glm::vec2(0.0f));
 	}
-	if (enemy3 != nullptr) {
-		state.enemy3Alive = enemy3->isAlive();
-		state.enemy3Pos = glm::vec2(enemy3->getPosition());
+	for (size_t i = 0; i < enemies3.size(); ++i) {
+		Enemy3 *e = enemies3[i];
+		bool activated = (i < enemy3Activated.size()) ? enemy3Activated[i] : false;
+		bool alivePersist = (e != nullptr) ? (!activated || e->isAlive()) : false;
+		state.enemy3AliveList.push_back(alivePersist);
+		state.enemy3PosList.push_back(e != nullptr ? glm::vec2(e->getPosition()) : glm::vec2(0.0f));
+	}
+	state.enemy1ActivatedList = enemyActivated;
+	state.enemy2ActivatedList = enemy2Activated;
+	state.enemy3ActivatedList = enemy3Activated;
+
+	// Save first alive enemy of each type (for backward compatibility with single-enemy persistence)
+	if (!enemies.empty() && enemies[0] != nullptr) {
+		bool activated = !enemyActivated.empty() ? enemyActivated[0] : false;
+		state.enemy1Alive = !activated || enemies[0]->isAlive();
+		state.enemy1Pos = glm::vec2(enemies[0]->getPosition());
+	}
+	if (!enemies2.empty() && enemies2[0] != nullptr) {
+		bool activated = !enemy2Activated.empty() ? enemy2Activated[0] : false;
+		state.enemy2Alive = !activated || enemies2[0]->isAlive();
+		state.enemy2Pos = glm::vec2(enemies2[0]->getPosition());
+	}
+	if (!enemies3.empty() && enemies3[0] != nullptr) {
+		bool activated = !enemy3Activated.empty() ? enemy3Activated[0] : false;
+		state.enemy3Alive = !activated || enemies3[0]->isAlive();
+		state.enemy3Pos = glm::vec2(enemies3[0]->getPosition());
 	}
 	Game::instance().saveRoomRuntimeState(Game::instance().getCurrentMapName(), state);
 }
@@ -764,177 +862,258 @@ void Scene::update(int deltaTime)
 	{
 		glm::vec2 pp = player->getPosition();
 		float activationRange = float(ENEMY_ACTIVATION_RANGE);
-		if (!enemyActivated) {
-			float dx = pp.x - enemySpawnPos.x;
-			float dy = pp.y - enemySpawnPos.y;
-			if (dx * dx + dy * dy < activationRange * activationRange) {
-				enemyActivated = true;
-				enemy->setActive(true);
+		
+		// Activate Enemy1 instances
+		for (size_t i = 0; i < enemies.size(); ++i) {
+			if (!enemyActivated[i]) {
+				float dx = pp.x - enemySpawnPos[i].x;
+				float dy = pp.y - enemySpawnPos[i].y;
+				if (dx * dx + dy * dy < activationRange * activationRange) {
+					enemyActivated[i] = true;
+					enemies[i]->setActive(true);
+				}
 			}
 		}
-		if (!enemy2Activated) {
-			float dx = pp.x - enemy2SpawnPos.x;
-			float dy = pp.y - enemy2SpawnPos.y;
-			if (dx * dx + dy * dy < activationRange * activationRange) {
-				enemy2Activated = true;
-				enemy2->setActive(true);
+		
+		// Activate Enemy2 instances
+		for (size_t i = 0; i < enemies2.size(); ++i) {
+			if (!enemy2Activated[i]) {
+				float dx = pp.x - enemy2SpawnPos[i].x;
+				float dy = pp.y - enemy2SpawnPos[i].y;
+				if (dx * dx + dy * dy < activationRange * activationRange) {
+					enemy2Activated[i] = true;
+					enemies2[i]->setActive(true);
+				}
 			}
 		}
-		if (!enemy3Activated) {
-			float dx = pp.x - enemy3SpawnPos.x;
-			float dy = pp.y - enemy3SpawnPos.y;
-			if (dx * dx + dy * dy < activationRange * activationRange) {
-				enemy3Activated = true;
-				enemy3->setActive(true);
+		
+		// Activate Enemy3 instances
+		for (size_t i = 0; i < enemies3.size(); ++i) {
+			if (!enemy3Activated[i]) {
+				float dx = pp.x - enemy3SpawnPos[i].x;
+				float dy = pp.y - enemy3SpawnPos[i].y;
+				if (dx * dx + dy * dy < activationRange * activationRange) {
+					enemy3Activated[i] = true;
+					enemies3[i]->setActive(true);
+				}
 			}
 		}
 	}
 
 	if (player->isAlive() || player->isDying())
 		player->update(deltaTime);
-	if (enemy->isAlive() || enemy->isDying())
-		enemy->update(deltaTime, player->getPosition());
+	
+	// Update all Enemy1 instances
+	for (Enemy *e : enemies) {
+		if (e->isAlive() || e->isDying())
+			e->update(deltaTime, player->getPosition());
+	}
+	
+	// Update all Enemy2 instances
+	for (Enemy2 *e : enemies2) {
+		if (e->isAlive() || e->isDying())
+			e->update(deltaTime, player->getPosition());
+	}
+	
+	// Update all Enemy3 instances
+	for (Enemy3 *e : enemies3) {
+		if (e->isAlive() || e->isDying())
+			e->update(deltaTime, player->getPosition());
+	}
 
-	// --- Player attack vs Enemy ---
-	if (player->isAttacking() && enemy->isAlive() && !attackHitThisSwing)
+	// --- Player attack vs Enemy1 ---
+	if (player->isAttacking() && !attackHitThisSwing)
 	{
 		glm::vec4 atkBox = player->getAttackHitbox();
-		glm::vec4 enemyBox = enemy->getHitbox();
-		if (atkBox.x < enemyBox.x + enemyBox.z &&
-			atkBox.x + atkBox.z > enemyBox.x &&
-			atkBox.y < enemyBox.y + enemyBox.w &&
-			atkBox.y + atkBox.w > enemyBox.y)
-		{
-			int knockDir = (enemy->getPosition().x >= player->getPosition().x) ? 1 : -1;
-			enemy->takeDamage(knockDir);
-			attackHitThisSwing = true;
+		for (Enemy *e : enemies) {
+			if (e->isAlive()) {
+				glm::vec4 enemyBox = e->getHitbox();
+				if (atkBox.x < enemyBox.x + enemyBox.z &&
+					atkBox.x + atkBox.z > enemyBox.x &&
+					atkBox.y < enemyBox.y + enemyBox.w &&
+					atkBox.y + atkBox.w > enemyBox.y)
+				{
+					int knockDir = (e->getPosition().x >= player->getPosition().x) ? 1 : -1;
+					e->takeDamage(knockDir);
+					attackHitThisSwing = true;
+					break;
+				}
+			}
 		}
 	}
-	if (player->isAttacking() && Game::instance().hasSword) {
-		enemy->destroyArrowsInHitbox(player->getAttackHitbox());
+	
+	// --- Player attack vs Enemy2 ---
+	if (player->isAttacking() && !attackHitEnemy2ThisSwing)
+	{
+		glm::vec4 atkBox = player->getAttackHitbox();
+		for (Enemy2 *e : enemies2) {
+			if (e->isAlive()) {
+				glm::vec4 enemyBox = e->getHitbox();
+				if (atkBox.x < enemyBox.x + enemyBox.z &&
+					atkBox.x + atkBox.z > enemyBox.x &&
+					atkBox.y < enemyBox.y + enemyBox.w &&
+					atkBox.y + atkBox.w > enemyBox.y)
+				{
+					int knockDir = (e->getPosition().x >= player->getPosition().x) ? 1 : -1;
+					e->takeDamage(knockDir);
+					attackHitEnemy2ThisSwing = true;
+					break;
+				}
+			}
+		}
 	}
-	if (!player->isAttacking())
+	
+	// --- Player attack vs Enemy3 ---
+	if (player->isAttacking() && !attackHitEnemy3ThisSwing)
+	{
+		glm::vec4 atkBox = player->getAttackHitbox();
+		for (Enemy3 *e : enemies3) {
+			if (e->isAlive()) {
+				glm::vec4 enemyBox = e->getHitbox();
+				if (atkBox.x < enemyBox.x + enemyBox.z &&
+					atkBox.x + atkBox.z > enemyBox.x &&
+					atkBox.y < enemyBox.y + enemyBox.w &&
+					atkBox.y + atkBox.w > enemyBox.y)
+				{
+					int knockDir = (e->getPosition().x >= player->getPosition().x) ? 1 : -1;
+					e->takeDamage(knockDir);
+					attackHitEnemy3ThisSwing = true;
+					break;
+				}
+			}
+		}
+	}
+	
+	if (player->isAttacking() && Game::instance().hasSword) {
+		for (Enemy *e : enemies) {
+			e->destroyArrowsInHitbox(player->getAttackHitbox());
+		}
+	}
+	
+	if (!player->isAttacking()) {
 		attackHitThisSwing = false;
+		attackHitEnemy2ThisSwing = false;
+		attackHitEnemy3ThisSwing = false;
+	}
 
 	// --- Enemy1 arrows hit player (or reflect if protecting) ---
-	if (player->isAlive() && enemy->isAlive())
-	{
-		if (player->isProtecting())
+	for (Enemy *e : enemies) {
+		if (player->isAlive() && e->isAlive())
 		{
-			if (enemy->reflectArrowHit(player->getPosition(), glm::ivec2(Player::HITBOX_WIDTH, Player::HITBOX_HEIGHT), player->isFacingLeft()))
-				parryFlashMs = std::max(parryFlashMs, PARRY_FLASH_MS);
+			if (player->isProtecting())
+			{
+				if (e->reflectArrowHit(player->getPosition(), glm::ivec2(Player::HITBOX_WIDTH, Player::HITBOX_HEIGHT), player->isFacingLeft())) {
+					parryFlashMs = std::max(parryFlashMs, PARRY_FLASH_MS);
+					AudioManager::instance().playSfx("parry", 1.0f, 1.0f);
+				}
+			}
+			else if (!player->isInvincible())
+				if (e->checkArrowHit(player->getPosition(), glm::ivec2(Player::HITBOX_WIDTH, Player::HITBOX_HEIGHT)))
+					player->takeDamage();
 		}
-		else if (!player->isInvincible())
-			if (enemy->checkArrowHit(player->getPosition(), glm::ivec2(Player::HITBOX_WIDTH, Player::HITBOX_HEIGHT)))
-				player->takeDamage();
 	}
 
 	// --- Enemy1 reflected arrows vs all enemies ---
 	{
 		int kd;
-		if (enemy->isAlive()  && enemy->checkReflectedArrowHit(enemy->getHitbox(),  kd)) enemy->takeDamage(kd);
-		if (enemy2->isAlive() && enemy->checkReflectedArrowHit(enemy2->getHitbox(), kd)) enemy2->takeDamage(kd);
-		if (enemy3->isAlive() && enemy->checkReflectedArrowHit(enemy3->getHitbox(), kd)) enemy3->takeDamage(kd);
-	}
-
-	// --- Enemy2 update ---
-	if (enemy2->isAlive() || enemy2->isDying())
-		enemy2->update(deltaTime, player->getPosition());
-
-	// --- Player attack vs Enemy2 ---
-	if (player->isAttacking() && enemy2->isAlive() && !attackHitEnemy2ThisSwing)
-	{
-		glm::vec4 atkBox = player->getAttackHitbox();
-		glm::vec4 e2Box  = enemy2->getHitbox();
-		if (atkBox.x < e2Box.x + e2Box.z &&
-			atkBox.x + atkBox.z > e2Box.x &&
-			atkBox.y < e2Box.y + e2Box.w  &&
-			atkBox.y + atkBox.w > e2Box.y)
-		{
-			int knockDir = (enemy2->getPosition().x >= player->getPosition().x) ? 1 : -1;
-			enemy2->takeDamage(knockDir);
-			attackHitEnemy2ThisSwing = true;
-		}
-	}
-	if (!player->isAttacking())
-		attackHitEnemy2ThisSwing = false;
-
-	// --- Enemy2 melee hits player ---
-	if (enemy2->isMeleeAttacking() && !enemy2HitPlayerThisSwing)
-	{
-		if (player->isAlive() && !player->isInvincible())
-		{
-			glm::vec4 m = enemy2->getMeleeHitbox();
-			glm::vec2 pPos = player->getPosition();
-			if (m.x < pPos.x + Player::HITBOX_WIDTH  && m.x + m.z > pPos.x &&
-				m.y < pPos.y + Player::HITBOX_HEIGHT && m.y + m.w > pPos.y)
-			{
-				player->takeDamage();
-				enemy2HitPlayerThisSwing = true;
+		for (Enemy *e1 : enemies) {
+			if (e1->isAlive()) {
+				for (Enemy *e2 : enemies) {
+					if (e2->isAlive() && e1->checkReflectedArrowHit(e2->getHitbox(), kd)) 
+						e2->takeDamage(kd);
+				}
+				for (Enemy2 *e2 : enemies2) {
+					if (e2->isAlive() && e1->checkReflectedArrowHit(e2->getHitbox(), kd)) 
+						e2->takeDamage(kd);
+				}
+				for (Enemy3 *e2 : enemies3) {
+					if (e2->isAlive() && e1->checkReflectedArrowHit(e2->getHitbox(), kd)) 
+						e2->takeDamage(kd);
+				}
 			}
 		}
 	}
-	if (!enemy2->isMeleeAttacking()) enemy2HitPlayerThisSwing = false;
 
-	// --- Enemy3 update ---
-	if (enemy3->isAlive() || enemy3->isDying())
-		enemy3->update(deltaTime, player->getPosition());
-
-	// --- Player attack vs Enemy3 ---
-	if (player->isAttacking() && enemy3->isAlive() && !attackHitEnemy3ThisSwing)
-	{
-		glm::vec4 atkBox = player->getAttackHitbox();
-		glm::vec4 e3Box  = enemy3->getHitbox();
-		if (atkBox.x < e3Box.x + e3Box.z &&
-			atkBox.x + atkBox.z > e3Box.x &&
-			atkBox.y < e3Box.y + e3Box.w  &&
-			atkBox.y + atkBox.w > e3Box.y)
+	// --- Enemy2 melee hits player ---
+	for (Enemy2 *e : enemies2) {
+		if (e->isMeleeAttacking() && !enemy2HitPlayerThisSwing)
 		{
-			int knockDir = (enemy3->getPosition().x >= player->getPosition().x) ? 1 : -1;
-			enemy3->takeDamage(knockDir);
-			attackHitEnemy3ThisSwing = true;
+			if (player->isAlive() && !player->isInvincible())
+			{
+				glm::vec4 m = e->getMeleeHitbox();
+				glm::vec2 pPos = player->getPosition();
+				if (m.x < pPos.x + Player::HITBOX_WIDTH  && m.x + m.z > pPos.x &&
+					m.y < pPos.y + Player::HITBOX_HEIGHT && m.y + m.w > pPos.y)
+				{
+					player->takeDamage();
+					enemy2HitPlayerThisSwing = true;
+					break;
+				}
+			}
 		}
 	}
-	if (!player->isAttacking())
-		attackHitEnemy3ThisSwing = false;
+	if (enemies2.empty() || !std::any_of(enemies2.begin(), enemies2.end(), [](Enemy2* e) { return e->isMeleeAttacking(); }))
+		enemy2HitPlayerThisSwing = false;
 
 	// --- Enemy3 fireballs hit player (or reflect if protecting) ---
-	if (player->isAlive() && enemy3->isAlive())
-	{
-		if (player->isProtecting())
+	for (Enemy3 *e : enemies3) {
+		if (player->isAlive() && e->isAlive())
 		{
-			if (enemy3->reflectFireballHit(player->getPosition(), glm::ivec2(Player::HITBOX_WIDTH, Player::HITBOX_HEIGHT), player->isFacingLeft()))
-				parryFlashMs = std::max(parryFlashMs, PARRY_FLASH_MS);
+			if (player->isProtecting())
+			{
+				if (e->reflectFireballHit(player->getPosition(), glm::ivec2(Player::HITBOX_WIDTH, Player::HITBOX_HEIGHT), player->isFacingLeft())) {
+					parryFlashMs = std::max(parryFlashMs, PARRY_FLASH_MS);
+					AudioManager::instance().playSfx("parry", 1.0f, 1.0f);
+				}
+			}
+			else if (!player->isInvincible())
+				if (e->checkFireballHit(player->getPosition(), glm::ivec2(Player::HITBOX_WIDTH, Player::HITBOX_HEIGHT)))
+					player->takeDamage();
 		}
-		else if (!player->isInvincible())
-			if (enemy3->checkFireballHit(player->getPosition(), glm::ivec2(Player::HITBOX_WIDTH, Player::HITBOX_HEIGHT)))
-				player->takeDamage();
 	}
 
 	// --- Enemy3 reflected fireballs vs all enemies ---
 	{
 		int kd;
-		if (enemy->isAlive()  && enemy3->checkReflectedFireballHit(enemy->getHitbox(),  kd)) enemy->takeDamage(kd);
-		if (enemy2->isAlive() && enemy3->checkReflectedFireballHit(enemy2->getHitbox(), kd)) enemy2->takeDamage(kd);
-		if (enemy3->isAlive() && enemy3->checkReflectedFireballHit(enemy3->getHitbox(), kd)) enemy3->takeDamage(kd);
-	}
-
-	// --- Enemy3 melee (Attack2) hits player ---
-	if (enemy3->isMeleeAttacking() && !enemy3HitPlayerThisSwing)
-	{
-		if (player->isAlive() && !player->isInvincible())
-		{
-			glm::vec4 m = enemy3->getMeleeHitbox();
-			glm::vec2 pPos = player->getPosition();
-			if (m.x < pPos.x + Player::HITBOX_WIDTH  && m.x + m.z > pPos.x &&
-				m.y < pPos.y + Player::HITBOX_HEIGHT && m.y + m.w > pPos.y)
-			{
-				player->takeDamage();
-				enemy3HitPlayerThisSwing = true;
+		for (Enemy3 *e3 : enemies3) {
+			if (e3->isAlive()) {
+				for (Enemy *e1 : enemies) {
+					if (e1->isAlive() && e3->checkReflectedFireballHit(e1->getHitbox(), kd)) 
+						e1->takeDamage(kd);
+				}
+				for (Enemy2 *e2 : enemies2) {
+					if (e2->isAlive() && e3->checkReflectedFireballHit(e2->getHitbox(), kd)) 
+						e2->takeDamage(kd);
+				}
+				for (Enemy3 *e3_2 : enemies3) {
+					if (e3_2->isAlive() && e3->checkReflectedFireballHit(e3_2->getHitbox(), kd)) 
+						e3_2->takeDamage(kd);
+				}
 			}
 		}
 	}
-	if (!enemy3->isMeleeAttacking()) enemy3HitPlayerThisSwing = false;
+
+	// --- Enemy3 melee (Attack2) hits player ---
+	for (Enemy3 *e : enemies3) {
+		if (e->isMeleeAttacking() && !enemy3HitPlayerThisSwing)
+		{
+			if (player->isAlive() && !player->isInvincible())
+			{
+				glm::vec4 m = e->getMeleeHitbox();
+				glm::vec2 pPos = player->getPosition();
+				if (m.x < pPos.x + Player::HITBOX_WIDTH  && m.x + m.z > pPos.x &&
+					m.y < pPos.y + Player::HITBOX_HEIGHT && m.y + m.w > pPos.y)
+				{
+					player->takeDamage();
+					enemy3HitPlayerThisSwing = true;
+					break;
+				}
+			}
+		}
+	}
+	if (enemies3.empty() || !std::any_of(enemies3.begin(), enemies3.end(), [](Enemy3* e) { return e->isMeleeAttacking(); }))
+		enemy3HitPlayerThisSwing = false;
+	
 	updateCamera();
 
     glm::vec2 pPos = player->getPosition();
@@ -944,11 +1123,15 @@ void Scene::update(int deltaTime)
 		if (player->consumeHardLanding(&landingImpact)) {
 			glm::vec2 dustCenter(pPos.x + float(Player::HITBOX_WIDTH) * 0.5f, pPos.y + float(Player::HITBOX_HEIGHT));
 			spawnLandingDustParticles(dustCenter, sampleGroundDustColor(dustCenter), landingImpact);
+			float landingVol = 0.30f + std::max(0.0f, landingImpact) * 0.0042f;
+			landingVol = std::max(0.30f, std::min(3.0f, landingVol));
+			AudioManager::instance().playSfx("walk", landingVol, 1.0f);
 		}
 	}
 
 	// Trigger spring animation on activation
 	if (player->consumeSpringTrigger()) {
+		AudioManager::instance().playSfx("spring", 1.0f, 1.0f);
 		for (Sprite* spring : springs) {
 			if (checkAABB(pPos, pSize, spring->getPosition(), glm::ivec2(map->getTileSize(), map->getTileSize()))) {
 				spring->changeAnimation(1);
@@ -1193,32 +1376,57 @@ void Scene::update(int deltaTime)
 		wPos = nextPos;
 
 		weights[i]->update(deltaTime);
-			
+		
 		// Weight collision with enemies - reuse wPos and weightSize from above
-		glm::vec4 enemyHitbox = enemy->getHitbox();
-		if (enemy->isAlive() && checkAABB(wPos, weightSize, glm::vec2(enemyHitbox.x, enemyHitbox.y), glm::ivec2(enemyHitbox.z, enemyHitbox.w))) {
-			enemy->takeDamage(0);
-			enemy->takeDamage(0);
-			enemy->takeDamage(0);
-			weightDestroyed = true;
+		// Check collision with all Enemy1 instances
+		for (Enemy *e : enemies) {
+			if (e->isAlive()) {
+				glm::vec4 enemyHitbox = e->getHitbox();
+				if (checkAABB(wPos, weightSize, glm::vec2(enemyHitbox.x, enemyHitbox.y), glm::ivec2(enemyHitbox.z, enemyHitbox.w))) {
+					e->takeDamage(0);
+					e->takeDamage(0);
+					e->takeDamage(0);
+					weightDestroyed = true;
+					break;
+				}
+			}
 		}
-		glm::vec4 enemy2Hitbox = enemy2->getHitbox();
-		if (enemy2->isAlive() && checkAABB(wPos, weightSize, glm::vec2(enemy2Hitbox.x, enemy2Hitbox.y), glm::ivec2(enemy2Hitbox.z, enemy2Hitbox.w))) {
-			enemy2->takeDamage(0);
-			enemy2->takeDamage(0);
-			enemy2->takeDamage(0);
-			weightDestroyed = true;
+		
+		// Check collision with all Enemy2 instances
+		if (!weightDestroyed) {
+			for (Enemy2 *e : enemies2) {
+				if (e->isAlive()) {
+					glm::vec4 enemyHitbox = e->getHitbox();
+					if (checkAABB(wPos, weightSize, glm::vec2(enemyHitbox.x, enemyHitbox.y), glm::ivec2(enemyHitbox.z, enemyHitbox.w))) {
+						e->takeDamage(0);
+						e->takeDamage(0);
+						e->takeDamage(0);
+						weightDestroyed = true;
+						break;
+					}
+				}
+			}
 		}
-		glm::vec4 enemy3Hitbox = enemy3->getHitbox();
-		if (enemy3->isAlive() && checkAABB(wPos, weightSize, glm::vec2(enemy3Hitbox.x, enemy3Hitbox.y), glm::ivec2(enemy3Hitbox.z, enemy3Hitbox.w))) {
-			enemy3->takeDamage(0);
-			enemy3->takeDamage(0);
-			enemy3->takeDamage(0);
-			weightDestroyed = true;
+		
+		// Check collision with all Enemy3 instances
+		if (!weightDestroyed) {
+			for (Enemy3 *e : enemies3) {
+				if (e->isAlive()) {
+					glm::vec4 enemyHitbox = e->getHitbox();
+					if (checkAABB(wPos, weightSize, glm::vec2(enemyHitbox.x, enemyHitbox.y), glm::ivec2(enemyHitbox.z, enemyHitbox.w))) {
+						e->takeDamage(0);
+						e->takeDamage(0);
+						e->takeDamage(0);
+						weightDestroyed = true;
+						break;
+					}
+				}
+			}
 		}
 		if (weightDestroyed) {
 			spawnExplosionParticles(glm::vec2(wPos.x + float(weightSize.x) * 0.5f, wPos.y + float(weightSize.y) * 0.5f));
 			explosionFlashMs = std::max(explosionFlashMs, EXPLOSION_FLASH_MS);
+			AudioManager::instance().playSfx("explosion", 1.15f, 1.0f);
 			delete weights[i];
 			weights.erase(weights.begin() + i);
 			weightVelocities.erase(weightVelocities.begin() + i);
@@ -1306,6 +1514,7 @@ void Scene::update(int deltaTime)
 
 				if (!link.targetMap.empty()) {
 					door->changeAnimation(1); // Open door first, swap room after delay
+					AudioManager::instance().playSfx("door", 1.0f, 1.0f);
 
 					int targetX = 0;
 					int targetY = 0;
@@ -1313,12 +1522,10 @@ void Scene::update(int deltaTime)
 						scheduleTransitionToWorld(targetX, targetY);
 						pendingTargetDoorIndex = link.targetDoorIndex;
 						cout << "Returning to world room: map_" << targetX << "_" << targetY << endl;
-						AudioManager::instance().playSfx("teleport");
 					}
 					else {
 						scheduleTransitionToMap(link.targetMap, true, link.targetDoorIndex);
 						cout << "Entering side room: " << link.targetMap << endl;
-						AudioManager::instance().playSfx("teleport");
 					}
 				}
 			}
@@ -1381,15 +1588,21 @@ void Scene::render()
 	for (Sprite* door : doors) { door->render(); }
 	for (Sprite* portal : portals) { portal->render(); }
 
-	if (enemy->isAlive() || enemy->isDying())
-		enemy->render();
-	if (enemy2->isAlive() || enemy2->isDying())
-		enemy2->render();
-	if (enemy3->isAlive() || enemy3->isDying())
-		enemy3->render();
+	for (Enemy *e : enemies) {
+		if (e->isAlive() || e->isDying())
+			e->render();
+	}
+	for (Enemy2 *e : enemies2) {
+		if (e->isAlive() || e->isDying())
+			e->render();
+	}
+	for (Enemy3 *e : enemies3) {
+		if (e->isAlive() || e->isDying())
+			e->render();
+	}
 	float warpRatio = float(teleportWarpMs) / float(TELEPORT_WARP_MS);
 	warpRatio = std::max(0.0f, std::min(1.0f, warpRatio));
-	float playerWarpAmount = 0.55f * warpRatio;
+	float playerWarpAmount = 0.85f * warpRatio;
 	texProgram.setUniform1f("warpAmount", playerWarpAmount);
 	texProgram.setUniform1f("godModeAmount", Game::instance().godMode ? 1.0f : 0.0f);
 	player->render();

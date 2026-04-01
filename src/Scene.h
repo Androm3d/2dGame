@@ -68,9 +68,9 @@ private:
 	TileMap *map;
 	Player *player;
 	glm::vec2 playerInitPos;
-	Enemy *enemy;
-	Enemy2 *enemy2;
-	Enemy3 *enemy3;
+	std::vector<Enemy*> enemies;
+	std::vector<Enemy2*> enemies2;
+	std::vector<Enemy3*> enemies3;
 	ShaderProgram texProgram;
 	float currentTime;
 	glm::mat4 projection;
@@ -124,12 +124,12 @@ private:
 	bool enemy2HitPlayerThisSwing;
 	bool enemy3HitPlayerThisSwing;
 
-	bool enemyActivated = false;
-	bool enemy2Activated = false;
-	bool enemy3Activated = false;
-	glm::vec2 enemySpawnPos;
-	glm::vec2 enemy2SpawnPos;
-	glm::vec2 enemy3SpawnPos;
+	std::vector<bool> enemyActivated;
+	std::vector<bool> enemy2Activated;
+	std::vector<bool> enemy3Activated;
+	std::vector<glm::vec2> enemySpawnPos;
+	std::vector<glm::vec2> enemy2SpawnPos;
+	std::vector<glm::vec2> enemy3SpawnPos;
 	Text hudText;
 	bool hudReady = false;
 	std::vector<VfxParticle> vfxParticles;

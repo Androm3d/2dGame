@@ -47,6 +47,7 @@ void Player::init(const glm::ivec2 &tileMapPos, ShaderProgram &shaderProgram)
 	prevShift = false;
 	parryTimer = 0;
 	parryCooldown = 0;
+	footstepCooldownMs = 0; // Initialize footstep cooldown
 	facingLeft = false;
 	alive = true;
 	hitTimer = 0;
@@ -243,6 +244,10 @@ void Player::update(int deltaTime)
 		return;
 	}
 	if (hitTimer > 0) hitTimer--;
+	if (footstepCooldownMs > 0) {
+		footstepCooldownMs -= deltaTime;
+		if (footstepCooldownMs < 0) footstepCooldownMs = 0;
+	}
 	if (springCooldown > 0) {
 		springCooldown -= deltaTime;
 		if (springCooldown < 0) springCooldown = 0;
@@ -512,7 +517,6 @@ void Player::update(int deltaTime)
 			onGround = false;
 			sprite->setFlipHorizontal(facingLeft);
 			sprite->changeAnimation(JUMP_UP);
-			AudioManager::instance().playSfx("jump");
 		}
 
 		verticalVelocity += GRAVITY * dt;
@@ -590,7 +594,16 @@ void Player::update(int deltaTime)
 			onGround = false;
 			springCooldown = PLAYER_SPRING_COOLDOWN_MS;
 			springTriggered = true;
-			AudioManager::instance().playSfx("jump");
+			AudioManager::instance().playSfx("spring", 0.9f, 1.0f);
+		}
+	}
+
+	// Footsteps while actually walking on ground.
+	if (!bClimbing && !bJumping && !bAttacking && !bProtecting && onGround) {
+		bool walking = (leftPressed && !rightPressed) || (rightPressed && !leftPressed);
+		if (walking && footstepCooldownMs == 0) {
+			AudioManager::instance().playSfx("walk", 0.5f, 1.0f);
+			footstepCooldownMs = 180;
 		}
 	}
 
@@ -647,6 +660,7 @@ void Player::takeDamage()
 	Game::instance().lives--;
 	if (Game::instance().lives <= 0)
 	{
+		AudioManager::instance().playHurt(AudioManager::HurtProfile::Player);
 		bDying = true;
 		sprite->changeAnimation(DEAD);
 		sprite->setAnimationLoop(DEAD, false);
@@ -658,7 +672,7 @@ void Player::takeDamage()
 		bAttacking = false;
 		bProtecting = false;
 		sprite->changeAnimation(HURT);
-		AudioManager::instance().playSfx("hurt");
+		AudioManager::instance().playHurt(AudioManager::HurtProfile::Player);
 	}
 }
 

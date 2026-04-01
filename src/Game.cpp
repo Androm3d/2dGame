@@ -407,9 +407,12 @@ void Game::init()
 	AudioManager::instance().init();
 	glClearColor(0.3f, 0.3f, 0.3f, 1.0f);
 	currentState = GameState::MENU;
+	canResumePlay = false;
+	menuOpenedFromDeath = false;
 	menuSelection = 0;
 	godMode = false;
 	scene.init();
+	AudioManager::instance().playMenuMusic(true);
 }
 
 void Game::resetGameState()
@@ -438,13 +441,24 @@ void Game::resetGameState()
 	roomRuntimeStates.clear();
 	godMode = false;
 	scene.init();
+	canResumePlay = true;
+	menuOpenedFromDeath = false;
 }
 
 void Game::transitionToState(GameState newState)
 {
+	GameState oldState = currentState;
 	currentState = newState;
+
 	if (newState == GameState::PLAY) {
-		resetGameState();
+		if (!canResumePlay || menuOpenedFromDeath)
+			resetGameState();
+		AudioManager::instance().playGameMusic(menuOpenedFromDeath || !canResumePlay);
+		menuOpenedFromDeath = false;
+	}
+	else if (newState == GameState::MENU) {
+		bool restartMenu = (oldState == GameState::PLAY);
+		AudioManager::instance().playMenuMusic(restartMenu);
 	}
 }
 
@@ -459,6 +473,8 @@ bool Game::update(int deltaTime)
 		scene.update(deltaTime);
 		
 		if (lives <= 0) {
+			menuOpenedFromDeath = true;
+			canResumePlay = false;
 			transitionToState(GameState::MENU);
 		}
 	}
@@ -486,10 +502,13 @@ void Game::keyPressed(int key)
 {
 	if(key == GLFW_KEY_ESCAPE) {
 		if (currentState == GameState::PLAY) {
+			menuOpenedFromDeath = false;
+			canResumePlay = true;
 			transitionToState(GameState::MENU);
 		} else if (currentState == GameState::INSTRUCTIONS || currentState == GameState::CREDITS) {
 			transitionToState(GameState::MENU);
 		} else {
+			AudioManager::instance().shutdown();
 			bPlay = false;
 		}
 	}
