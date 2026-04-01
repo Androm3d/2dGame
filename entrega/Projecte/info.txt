@@ -15,9 +15,9 @@ INSTRUCCIONS D'EXECUCIÓ (JUGAR DIRECTAMENT)
 
 Aquest lliurament inclou un executable natiu per a Windows per facilitar-ne l'avaluació.
 1. Obriu la carpeta "Binari".
-2. Windows: Feu doble clic a "GameWindows.exe".
-   MacOS: Feu doble clic a "GameMacOS"
-   Linux: Feu servir wine per executar "GameWindows.exe"
+2. Windows: Feu doble clic a "SamuraiVengeance.exe".
+   MacOS: Feu doble clic a "SamuraiVengeanceMac"
+   Linux: Feu servir wine per executar "SamuraiVengeanceArch"
 (Totes les .dll i els recursos necessaris ja estan inclosos a la carpeta, no cal compilar res).
 
 * Nota per a usuaris de Linux: Podeu compilar el joc fàcilment des del codi font 
