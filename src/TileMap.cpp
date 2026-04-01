@@ -554,12 +554,9 @@ bool TileMap::checkCollision(const glm::ivec2 &pos, const glm::ivec2 &size, Coll
 					return true;
 				}
 				else if (type == TileType::ONE_WAY_PLATFORM && !dropThrough) {
-					int playerBottom = pos.y + size.y - 1;
 					int tileTop = y1 * tileSize;
-					if (playerBottom - tileTop < 8) { 
-						if (correctedPos) *correctedPos = tileTop - size.y;
-						return true;
-					}
+					if (correctedPos) *correctedPos = tileTop - size.y;
+					return true;
 				}
 			}
 			break;

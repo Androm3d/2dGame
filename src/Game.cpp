@@ -3,6 +3,7 @@
 #include <queue>
 #include <algorithm>
 #include "Game.h"
+#include "AudioManager.h"
 
 void Game::addDoorLinkBidirectional(const std::string &fromMap, int fromDoorIndex, const std::string &toMap, int toDoorIndex)
 {
@@ -209,6 +210,36 @@ int Game::getTotalKeysInCurrentWorld()
 	return totalKeys;
 }
 
+void Game::grantAllKeysInCurrentWorld()
+{
+	const std::string worldMap = getCurrentWorldMapName();
+	std::queue<std::string> q;
+	std::unordered_set<std::string> visited;
+
+	q.push(worldMap);
+	visited.insert(worldMap);
+
+	while (!q.empty()) {
+		const std::string room = q.front();
+		q.pop();
+
+		roomCollectedKeys[room] = getRoomTotalKeys(room);
+
+		auto it = doorGraph.find(room);
+		if (it == doorGraph.end())
+			continue;
+
+		for (const DoorLink &link : it->second) {
+			if (link.targetMap.empty())
+				continue;
+			if (visited.insert(link.targetMap).second)
+				q.push(link.targetMap);
+		}
+	}
+
+	keysCollected = getTotalKeysInCurrentWorld();
+}
+
 int Game::getCollectedKeysInCurrentWorld() const
 {
 	const std::string worldMap = getCurrentWorldMapName();
@@ -278,6 +309,9 @@ void Game::setNextSpawnDoor(const std::string &mapName, int doorIndex)
 	hasNextSpawnDoor = true;
 	nextSpawnMap = mapName;
 	nextSpawnDoorIndex = doorIndex;
+	hasNextSpawnPortal = false;
+	nextSpawnPortalMap.clear();
+	nextSpawnPortalSide = PortalEntrySide::NONE;
 }
 
 bool Game::consumeNextSpawnDoor(const std::string &mapName, int &doorIndexOut)
@@ -289,6 +323,42 @@ bool Game::consumeNextSpawnDoor(const std::string &mapName, int &doorIndexOut)
 	hasNextSpawnDoor = false;
 	nextSpawnMap.clear();
 	nextSpawnDoorIndex = -1;
+	return true;
+}
+
+void Game::setNextSpawnPortal(const std::string &mapName, PortalEntrySide side)
+{
+	hasNextSpawnPortal = (side != PortalEntrySide::NONE);
+	nextSpawnPortalMap = mapName;
+	nextSpawnPortalSide = side;
+	hasNextSpawnDoor = false;
+	nextSpawnMap.clear();
+	nextSpawnDoorIndex = -1;
+}
+
+bool Game::consumeNextSpawnPortal(const std::string &mapName, PortalEntrySide &sideOut)
+{
+	if (!hasNextSpawnPortal || nextSpawnPortalMap != mapName || nextSpawnPortalSide == PortalEntrySide::NONE)
+		return false;
+
+	sideOut = nextSpawnPortalSide;
+	hasNextSpawnPortal = false;
+	nextSpawnPortalMap.clear();
+	nextSpawnPortalSide = PortalEntrySide::NONE;
+	return true;
+}
+
+void Game::saveRoomRuntimeState(const std::string &mapName, const RoomRuntimeState &state)
+{
+	roomRuntimeStates[mapName] = state;
+}
+
+bool Game::loadRoomRuntimeState(const std::string &mapName, RoomRuntimeState &stateOut) const
+{
+	auto it = roomRuntimeStates.find(mapName);
+	if (it == roomRuntimeStates.end())
+		return false;
+	stateOut = it->second;
 	return true;
 }
 
@@ -319,9 +389,14 @@ void Game::init()
 	hasNextSpawnDoor = false;
 	nextSpawnMap.clear();
 	nextSpawnDoorIndex = -1;
+	hasNextSpawnPortal = false;
+	nextSpawnPortalMap.clear();
+	nextSpawnPortalSide = PortalEntrySide::NONE;
 	roomTotalKeys.clear();
 	roomCollectedKeys.clear();
+	roomRuntimeStates.clear();
 	configureRoomGraph();
+	AudioManager::instance().init();
 	glClearColor(0.3f, 0.3f, 0.3f, 1.0f);
 	currentState = GameState::MENU;
 	menuSelection = 0;
@@ -344,11 +419,15 @@ void Game::resetGameState()
 	hasNextSpawnDoor = false;
 	nextSpawnMap.clear();
 	nextSpawnDoorIndex = -1;
+	hasNextSpawnPortal = false;
+	nextSpawnPortalMap.clear();
+	nextSpawnPortalSide = PortalEntrySide::NONE;
 	roomTotalKeys.clear();
 	roomCollectedKeys.clear();
 	roomCollectedHeals.clear();
 	roomCollectedShields.clear();
 	roomCollectedSword.clear();
+	roomRuntimeStates.clear();
 	godMode = false;
 	scene.init();
 }
@@ -364,6 +443,10 @@ void Game::transitionToState(GameState newState)
 
 bool Game::update(int deltaTime)
 {
+	// Clamp frame spikes (e.g., app resumed from background) to avoid physics tunneling.
+	if (deltaTime < 0) deltaTime = 0;
+	if (deltaTime > 50) deltaTime = 50;
+
 	if (currentState == GameState::PLAY) {
 		scene.update(deltaTime);
 		
@@ -424,14 +507,7 @@ void Game::keyPressed(int key)
 			godMode = !godMode;
 		}
 		if (key == GLFW_KEY_K) {
-			const std::string worldMap = getCurrentWorldMapName();
-			int totalKeys = getTotalKeysInCurrentWorld();
-			for (auto &entry : roomCollectedKeys) {
-				if (entry.first.find("../levels/map_") != std::string::npos) {
-					entry.second = getRoomTotalKeys(entry.first);
-				}
-			}
-			keysCollected = totalKeys;
+			grantAllKeysInCurrentWorld();
 		}
 		if (key >= GLFW_KEY_1 && key <= GLFW_KEY_9) {
 			int level = key - GLFW_KEY_1 + 1;

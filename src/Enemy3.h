@@ -5,6 +5,7 @@
 #include <vector>
 #include "Sprite.h"
 #include "TileMap.h"
+#include "BaseEnemy.h"
 
 
 struct FireBall
@@ -15,7 +16,7 @@ struct FireBall
 };
 
 
-class Enemy3
+class Enemy3 : public BaseEnemy
 {
 public:
 	Enemy3();
@@ -26,55 +27,28 @@ public:
 	void update(int deltaTime, const glm::vec2 &playerPos);
 	void render();
 
-	void setTileMap(TileMap *tileMap);
 	void setPosition(const glm::vec2 &pos);
-	glm::ivec2 getPosition() const { return posEnemy; }
 
 	void takeDamage(int knockDir);
-	void setActive(bool value);
-	bool isAlive() const { return alive; }
-	bool isDying() const { return bDying; }
-	bool isInvincible() const { return hitTimer > 0; }
 	glm::vec4 getHitbox() const;
 	bool checkFireballHit(const glm::vec2 &pPos, const glm::ivec2 &pSize);
-	void reflectFireballHit(const glm::vec2 &pPos, const glm::ivec2 &pSize, bool playerFacingLeft);
+	bool reflectFireballHit(const glm::vec2 &pPos, const glm::ivec2 &pSize, bool playerFacingLeft);
 	bool checkReflectedFireballHit(const glm::vec4 &hitbox, int &outKnockDir);
 	glm::vec4 getMeleeHitbox() const;
 	bool isMeleeAttacking() const { return bMelee; }
 
 private:
-	void computePath(const glm::vec2 &playerPos);
+	void computePath(const glm::vec2 &playerPos) override;
 
-	bool facingLeft;
-	bool bJumping;
-	bool onGround;
 	bool bCasting;     // playing fire-cast animation (Attack)
 	bool bMelee;       // playing close-melee animation (Attack2)
-	bool alive;
-	bool bDying;
-	int health;
-	int jumpAngle, startY;
-	int pathRecalcTimer;
 	int attackCooldown;
-	int springCooldown;
-	int dashCooldown;
-	int hitTimer;
-	int knockbackFrames;
-	int knockbackDir;
-	int dashTimeLeftMs;
-	glm::ivec2 tileMapDispl, posEnemy;
-	glm::vec2 posEnemyF;
-	float verticalVelocity;
-	float dashVelocity;
-	float dashVelocityStart;
 	Texture spritesheet;
+	Texture stairsSpritesheet;
 	Texture fireSpritesheet;
 	Sprite *sprite;
+	Sprite *stairsSprite;
 	Sprite *fireSprite;   // re-used for each fireball render
-	TileMap *map;
-
-	std::vector<glm::ivec2> path;
-	int pathIndex;
 
 	std::vector<FireBall> fireballs;
 };

@@ -3,6 +3,7 @@
 #include <GL/glew.h>
 #include "Player.h"
 #include "Game.h"
+#include "AudioManager.h"
 
 
 #include "GameConstants.h"
@@ -249,6 +250,8 @@ void Player::update(int deltaTime)
 	if (dashCooldown > 0) dashCooldown--;
 	if (dropThroughTimerMs > 0) dropThroughTimerMs -= deltaTime;
 	springTriggered = false;
+	hardLandingTriggered = false;
+	hardLandingSpeed = 0.0f;
 	float dt = float(deltaTime) / 1000.0f;
 
 
@@ -293,6 +296,7 @@ void Player::update(int deltaTime)
 		parryTimer = 0;
 		attackSprite->changeAnimation(0);
 		attackSprite->setFlipHorizontal(facingLeft);
+		AudioManager::instance().playSfx("sword_attack");
 	}
 	if(bAttacking)
 	{
@@ -332,6 +336,7 @@ void Player::update(int deltaTime)
 		onGround = false;
 		springCooldown = PLAYER_SPRING_COOLDOWN_MS;
 		springTriggered = true;
+		AudioManager::instance().playSfx("jump");
 	}
 
 	// Dash boost
@@ -507,6 +512,7 @@ void Player::update(int deltaTime)
 			onGround = false;
 			sprite->setFlipHorizontal(facingLeft);
 			sprite->changeAnimation(JUMP_UP);
+			AudioManager::instance().playSfx("jump");
 		}
 
 		verticalVelocity += GRAVITY * dt;
@@ -518,6 +524,11 @@ void Player::update(int deltaTime)
 			bool dropThrough = downPressed && !onLadder;
 			if (map->checkCollision(fallPos, glm::ivec2(Player::HITBOX_WIDTH, Player::HITBOX_HEIGHT), CollisionDir::DOWN, &fallPos.y, dropThrough))
 			{
+				if (verticalVelocity > PLAYER_HARD_LANDING_SPEED)
+				{
+					hardLandingTriggered = true;
+					hardLandingSpeed = verticalVelocity;
+				}
 				posPlayerF.y = float(fallPos.y);
 				verticalVelocity = 0.0f;
 				onGround = true;
@@ -530,6 +541,11 @@ void Player::update(int deltaTime)
 				int nearGroundY = 0;
 				if (map->checkCollision(nearGroundProbe, glm::ivec2(Player::HITBOX_WIDTH, Player::HITBOX_HEIGHT), CollisionDir::DOWN, &nearGroundY, dropThrough))
 				{
+					if (verticalVelocity > PLAYER_HARD_LANDING_SPEED)
+					{
+						hardLandingTriggered = true;
+						hardLandingSpeed = verticalVelocity;
+					}
 					posPlayerF.y = float(nearGroundY);
 					verticalVelocity = 0.0f;
 					onGround = true;
@@ -574,6 +590,7 @@ void Player::update(int deltaTime)
 			onGround = false;
 			springCooldown = PLAYER_SPRING_COOLDOWN_MS;
 			springTriggered = true;
+			AudioManager::instance().playSfx("jump");
 		}
 	}
 
@@ -641,6 +658,7 @@ void Player::takeDamage()
 		bAttacking = false;
 		bProtecting = false;
 		sprite->changeAnimation(HURT);
+		AudioManager::instance().playSfx("hurt");
 	}
 }
 
@@ -654,6 +672,17 @@ bool Player::consumeSpringTrigger()
 	if (!springTriggered)
 		return false;
 	springTriggered = false;
+	return true;
+}
+
+bool Player::consumeHardLanding(float *impactSpeed)
+{
+	if (!hardLandingTriggered)
+		return false;
+	if (impactSpeed != nullptr)
+		*impactSpeed = hardLandingSpeed;
+	hardLandingTriggered = false;
+	hardLandingSpeed = 0.0f;
 	return true;
 }
 

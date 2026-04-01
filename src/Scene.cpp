@@ -3,11 +3,13 @@
 #include <cstdio>
 #include <fstream>
 #include <sstream>
+#include <algorithm>
 #include <glm/gtc/matrix_transform.hpp>
 #include <iostream>
 #include "Scene.h"
 #include "Game.h"
 #include "GameConstants.h"
+#include "AudioManager.h"
 
 
 #define SCREEN_X 0
@@ -22,6 +24,11 @@ static const int WEIGHT_SPRING_COOLDOWN_MS = 180;
 static const int WEIGHT_DASH_COOLDOWN_MS = 180;
 static const float WEIGHT_SPAWN_RAISE_PX = 12.0f;
 static const float PLAYER_SPAWN_CLIP_OFFSET = 12.0f;
+static const int EXPLOSION_FLASH_MS = 180;
+static const int PARRY_FLASH_MS = 120;
+static const int TELEPORT_WARP_MS = 520;
+static const float ITEM_BOB_AMPLITUDE_PX = 3.0f;
+static const float ITEM_BOB_SPEED_RAD = 2.8f;
 
 namespace {
 bool parseWorldMapCoords(const std::string &mapName, int &x, int &y)
@@ -67,18 +74,24 @@ Scene::~Scene()
 	clearLevelEntities();
 	if (bgVbo != 0) glDeleteBuffers(1, &bgVbo);
 	if (bgVao != 0) glDeleteVertexArrays(1, &bgVao);
+	if (particleVbo != 0) glDeleteBuffers(1, &particleVbo);
+	if (particleVao != 0) glDeleteVertexArrays(1, &particleVao);
 	texProgram.free();
 	bgProgram.free();
+	particleProgram.free();
 }
 
 void Scene::clearLevelEntities()
 {
 	for (Sprite* key : keys) delete key;
 	keys.clear();
+	keyBasePositions.clear();
 	for (Sprite* heal : heals) delete heal;
 	heals.clear();
+	healBasePositions.clear();
 	for (Sprite* shield : shields) delete shield;
 	shields.clear();
+	shieldBasePositions.clear();
 	for (Sprite* weight : weights) delete weight;
 	weights.clear();
 	weightVelocities.clear();
@@ -91,6 +104,11 @@ void Scene::clearLevelEntities()
 	springs.clear();
 	for (Sprite* dash : dashes) delete dash;
 	dashes.clear();
+	vfxParticles.clear();
+	explosionFlashMs = 0;
+	parryFlashMs = 0;
+	teleportWarpMs = 0;
+	grayscaleAmount = 0.0f;
 	for (Sprite* door : doors) delete door;
 	doors.clear();
 	for (Sprite* portal : portals) delete portal;
@@ -100,6 +118,7 @@ void Scene::clearLevelEntities()
 		delete sword;
 		sword = nullptr;
 	}
+	swordHasBasePosition = false;
 	if (map != nullptr) {
 		delete map;
 		map = nullptr;
@@ -140,6 +159,8 @@ void Scene::init()
 	initShaders();
     std::string mapFile = Game::instance().getCurrentMapName();
     map = TileMap::createTileMap(mapFile, glm::vec2(0, 0), texProgram);	player = new Player();
+	Game::RoomRuntimeState runtimeState;
+	bool hasRuntimeState = Game::instance().loadRoomRuntimeState(mapFile, runtimeState);
 	Game::instance().registerRoomKeyTotal(mapFile, int(map->getKeySpawns().size()));
 	Game::instance().preloadConnectedRoomKeys();
 	Game::instance().totalKeysInLevel = Game::instance().getTotalKeysInCurrentWorld();
@@ -175,6 +196,26 @@ void Scene::init()
 			playerInitPos.y -= PLAYER_SPAWN_CLIP_OFFSET;
 		}
 	}
+	else {
+		Game::PortalEntrySide portalSide = Game::PortalEntrySide::NONE;
+		if (Game::instance().consumeNextSpawnPortal(mapFile, portalSide)) {
+			const std::vector<glm::ivec2> &portalSpawns = map->getPortals();
+			int sideCode = 0;
+			switch (portalSide) {
+				case Game::PortalEntrySide::LEFT: sideCode = 1; break;
+				case Game::PortalEntrySide::RIGHT: sideCode = 2; break;
+				case Game::PortalEntrySide::TOP: sideCode = 3; break;
+				case Game::PortalEntrySide::BOTTOM: sideCode = 4; break;
+				default: break;
+			}
+			int portalIndex = findPortalSpawnIndexForSide(portalSpawns, sideCode);
+			if (portalIndex >= 0 && portalIndex < int(portalSpawns.size())) {
+				playerInitPos = glm::vec2(portalSpawns[portalIndex]);
+				playerInitPos.y -= float(map->getTileSize());
+				playerInitPos.y -= PLAYER_SPAWN_CLIP_OFFSET;
+			}
+		}
+	}
 	
 	player->setPosition(playerInitPos);
 	player->setTileMap(map);
@@ -189,7 +230,12 @@ void Scene::init()
 	}
 	enemy = new Enemy();
 	enemy->init(glm::ivec2(SCREEN_X, SCREEN_Y), texProgram);
-	if (!map->getEnemy1Spawns().empty()) {
+	if (hasRuntimeState) {
+		enemy->setActive(runtimeState.enemy1Alive);
+		if (runtimeState.enemy1Alive)
+			enemy->setPosition(runtimeState.enemy1Pos);
+	}
+	else if (!map->getEnemy1Spawns().empty()) {
 		enemySpawnPos = glm::vec2(map->getEnemy1Spawns()[0]);
 		enemy->setPosition(enemySpawnPos);
 		enemy->setActive(false);   // empieza dormido
@@ -203,7 +249,12 @@ void Scene::init()
 	enemy->setTileMap(map);
 	enemy2 = new Enemy2();
 	enemy2->init(glm::ivec2(SCREEN_X, SCREEN_Y), texProgram);
-	if (!map->getEnemy2Spawns().empty()) {
+	if (hasRuntimeState) {
+		enemy2->setActive(runtimeState.enemy2Alive);
+		if (runtimeState.enemy2Alive)
+			enemy2->setPosition(runtimeState.enemy2Pos);
+	}
+	else if (!map->getEnemy2Spawns().empty()) {
 		enemy2SpawnPos = glm::vec2(map->getEnemy2Spawns()[0]);
 		enemy2->setPosition(enemy2SpawnPos);
 		enemy2->setActive(false);
@@ -217,7 +268,12 @@ void Scene::init()
 	enemy2->setTileMap(map);
 	enemy3 = new Enemy3();
 	enemy3->init(glm::ivec2(SCREEN_X, SCREEN_Y), texProgram);
-	if (!map->getEnemy3Spawns().empty()) {
+	if (hasRuntimeState) {
+		enemy3->setActive(runtimeState.enemy3Alive);
+		if (runtimeState.enemy3Alive)
+			enemy3->setPosition(runtimeState.enemy3Pos);
+	}
+	else if (!map->getEnemy3Spawns().empty()) {
 		enemy3SpawnPos = glm::vec2(map->getEnemy3Spawns()[0]);
 		enemy3->setPosition(enemy3SpawnPos);
 		enemy3->setActive(false);
@@ -258,10 +314,13 @@ void Scene::init()
 	updateCamera();
 
 	for (Sprite* k : keys) delete k; keys.clear();
+	keyBasePositions.clear();
 	for (Sprite* d : doors) delete d; doors.clear();
 	for (Sprite* p : portals) delete p; portals.clear();
 	for (Sprite* h : heals) delete h; heals.clear();
+	healBasePositions.clear();
 	for (Sprite* s : shields) delete s; shields.clear();
+	shieldBasePositions.clear();
 	for (Sprite* w : weights) delete w; weights.clear();
 	weightVelocities.clear();
 	weightSpringCooldownMs.clear();
@@ -272,6 +331,7 @@ void Scene::init()
 	for (Sprite* sp : springs) delete sp; springs.clear();
 	for (Sprite* d : dashes) delete d; dashes.clear();
 	if (sword != nullptr) {  delete sword;  sword = nullptr; }
+	swordHasBasePosition = false;
 
 	// texturas
 	texKey.loadFromFile("../images/key.png", TEXTURE_PIXEL_FORMAT_RGBA);
@@ -313,6 +373,7 @@ void Scene::init()
         Sprite* newKey = Sprite::createSprite(glm::vec2(map->getTileSize(), map->getTileSize()), glm::vec2(1.0, 1.0), &texKey, &texProgram);
         newKey->setPosition(pos);
         keys.push_back(newKey); // Add it to your vector
+		keyBasePositions.push_back(glm::vec2(float(pos.x), float(pos.y)));
     }
 
 	if (!map->getSwordSpawns().empty() && !Game::instance().hasSwordBeenCollectedInRoom(mapFile)) {
@@ -320,6 +381,8 @@ void Scene::init()
 		Sprite* newSword = Sprite::createSprite(glm::vec2(map->getTileSize(), map->getTileSize()), glm::vec2(1.0, 1.0), &texSword, &texProgram);
 		newSword->setPosition(pos);
 		sword = newSword; // Store it in the sword member variable
+		swordBasePosition = glm::vec2(float(pos.x), float(pos.y));
+		swordHasBasePosition = true;
 	}
 
 	int alreadyCollectedHeals = Game::instance().getCollectedHealsForRoom(mapFile);
@@ -329,6 +392,7 @@ void Scene::init()
 		Sprite* newHeal = Sprite::createSprite(glm::vec2(map->getTileSize(), map->getTileSize()), glm::vec2(1.0, 1.0), &texHeal, &texProgram);
 		newHeal->setPosition(pos);
 		heals.push_back(newHeal);
+		healBasePositions.push_back(glm::vec2(float(pos.x), float(pos.y)));
 	}
 
 	int alreadyCollectedShields = Game::instance().getCollectedShieldsForRoom(mapFile);
@@ -338,21 +402,37 @@ void Scene::init()
 		Sprite* newShield = Sprite::createSprite(glm::vec2(map->getTileSize(), map->getTileSize()), glm::vec2(1.0, 1.0), &texShield, &texProgram);
 		newShield->setPosition(pos);
 		shields.push_back(newShield);
+		shieldBasePositions.push_back(glm::vec2(float(pos.x), float(pos.y)));
 	}
 
-	for (glm::ivec2 pos : map->getWeightSpawns()) {
+	std::vector<glm::vec2> weightInitialPositions;
+	std::vector<float> weightInitialVelocities;
+	if (hasRuntimeState) {
+		weightInitialPositions = runtimeState.weightPositions;
+		weightInitialVelocities = runtimeState.weightVelocities;
+	}
+	else {
+		for (glm::ivec2 pos : map->getWeightSpawns())
+			weightInitialPositions.push_back(glm::vec2(float(pos.x), float(pos.y)));
+	}
+
+	for (size_t wi = 0; wi < weightInitialPositions.size(); ++wi) {
+		glm::vec2 pos = weightInitialPositions[wi];
 		Sprite* newWeight = Sprite::createSprite(glm::vec2(map->getTileSize(), map->getTileSize()), glm::vec2(1.0, 1.0), &texWeight, &texProgram);
-		glm::vec2 spawnPos(float(pos.x), float(pos.y) - WEIGHT_SPAWN_RAISE_PX);
+		glm::vec2 spawnPos(float(pos.x), float(pos.y));
+		if (!hasRuntimeState)
+			spawnPos.y -= WEIGHT_SPAWN_RAISE_PX;
 		if (spawnPos.y < 0.0f) spawnPos.y = 0.0f;
 		// Resolve initial placement onto support tiles to avoid first-frame one-way clipping.
 		glm::ivec2 spawnCheckPos(int(spawnPos.x), int(spawnPos.y + 1.0f));
 		glm::ivec2 weightSize(map->getTileSize(), map->getTileSize());
 		int correctedY = 0;
-		if (map->checkCollision(spawnCheckPos, weightSize, CollisionDir::DOWN, &correctedY, false))
+		if (!hasRuntimeState && map->checkCollision(spawnCheckPos, weightSize, CollisionDir::DOWN, &correctedY, false))
 			spawnPos.y = float(correctedY);
 		newWeight->setPosition(spawnPos);
 		weights.push_back(newWeight);
-		weightVelocities.push_back(0.0f);
+		float initialVel = (wi < weightInitialVelocities.size()) ? weightInitialVelocities[wi] : 0.0f;
+		weightVelocities.push_back(initialVel);
 		weightSpringCooldownMs.push_back(0);
 		weightDashCooldownMs.push_back(0);
 		weightDashVelocities.push_back(0.0f);
@@ -536,10 +616,59 @@ void Scene::updateCamera()
 	cameraY = std::max(0.f, std::min(targetY, maxCamY));
 }
 
+int Scene::findPortalSpawnIndexForSide(const std::vector<glm::ivec2> &portalSpawns, int sideCode) const
+{
+	if (portalSpawns.empty())
+		return -1;
+	int bestIndex = 0;
+	for (int i = 1; i < int(portalSpawns.size()); ++i)
+	{
+		const glm::ivec2 &a = portalSpawns[i];
+		const glm::ivec2 &b = portalSpawns[bestIndex];
+		switch (sideCode)
+		{
+			case 1: if (a.x < b.x) bestIndex = i; break;
+			case 2: if (a.x > b.x) bestIndex = i; break;
+			case 3: if (a.y < b.y) bestIndex = i; break;
+			case 4: if (a.y > b.y) bestIndex = i; break;
+			default: break;
+		}
+	}
+	return bestIndex;
+}
+
+void Scene::saveCurrentRoomRuntimeState()
+{
+	if (map == nullptr)
+		return;
+	Game::RoomRuntimeState state;
+	state.weightPositions.reserve(weights.size());
+	state.weightVelocities.reserve(weightVelocities.size());
+	for (size_t i = 0; i < weights.size(); ++i)
+	{
+		state.weightPositions.push_back(weights[i]->getPosition());
+		state.weightVelocities.push_back(i < weightVelocities.size() ? weightVelocities[i] : 0.0f);
+	}
+	if (enemy != nullptr) {
+		state.enemy1Alive = enemy->isAlive();
+		state.enemy1Pos = glm::vec2(enemy->getPosition());
+	}
+	if (enemy2 != nullptr) {
+		state.enemy2Alive = enemy2->isAlive();
+		state.enemy2Pos = glm::vec2(enemy2->getPosition());
+	}
+	if (enemy3 != nullptr) {
+		state.enemy3Alive = enemy3->isAlive();
+		state.enemy3Pos = glm::vec2(enemy3->getPosition());
+	}
+	Game::instance().saveRoomRuntimeState(Game::instance().getCurrentMapName(), state);
+}
+
 void Scene::scheduleTransitionToMap(const std::string &targetMap, bool enterSideRoom, int targetDoorIndex)
 {
 	if (transitionPending)
 		return;
+	saveCurrentRoomRuntimeState();
 
 	transitionPending = true;
 	transitionDelayMs = TRANSITION_DELAY_MS;
@@ -553,6 +682,7 @@ void Scene::scheduleTransitionToWorld(int targetRoomX, int targetRoomY)
 {
 	if (transitionPending)
 		return;
+	saveCurrentRoomRuntimeState();
 
 	transitionPending = true;
 	transitionDelayMs = TRANSITION_DELAY_MS;
@@ -619,6 +749,17 @@ void Scene::update(int deltaTime)
 		}
 	}
 
+	if (explosionFlashMs > 0)
+		explosionFlashMs = std::max(0, explosionFlashMs - deltaTime);
+	if (parryFlashMs > 0)
+		parryFlashMs = std::max(0, parryFlashMs - deltaTime);
+	if (teleportWarpMs > 0)
+		teleportWarpMs = std::max(0, teleportWarpMs - deltaTime);
+	float grayTarget = (Game::instance().lives <= 0) ? 1.0f : 0.0f;
+	float grayBlend = std::min(1.0f, dt * 6.0f);
+	grayscaleAmount += (grayTarget - grayscaleAmount) * grayBlend;
+	updateVfx(deltaTime);
+
 	// --- Activacion por proximidad: los enemigos no se activan hasta que el jugador este cerca ---
 	{
 		glm::vec2 pp = player->getPosition();
@@ -679,7 +820,10 @@ void Scene::update(int deltaTime)
 	if (player->isAlive() && enemy->isAlive())
 	{
 		if (player->isProtecting())
-			enemy->reflectArrowHit(player->getPosition(), glm::ivec2(Player::HITBOX_WIDTH, Player::HITBOX_HEIGHT), player->isFacingLeft());
+		{
+			if (enemy->reflectArrowHit(player->getPosition(), glm::ivec2(Player::HITBOX_WIDTH, Player::HITBOX_HEIGHT), player->isFacingLeft()))
+				parryFlashMs = std::max(parryFlashMs, PARRY_FLASH_MS);
+		}
 		else if (!player->isInvincible())
 			if (enemy->checkArrowHit(player->getPosition(), glm::ivec2(Player::HITBOX_WIDTH, Player::HITBOX_HEIGHT)))
 				player->takeDamage();
@@ -758,7 +902,10 @@ void Scene::update(int deltaTime)
 	if (player->isAlive() && enemy3->isAlive())
 	{
 		if (player->isProtecting())
-			enemy3->reflectFireballHit(player->getPosition(), glm::ivec2(Player::HITBOX_WIDTH, Player::HITBOX_HEIGHT), player->isFacingLeft());
+		{
+			if (enemy3->reflectFireballHit(player->getPosition(), glm::ivec2(Player::HITBOX_WIDTH, Player::HITBOX_HEIGHT), player->isFacingLeft()))
+				parryFlashMs = std::max(parryFlashMs, PARRY_FLASH_MS);
+		}
 		else if (!player->isInvincible())
 			if (enemy3->checkFireballHit(player->getPosition(), glm::ivec2(Player::HITBOX_WIDTH, Player::HITBOX_HEIGHT)))
 				player->takeDamage();
@@ -792,6 +939,13 @@ void Scene::update(int deltaTime)
 
     glm::vec2 pPos = player->getPosition();
     pSize = glm::ivec2(Player::HITBOX_WIDTH, Player::HITBOX_HEIGHT);
+	{
+		float landingImpact = 0.0f;
+		if (player->consumeHardLanding(&landingImpact)) {
+			glm::vec2 dustCenter(pPos.x + float(Player::HITBOX_WIDTH) * 0.5f, pPos.y + float(Player::HITBOX_HEIGHT));
+			spawnLandingDustParticles(dustCenter, sampleGroundDustColor(dustCenter), landingImpact);
+		}
+	}
 
 	// Trigger spring animation on activation
 	if (player->consumeSpringTrigger()) {
@@ -811,6 +965,27 @@ void Scene::update(int deltaTime)
 		dash->update(deltaTime);
 	}
 
+	const float bobTime = currentTime / 1000.0f;
+	for (int i = 0; i < int(keys.size()) && i < int(keyBasePositions.size()); ++i) {
+		float phase = float(i) * 0.55f;
+		float bobY = std::sin(bobTime * ITEM_BOB_SPEED_RAD + phase) * ITEM_BOB_AMPLITUDE_PX;
+		keys[i]->setPosition(glm::vec2(keyBasePositions[i].x, keyBasePositions[i].y + bobY));
+	}
+	if (sword != nullptr && swordHasBasePosition) {
+		float bobY = std::sin(bobTime * ITEM_BOB_SPEED_RAD + 1.2f) * ITEM_BOB_AMPLITUDE_PX;
+		sword->setPosition(glm::vec2(swordBasePosition.x, swordBasePosition.y + bobY));
+	}
+	for (int i = 0; i < int(heals.size()) && i < int(healBasePositions.size()); ++i) {
+		float phase = 0.8f + float(i) * 0.6f;
+		float bobY = std::sin(bobTime * ITEM_BOB_SPEED_RAD + phase) * ITEM_BOB_AMPLITUDE_PX;
+		heals[i]->setPosition(glm::vec2(healBasePositions[i].x, healBasePositions[i].y + bobY));
+	}
+	for (int i = 0; i < int(shields.size()) && i < int(shieldBasePositions.size()); ++i) {
+		float phase = 1.4f + float(i) * 0.7f;
+		float bobY = std::sin(bobTime * ITEM_BOB_SPEED_RAD + phase) * ITEM_BOB_AMPLITUDE_PX;
+		shields[i]->setPosition(glm::vec2(shieldBasePositions[i].x, shieldBasePositions[i].y + bobY));
+	}
+
 	// Fall out of bounds death check
 	if (pPos.y > map->getMapSize().y * map->getTileSize() + pSize.y) {
 		Game::instance().lives--;
@@ -822,6 +997,17 @@ void Scene::update(int deltaTime)
 		pPos = player->getPosition();
 	}
 
+	{
+		const std::string mapName = Game::instance().getCurrentMapName();
+		const int collectedKeys = Game::instance().getCollectedKeysForRoom(mapName);
+		const int roomTotalKeys = int(map->getKeySpawns().size());
+		if (collectedKeys >= roomTotalKeys && !keys.empty()) {
+			for (Sprite *key : keys)
+				delete key;
+			keys.clear();
+		}
+	}
+
     // un bucle por tipo de item, como solo hay 5 no pasa nada pero si añadimos más habría que crear una clase Item o algo así para no repetir código
     for (int i = keys.size() - 1; i >= 0; i--) {
         if (checkAABB(pPos, pSize, keys[i]->getPosition(), glm::ivec2(map->getTileSize(), map->getTileSize()))) {
@@ -829,7 +1015,10 @@ void Scene::update(int deltaTime)
 			Game::instance().collectKeyInCurrentRoom();     
             delete keys[i];                
             keys.erase(keys.begin() + i); 
+			if (i < int(keyBasePositions.size()))
+				keyBasePositions.erase(keyBasePositions.begin() + i);
             std::cout << "KEY PICKED UP" << std::endl;
+			AudioManager::instance().playSfx("pickup_key");
         }
     }
 
@@ -839,7 +1028,9 @@ void Scene::update(int deltaTime)
 		Game::instance().collectSwordInCurrentRoom();
 		delete sword;
 		sword = nullptr;
+		swordHasBasePosition = false;
 		std::cout << "GOT THE SWORD" << std::endl;
+		AudioManager::instance().playSfx("pickup_sword");
 	}
 
 	for (int i = heals.size() - 1; i >= 0; i--) {
@@ -850,7 +1041,10 @@ void Scene::update(int deltaTime)
 			Game::instance().collectHealInCurrentRoom();
 			delete heals[i];
 			heals.erase(heals.begin() + i);
+			if (i < int(healBasePositions.size()))
+				healBasePositions.erase(healBasePositions.begin() + i);
 			std::cout << "HEAL PICKED UP" << std::endl;
+			AudioManager::instance().playSfx("pickup_heal");
 		}
 	}
 
@@ -860,7 +1054,10 @@ void Scene::update(int deltaTime)
 			Game::instance().collectShieldInCurrentRoom();
 			delete shields[i];
 			shields.erase(shields.begin() + i);
+			if (i < int(shieldBasePositions.size()))
+				shieldBasePositions.erase(shieldBasePositions.begin() + i);
 			std::cout << "SHIELD PICKED UP" << std::endl;
+			AudioManager::instance().playSfx("pickup_shield");
 		}
 	}
 
@@ -1020,6 +1217,8 @@ void Scene::update(int deltaTime)
 			weightDestroyed = true;
 		}
 		if (weightDestroyed) {
+			spawnExplosionParticles(glm::vec2(wPos.x + float(weightSize.x) * 0.5f, wPos.y + float(weightSize.y) * 0.5f));
+			explosionFlashMs = std::max(explosionFlashMs, EXPLOSION_FLASH_MS);
 			delete weights[i];
 			weights.erase(weights.begin() + i);
 			weightVelocities.erase(weightVelocities.begin() + i);
@@ -1043,32 +1242,42 @@ void Scene::update(int deltaTime)
 					cout << "Portal is locked: collect all keys in this map and its connected rooms." << endl;
 					continue;
 				}
+				teleportWarpMs = std::max(teleportWarpMs, TELEPORT_WARP_MS);
 				
 				glm::vec2 portPos = portal->getPosition();
 				int currentX = Game::instance().currentRoomX;
 				int currentY = Game::instance().currentRoomY;
 				int targetX = currentX;
 				int targetY = currentY;
+				Game::PortalEntrySide destinationSpawnSide = Game::PortalEntrySide::NONE;
 
 				// Is the portal on the Right side of the screen? (e.g., X > 800)
 				if (portPos.x > SCREEN_WIDTH * 0.8f) {
 					targetX = currentX + 1; // Go Right
+					destinationSpawnSide = Game::PortalEntrySide::LEFT;
 				}
 				// Is it on the Left side?
 				else if (portPos.x < SCREEN_WIDTH * 0.2f) {
 					targetX = currentX - 1; // Go Left
+					destinationSpawnSide = Game::PortalEntrySide::RIGHT;
 				}
 				// Is it at the Top?
 				else if (portPos.y < SCREEN_HEIGHT * 0.2f) {
 					targetY = currentY - 1; // Go Up
+					destinationSpawnSide = Game::PortalEntrySide::BOTTOM;
 				}
 				// Must be at the Bottom!
 				else {
 					targetY = currentY + 1; // Go Down
+					destinationSpawnSide = Game::PortalEntrySide::TOP;
 				}
+
+				std::string targetMap = "../levels/map_" + std::to_string(targetX) + "_" + std::to_string(targetY) + ".json";
+				Game::instance().setNextSpawnPortal(targetMap, destinationSpawnSide);
 
 				scheduleTransitionToWorld(targetX, targetY);
 				cout << "Teleporting to room: map_" << targetX << "_" << targetY << endl;
+				AudioManager::instance().playSfx("teleport");
 			}
         }
 		portal ->update(deltaTime); 
@@ -1094,10 +1303,12 @@ void Scene::update(int deltaTime)
 						scheduleTransitionToWorld(targetX, targetY);
 						pendingTargetDoorIndex = link.targetDoorIndex;
 						cout << "Returning to world room: map_" << targetX << "_" << targetY << endl;
+						AudioManager::instance().playSfx("teleport");
 					}
 					else {
 						scheduleTransitionToMap(link.targetMap, true, link.targetDoorIndex);
 						cout << "Entering side room: " << link.targetMap << endl;
+						AudioManager::instance().playSfx("teleport");
 					}
 				}
 			}
@@ -1125,10 +1336,29 @@ void Scene::render()
 	texProgram.use();
 	texProgram.setUniformMatrix4f("projection", projection);
 	texProgram.setUniform4f("color", 1.0f, 1.0f, 1.0f, 1.0f);
+	texProgram.setUniform1f("grayscaleAmount", grayscaleAmount);
+	float explosionFlashAmount = float(explosionFlashMs) / float(EXPLOSION_FLASH_MS);
+	float parryFlashAmount = (float(parryFlashMs) / float(PARRY_FLASH_MS)) * 0.35f;
+	float totalFlash = std::min(1.0f, explosionFlashAmount + parryFlashAmount);
+	float flashMix = 0.0f;
+	float flashDenom = explosionFlashAmount + parryFlashAmount;
+	if (flashDenom > 0.0001f)
+		flashMix = parryFlashAmount / flashDenom;
+	float flashR = 1.0f;
+	float flashG = 0.55f + (1.0f - 0.55f) * flashMix;
+	float flashB = 0.10f + (1.0f - 0.10f) * flashMix;
+	texProgram.setUniform1f("flashAmount", totalFlash);
+	texProgram.setUniform3f("flashColor", flashR, flashG, flashB);
+	texProgram.setUniform1f("warpAmount", 0.0f);
+	texProgram.setUniform1f("warpPhase", currentTime / 1000.0f);
+	texProgram.setUniform1f("time", currentTime / 1000.0f);
+	texProgram.setUniform1f("godModeAmount", 0.0f);
+	texProgram.setUniform1f("mapSwayAmount", 1.0f);
 	modelview = glm::translate(glm::mat4(1.0f), glm::vec3(-cameraX, -cameraY, 0.f));
 	texProgram.setUniformMatrix4f("modelview", modelview);
 	texProgram.setUniform2f("texCoordDispl", 0.f, 0.f);
 	map->render();
+	texProgram.setUniform1f("mapSwayAmount", 0.0f);
 	Sprite::setGlobalRenderOffset(glm::vec2(-cameraX, -cameraY));
 
 	for (Sprite* key : keys) { key->render(); }
@@ -1147,7 +1377,37 @@ void Scene::render()
 		enemy2->render();
 	if (enemy3->isAlive() || enemy3->isDying())
 		enemy3->render();
+	float warpRatio = float(teleportWarpMs) / float(TELEPORT_WARP_MS);
+	warpRatio = std::max(0.0f, std::min(1.0f, warpRatio));
+	float playerWarpAmount = 0.55f * warpRatio;
+	texProgram.setUniform1f("warpAmount", playerWarpAmount);
+	texProgram.setUniform1f("godModeAmount", Game::instance().godMode ? 1.0f : 0.0f);
 	player->render();
+	texProgram.setUniform1f("warpAmount", 0.0f);
+	texProgram.setUniform1f("godModeAmount", 0.0f);
+
+	if (!vfxParticles.empty())
+	{
+		particleProgram.use();
+		particleProgram.setUniformMatrix4f("projection", projection);
+		particleProgram.setUniformMatrix4f("modelview", modelview);
+		std::vector<float> gpuData;
+		gpuData.reserve(vfxParticles.size() * 7);
+		for (const VfxParticle &p : vfxParticles)
+		{
+			gpuData.push_back(p.pos.x);
+			gpuData.push_back(p.pos.y);
+			gpuData.push_back(p.color.r);
+			gpuData.push_back(p.color.g);
+			gpuData.push_back(p.color.b);
+			gpuData.push_back(p.color.a);
+			gpuData.push_back(p.size);
+		}
+		glBindVertexArray(particleVao);
+		glBindBuffer(GL_ARRAY_BUFFER, particleVbo);
+		glBufferData(GL_ARRAY_BUFFER, GLsizeiptr(gpuData.size() * sizeof(float)), gpuData.data(), GL_DYNAMIC_DRAW);
+		glDrawArrays(GL_POINTS, 0, GLsizei(vfxParticles.size()));
+	}
 	Sprite::setGlobalRenderOffset(glm::vec2(0.f, 0.f));
 
 	if(hudReady)
@@ -1176,6 +1436,7 @@ void Scene::render()
 void Scene::initShaders()
 {
 	Shader vShader, fShader;
+	Shader pVShader, pFShader;
 
 	vShader.initFromFile(VERTEX_SHADER, "../shaders/texture.vert");
 	if(!vShader.isCompiled())
@@ -1201,6 +1462,106 @@ void Scene::initShaders()
 	texProgram.bindFragmentOutput("outColor");
 	vShader.free();
 	fShader.free();
+
+	pVShader.initFromFile(VERTEX_SHADER, "../shaders/particles.vert");
+	if(!pVShader.isCompiled())
+	{
+		cout << "Particle Vertex Shader Error" << endl;
+		cout << "" << pVShader.log() << endl << endl;
+	}
+	pFShader.initFromFile(FRAGMENT_SHADER, "../shaders/particles.frag");
+	if(!pFShader.isCompiled())
+	{
+		cout << "Particle Fragment Shader Error" << endl;
+		cout << "" << pFShader.log() << endl << endl;
+	}
+	particleProgram.init();
+	particleProgram.addShader(pVShader);
+	particleProgram.addShader(pFShader);
+	particleProgram.link();
+	if(!particleProgram.isLinked())
+	{
+		cout << "Particle Shader Linking Error" << endl;
+		cout << "" << particleProgram.log() << endl << endl;
+	}
+	particleProgram.bindFragmentOutput("outColor");
+	pVShader.free();
+	pFShader.free();
+
+	if (particleVao == 0)
+		glGenVertexArrays(1, &particleVao);
+	if (particleVbo == 0)
+		glGenBuffers(1, &particleVbo);
+	glEnable(GL_PROGRAM_POINT_SIZE);
+	glBindVertexArray(particleVao);
+	glBindBuffer(GL_ARRAY_BUFFER, particleVbo);
+	glBufferData(GL_ARRAY_BUFFER, 0, nullptr, GL_DYNAMIC_DRAW);
+	GLint pPosLoc = particleProgram.bindVertexAttribute("position", 2, 7 * sizeof(float), 0);
+	GLint pColorLoc = particleProgram.bindVertexAttribute("inColor", 4, 7 * sizeof(float), (void *)(2 * sizeof(float)));
+	GLint pSizeLoc = particleProgram.bindVertexAttribute("inSize", 1, 7 * sizeof(float), (void *)(6 * sizeof(float)));
+	glEnableVertexAttribArray(pPosLoc);
+	glEnableVertexAttribArray(pColorLoc);
+	glEnableVertexAttribArray(pSizeLoc);
+}
+
+void Scene::updateVfx(int deltaTime)
+{
+	const float dt = float(deltaTime) / 1000.0f;
+	for (VfxParticle &p : vfxParticles)
+	{
+		p.lifeMs -= float(deltaTime);
+		p.vel.y += 1400.0f * dt;
+		p.pos += p.vel * dt;
+		p.color.a = std::max(0.0f, p.lifeMs / 450.0f);
+	}
+	vfxParticles.erase(std::remove_if(vfxParticles.begin(), vfxParticles.end(), [](const VfxParticle &p) {
+		return p.lifeMs <= 0.0f;
+	}), vfxParticles.end());
+}
+
+void Scene::spawnExplosionParticles(const glm::vec2 &center)
+{
+	for (int i = 0; i < 22; ++i)
+	{
+		float t = float(i) / 22.0f;
+		float angle = t * 6.2831853f;
+		float speed = 120.0f + 220.0f * ((i % 5) / 4.0f);
+		VfxParticle p;
+		p.pos = center;
+		p.vel = glm::vec2(std::cos(angle) * speed, std::sin(angle) * speed - 60.0f);
+		p.color = glm::vec4(1.0f, 0.55f + 0.25f * (i % 2), 0.1f, 1.0f);
+		p.lifeMs = 420.0f + float((i % 4) * 40);
+		p.size = 8.0f + float(i % 3) * 2.0f;
+		vfxParticles.push_back(p);
+	}
+}
+
+void Scene::spawnLandingDustParticles(const glm::vec2 &center, const glm::vec4 &baseColor, float impact)
+{
+	int count = 8 + int(std::min(14.0f, impact / 90.0f));
+	for (int i = 0; i < count; ++i)
+	{
+		float sign = (i % 2 == 0) ? -1.0f : 1.0f;
+		float spread = 20.0f + 12.0f * float(i % 5);
+		VfxParticle p;
+		p.pos = glm::vec2(center.x + sign * float(i * 2), center.y - 2.0f);
+		p.vel = glm::vec2(sign * spread, -80.0f - 20.0f * float(i % 4));
+		p.color = glm::vec4(baseColor.r, baseColor.g, baseColor.b, 0.9f);
+		p.lifeMs = 260.0f + float((i % 5) * 30);
+		p.size = 5.0f + float(i % 3);
+		vfxParticles.push_back(p);
+	}
+}
+
+glm::vec4 Scene::sampleGroundDustColor(const glm::vec2 &playerPos) const
+{
+	glm::ivec2 samplePos(int(playerPos.x), int(playerPos.y + 3.0f));
+	TileType tile = map->getTileTypeAtPos(samplePos);
+	if (tile == TileType::ONE_WAY_PLATFORM)
+		return glm::vec4(0.72f, 0.72f, 0.72f, 1.0f);
+	if (tile == TileType::SOLID)
+		return glm::vec4(0.62f, 0.48f, 0.32f, 1.0f);
+	return glm::vec4(0.85f, 0.85f, 0.85f, 1.0f);
 }
 
 
@@ -1212,6 +1573,11 @@ void Scene::renderMenuScreen(int selection)
 	texProgram.setUniformMatrix4f("projection", projection);
 	texProgram.setUniformMatrix4f("modelview", modelview);
 	texProgram.setUniform4f("color", 1.0f, 1.0f, 1.0f, 1.0f);
+	texProgram.setUniform1f("grayscaleAmount", 0.0f);
+	texProgram.setUniform1f("flashAmount", 0.0f);
+	texProgram.setUniform3f("flashColor", 1.0f, 1.0f, 1.0f);
+	texProgram.setUniform1f("warpAmount", 0.0f);
+	texProgram.setUniform1f("warpPhase", 0.0f);
 	
 	if (hudReady) {
 		glm::vec4 titleColor(1.0f, 0.9f, 0.2f, 1.0f);
@@ -1235,6 +1601,11 @@ void Scene::renderInstructionsScreen()
 	texProgram.setUniformMatrix4f("projection", projection);
 	texProgram.setUniformMatrix4f("modelview", modelview);
 	texProgram.setUniform4f("color", 1.0f, 1.0f, 1.0f, 1.0f);
+	texProgram.setUniform1f("grayscaleAmount", 0.0f);
+	texProgram.setUniform1f("flashAmount", 0.0f);
+	texProgram.setUniform3f("flashColor", 1.0f, 1.0f, 1.0f);
+	texProgram.setUniform1f("warpAmount", 0.0f);
+	texProgram.setUniform1f("warpPhase", 0.0f);
 	
 	if (hudReady) {
 		glm::vec4 titleColor(1.0f, 0.9f, 0.2f, 1.0f);
@@ -1263,6 +1634,11 @@ void Scene::renderCreditsScreen()
 	texProgram.setUniformMatrix4f("projection", projection);
 	texProgram.setUniformMatrix4f("modelview", modelview);
 	texProgram.setUniform4f("color", 1.0f, 1.0f, 1.0f, 1.0f);
+	texProgram.setUniform1f("grayscaleAmount", 0.0f);
+	texProgram.setUniform1f("flashAmount", 0.0f);
+	texProgram.setUniform3f("flashColor", 1.0f, 1.0f, 1.0f);
+	texProgram.setUniform1f("warpAmount", 0.0f);
+	texProgram.setUniform1f("warpPhase", 0.0f);
 	
 	if (hudReady) {
 		glm::vec4 titleColor(1.0f, 0.9f, 0.2f, 1.0f);
